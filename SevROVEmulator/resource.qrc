@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/logo">
+        <file>img/sevrov.png</file>
+        <file>img/sevsu.png</file>
+    </qresource>
+</RCC>

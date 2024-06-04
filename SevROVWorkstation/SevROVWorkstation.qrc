@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/camera_icon.png</file>
+        <file>img/cube_icon.png</file>
+        <file>img/display_icon.png</file>
+        <file>img/download_icon.png</file>
+        <file>img/eye_icon.png</file>
+        <file>img/off_button_icon.png</file>
+        <file>img/on_button_icon.png</file>
+        <file>img/remove_icon.png</file>
+        <file>img/ruler_2d_icon.png</file>
+        <file>img/ruler_3d_icon.png</file>
+        <file>img/ruler_icon.png</file>
+        <file>img/settings_icon.png</file>
+        <file>img/sevrov.png</file>
+        <file>img/sevsu.png</file>
+        <file>img/trash_icon.png</file>
+        <file>img/video_icon.png</file>
+    </qresource>
+</RCC>

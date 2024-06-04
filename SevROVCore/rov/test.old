@@ -1,0 +1,10 @@
+a = 0b00001100
+
+print('AGA') if(a & 0b00000001) else print ('NEA')
+print('AGA') if(a & 0b00000010) else print ('NEA')
+print('AGA') if(a & 0b00000100) else print ('NEA')
+print('AGA') if(a & 0b00001000) else print ('NEA')
+print (a & 0b00000001)
+print (a & 0b00000010)
+print (a & 0b00000100)
+print (a & 0b00001000)

@@ -1,0 +1,7 @@
+.qtc_clangd/
+Build/
+Deploy/
+SevROVCore/SevROVClient/.vs/
+SevROVCore/SevROVClient/packages/
+SevROVCore/SevROVClient/SevROVClient/bin/
+SevROVCore/SevROVClient/SevROVClient/obj/

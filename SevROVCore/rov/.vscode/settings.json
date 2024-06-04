@@ -1,0 +1,5 @@
+{
+    "python.analysis.diagnosticMode": "workspace",
+    "python.globalModuleInstallation": true,
+    "python.terminal.activateEnvironment": true
+}
