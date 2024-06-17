@@ -34,11 +34,16 @@ class MainWindow : public QMainWindow
 private:
     ApplicationSettings _appSet;
     SevROVController _sevROV;
+    SevROVXboxController *_jsController;
+    XboxGamepad _xbox;
 
     // Инструмент "Линейка"
     ToolWindow *_toolWindow;
 
     long _cnt; // Счетчик вызовов
+
+    // Joystick related
+    QTimer *_controlTimer;
 
     ///////////////////////////////////////////////////////////////////////////
     // OpenCV related
@@ -62,20 +67,20 @@ private:
     QImage _imgCamR;
     ///////////////////////////////////////////////////////////////////////////
 
-    void setup_icons();
-    void setup_window_geometry();
-    void setup_camera_view_layout(CameraView layouttype = CameraView::MONO);
-    void setup_connected_controls_style(bool isconnected = false);
+    void setupIcons();
+    void setupWindowGeometry();
+    void setupCameraViewLayout(CameraView layouttype = CameraView::MONO);
+    void setupConnectedControlsStyle(bool isconnected = false);
 
-    void setup_camera_connection(CameraConnection connection = CameraConnection::ON);
+    void setupCameraConnection(CameraConnection connection = CameraConnection::ON);
 
-    void on_video_timer();
-    t_vuxyzrgb get_cloud_3D_points(int rows, int cols, bool norm);
-    std::vector<Cloud3DItem> get_cloud_3D_points(std::string pathtofile);
-    t_vuxyzrgb convert_cloud_3D_points(std::vector<Cloud3DItem> cloud, bool);
+    void onVideoTimer();
+    t_vuxyzrgb getCloud3DPoints(int rows, int cols, bool norm);
+    std::vector<Cloud3DItem> getCloud3DPoints(std::string pathtofile);
+    t_vuxyzrgb convertCloud3DPoints(std::vector<Cloud3DItem> cloud, bool);
 
-    void move_window_to_center();
-    void rounded_rectangle(
+    void moveWindowToCenter();
+    void roundedRectangle(
         cv::Mat& src,
         cv::Point topLeft,
         cv::Point bottomRight,
@@ -83,6 +88,25 @@ private:
         const int thickness,
         const int lineType,
         const int cornerRadius);
+
+    void onControlTimer();
+
+    void OnButtonA(short value);
+    void OnButtonB(short value);
+    void OnButtonX(short value);
+    void OnButtonY(short value);
+    void OnButtonLBumper(short value);
+    void OnButtonRBumper(short value);
+    void OnButtonView(short value);
+    void OnButtonMenu(short value);
+    void OnDPad(short value);
+
+    void OnAxisLStickX(short value);
+    void OnAxisLStickY(short value);
+    void OnAxisRStickX(short value);
+    void OnAxisRStickY(short value);
+    void OnAxisLTrigger(short value);
+    void OnAxisRTrigger(short value);
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -94,6 +118,8 @@ private slots:
     void on_pbView_clicked();
 
     void on_pbScreenshot_clicked();
+
+    void on_pbSettings_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -32,6 +32,9 @@ public:
     const int CAMERA_ID = 0;
     const int CAMERA_LEFT_ID = 1;
     const int CAMERA_RIGHT_ID = 2;
+
+    const int JOYSTICK_ID = 0;
+    const int JOYSTICK_TIMER_INTERVAL = 100;
 };
 
 #endif // APPLICATIONSETTINGS_H

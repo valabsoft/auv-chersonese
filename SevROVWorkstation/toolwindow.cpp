@@ -38,7 +38,7 @@ void ToolWindow::move_window_to_center()
     move(primaryScreenRectCenter);
 }
 
-void ToolWindow::setup_window_geometry()
+void ToolWindow::setupWindowGeometry()
 {
     int windowWidth = _appSet.CAMERA_WIDTH + _appSet.TOOL_PANEL_WIDHT + _appSet.CAMERA_VIEW_BORDER_WIDTH * 3;
     int windowHeight = _appSet.CAMERA_HEIGHT + _appSet.TOOL_PANEL_HEIGHT + _appSet.CAMERA_VIEW_BORDER_WIDTH * 3;
@@ -53,7 +53,7 @@ void ToolWindow::setup_window_geometry()
     move_window_to_center();
 }
 
-void ToolWindow::set_data_cloud_3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud)
+void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud)
 {
     // Check the source image
     if (image.empty())
@@ -148,7 +148,7 @@ void ToolWindow::set_data_cloud_3D(cv::Mat image, t_vuxyzrgb data, std::vector<C
     ui->btnDelete->setVisible(false);
 }
 
-void ToolWindow::set_data_cloud_3D(cv::Mat image, t_vuxyzrgb data)
+void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data)
 {
     // Подгоняем размер сцены под размер изображения на входе
     ui->graphicsView->setFixedWidth(image.cols);
@@ -790,7 +790,7 @@ void ToolWindow::setup_controls_style()
 
 }
 
-void ToolWindow::clear_data()
+void ToolWindow::clearData()
 {
     ui->lswClusters->clear();
 }

@@ -20,14 +20,14 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("ТНПА :: AРМ Оператора :: " + _appSet.getAppVersion());
 
     // Устанавливаем геометрию окна и основных элементов
-    setup_window_geometry();
+    setupWindowGeometry();
 
     // Установка иконок
-    setup_icons();
+    setupIcons();
 
     // Layout по умолчанию - одиночная камера
-    setup_camera_view_layout(CameraView::MONO);
-    setup_connected_controls_style(false);
+    setupCameraViewLayout(CameraView::MONO);
+    setupConnectedControlsStyle(false);
 
     // Цвет фона главного окна приложения
     this->setStyleSheet("background-color: black;");
@@ -37,26 +37,91 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lbFPS->setFont(fontLabel);
 
     _videoTimer = new QTimer(this);
-    connect(_videoTimer, &QTimer::timeout, this, &MainWindow::on_video_timer);
+    connect(_videoTimer, &QTimer::timeout, this, &MainWindow::onVideoTimer);
+
+    _controlTimer = new QTimer(this);
+    connect(_controlTimer, &QTimer::timeout, this, &MainWindow::onControlTimer);
 
     QObject::connect(this, SIGNAL(update_fps_value(QString)), ui->lbFPS, SLOT(setText(QString)));
+
+    // Работа с джойстиком
+    _jsController = new SevROVXboxController();
+
+    // Кнопки
+    connect(_jsController, &SevROVXboxController::OnButtonA,
+            this, &MainWindow::OnButtonA);
+    connect(_jsController, &SevROVXboxController::OnButtonB,
+            this, &MainWindow::OnButtonB);
+    connect(_jsController, &SevROVXboxController::OnButtonX,
+            this, &MainWindow::OnButtonX);
+    connect(_jsController, &SevROVXboxController::OnButtonY,
+            this, &MainWindow::OnButtonY);
+    connect(_jsController, &SevROVXboxController::OnButtonLBumper,
+            this, &MainWindow::OnButtonLBumper);
+    connect(_jsController, &SevROVXboxController::OnButtonRBumper,
+            this, &MainWindow::OnButtonRBumper);
+    connect(_jsController, &SevROVXboxController::OnButtonView,
+            this, &MainWindow::OnButtonView);
+    connect(_jsController, &SevROVXboxController::OnButtonMenu,
+            this, &MainWindow::OnButtonMenu);
+    connect(_jsController, &SevROVXboxController::OnDPad,
+            this, &MainWindow::OnDPad);
+
+    // Оси
+    connect(_jsController, &SevROVXboxController::OnAxisLStickX,
+            this, &MainWindow::OnAxisLStickX);
+    connect(_jsController, &SevROVXboxController::OnAxisLStickY,
+            this, &MainWindow::OnAxisLStickY);
+    connect(_jsController, &SevROVXboxController::OnAxisRStickX,
+            this, &MainWindow::OnAxisRStickX);
+    connect(_jsController, &SevROVXboxController::OnAxisRStickY,
+            this, &MainWindow::OnAxisRStickY);
+    connect(_jsController, &SevROVXboxController::OnAxisLTrigger,
+            this, &MainWindow::OnAxisLTrigger);
+    connect(_jsController, &SevROVXboxController::OnAxisRTrigger,
+            this, &MainWindow::OnAxisRTrigger);
+
+    // Зеркалим данные
+    _xbox.A = 0;
+    _xbox.B = 0;
+    _xbox.X = 0;
+    _xbox.Y = 0;
+    _xbox.LBumper = 0;
+    _xbox.RBumper = 0;
+    _xbox.View = 0;
+    _xbox.Menu = 0;
+    _xbox.DPad = 0;
+    _xbox.LStickX = 0;
+    _xbox.LStickY = 0;
+    _xbox.RStickX = 0;
+    _xbox.RStickY = 0;
+    _xbox.LTrigger = -32768;
+    _xbox.RTrigger = -32768;
 }
 
 MainWindow::~MainWindow()
 {
+    // Освобождение ресурсов видео таймер
+    if (!_videoTimer->isActive())
+        _videoTimer->stop();
+
+    if (_videoTimer)
+        delete _videoTimer;
+
+    // Освобождение ресурсов таймер управления
+    if (!_controlTimer->isActive())
+        _controlTimer->stop();
+
+    if (_controlTimer)
+        delete _controlTimer;
+
+    // Веб-камеры
     if (_webCamO->isOpened())
         _webCamO->release();
     if (_webCamL->isOpened())
         _webCamL->release();
     if (_webCamR->isOpened())
         _webCamR->release();
-
-    // Освобождение ресурсов
-    if (!_videoTimer->isActive())
-        _videoTimer->stop();
-
-    if (_videoTimer)
-        delete _videoTimer;
 
     if (_webCamO)
         delete _webCamO;
@@ -70,62 +135,12 @@ MainWindow::~MainWindow()
     if (_toolWindow)
         delete _toolWindow;
 
+    delete _jsController;
+
     delete ui;
 }
 
-void MainWindow::on_pbStartStop_clicked()
-{
-    // Меняем состояние флага
-    _sevROV.isConnected = !_sevROV.isConnected;
-    _cnt = 0; // Сбрасываем счетчик
-    Q_EMIT update_fps_value("CNT: " + QString::number(_cnt++));
-
-    // Меняем иконку на кнопке
-    if (_sevROV.isConnected)
-    {
-        ui->pbStartStop->setIcon(QIcon(":/img/on_button_icon.png"));
-        ui->pbStartStop->setIconSize(QSize(64, 64));
-
-        setup_camera_connection(CameraConnection::ON);
-    }
-    else
-    {
-        ui->pbStartStop->setIcon(QIcon(":/img/off_button_icon.png"));
-        ui->pbStartStop->setIconSize(QSize(64, 64));
-
-        setup_camera_connection(CameraConnection::OFF);
-    }
-
-    setup_connected_controls_style(_sevROV.isConnected);
-}
-
-void MainWindow::on_pbView_clicked()
-{
-    // Если нет соединения - выход
-    if (!_sevROV.isConnected)
-        return;
-
-    switch (_sevROV.cameraView)
-    {
-    case CameraView::MONO:
-        ui->pbView->setIcon(QIcon(":/img/video_icon.png"));
-        ui->pbView->setIconSize(QSize(64, 64));
-        _sevROV.cameraView = CameraView::STEREO;
-
-        break;
-    case CameraView::STEREO:
-        ui->pbView->setIcon(QIcon(":/img/display_icon.png"));
-        ui->pbView->setIconSize(QSize(64, 64));
-        _sevROV.cameraView = CameraView::MONO;
-        break;
-    default:
-        break;
-    }
-
-    setup_camera_view_layout(_sevROV.cameraView);
-}
-
-void MainWindow::setup_icons()
+void MainWindow::setupIcons()
 {
     // Иконка главного окна
     setWindowIcon(QIcon(":/img/sevrov.png"));
@@ -141,7 +156,7 @@ void MainWindow::setup_icons()
     ui->pbScreenshot->setIconSize(QSize(64, 64));
 }
 
-void MainWindow::move_window_to_center()
+void MainWindow::moveWindowToCenter()
 {
     auto primaryScreen = QGuiApplication::primaryScreen(); // Главный экран
     QRect primaryScreenRect = primaryScreen->availableGeometry(); // Размер главного экрана
@@ -151,7 +166,7 @@ void MainWindow::move_window_to_center()
     move(primaryScreenRectCenter);
 }
 
-void MainWindow::setup_window_geometry()
+void MainWindow::setupWindowGeometry()
 {
     // Установка размера главного окна// Установка размера главного окна
     int windowWidth = _appSet.CAMERA_WIDTH + _appSet.CONTROL_PANEL_WIDTH + _appSet.CAMERA_VIEW_BORDER_WIDTH * 4;
@@ -161,7 +176,7 @@ void MainWindow::setup_window_geometry()
     setFixedSize(QSize(windowWidth, windowHeight));
 
     // Центрируем окно в пределах экрана
-    move_window_to_center();
+    moveWindowToCenter();
 
     QRect mainWindowRect = this->geometry();
 
@@ -192,7 +207,7 @@ void MainWindow::setup_window_geometry()
         mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH * 2);
 }
 
-void MainWindow::setup_camera_view_layout(CameraView layouttype)
+void MainWindow::setupCameraViewLayout(CameraView layouttype)
 {
     switch (layouttype)
     {
@@ -209,7 +224,7 @@ void MainWindow::setup_camera_view_layout(CameraView layouttype)
     }
 }
 
-void MainWindow::setup_connected_controls_style(bool isconnected)
+void MainWindow::setupConnectedControlsStyle(bool isconnected)
 {
     if (isconnected)
     {
@@ -265,7 +280,7 @@ void MainWindow::setup_connected_controls_style(bool isconnected)
     }
 }
 
-void MainWindow::setup_camera_connection(CameraConnection connection)
+void MainWindow::setupCameraConnection(CameraConnection connection)
 {
     switch (connection)
     {
@@ -336,7 +351,7 @@ void MainWindow::setup_camera_connection(CameraConnection connection)
 }
 
 // https://stackoverflow.com/questions/18973103/how-to-draw-a-rounded-rectangle-rectangle-with-rounded-corners-with-opencv
-void MainWindow::rounded_rectangle(
+void MainWindow::roundedRectangle(
     cv::Mat& src,
     cv::Point topLeft,
     cv::Point bottomRight,
@@ -367,7 +382,8 @@ void MainWindow::rounded_rectangle(
     cv::ellipse(src, p3 + cv::Point(-cornerRadius, -cornerRadius), cv::Size(cornerRadius, cornerRadius), 0.0, 0, 90, lineColor, thickness, lineType);
     cv::ellipse(src, p4 + cv::Point(cornerRadius, -cornerRadius), cv::Size(cornerRadius, cornerRadius), 90.0, 0, 90, lineColor, thickness, lineType);
 }
-void MainWindow::on_video_timer()
+
+void MainWindow::onVideoTimer()
 {
     int X0 = _appSet.CAMERA_WIDTH / 2;
     int Y0 = _appSet.CAMERA_HEIGHT / 2;
@@ -431,7 +447,7 @@ void MainWindow::on_video_timer()
         _destinationMatO.copyTo(overlayImage);
 
         // Внешний контур
-        rounded_rectangle(_destinationMatO,
+        roundedRectangle(_destinationMatO,
                           cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
                           cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
                           CV_RGB(0, 255, 255),
@@ -662,7 +678,7 @@ void MainWindow::on_video_timer()
     }
 }
 
-t_vuxyzrgb MainWindow:: get_cloud_3D_points(int rows, int cols, bool norm = true)
+t_vuxyzrgb MainWindow:: getCloud3DPoints(int rows, int cols, bool norm = true)
 {
     t_vuxyzrgb data;
 
@@ -779,7 +795,7 @@ t_vuxyzrgb MainWindow:: get_cloud_3D_points(int rows, int cols, bool norm = true
     return data;
 }
 
-std::vector<Cloud3DItem> MainWindow::get_cloud_3D_points(std::string pathtofile)
+std::vector<Cloud3DItem> MainWindow::getCloud3DPoints(std::string pathtofile)
 {
     std::vector<Cloud3DItem> cloud;
 
@@ -816,7 +832,7 @@ std::vector<Cloud3DItem> MainWindow::get_cloud_3D_points(std::string pathtofile)
     return cloud;
 }
 
-t_vuxyzrgb MainWindow:: MainWindow::convert_cloud_3D_points(std::vector<Cloud3DItem> cloud, bool norm = true)
+t_vuxyzrgb MainWindow:: MainWindow::convertCloud3DPoints(std::vector<Cloud3DItem> cloud, bool norm = true)
 {
     t_vuxyzrgb data;
     Data3DItem data3DItem;
@@ -916,6 +932,79 @@ t_vuxyzrgb MainWindow:: MainWindow::convert_cloud_3D_points(std::vector<Cloud3DI
     return data;
 }
 
+void MainWindow::onControlTimer()
+{
+
+}
+
+void MainWindow::on_pbStartStop_clicked()
+{
+    // Меняем состояние флага
+    _sevROV.isConnected = !_sevROV.isConnected;
+    _cnt = 0; // Сбрасываем счетчик
+    Q_EMIT update_fps_value("CNT: " + QString::number(_cnt++));
+
+    // Меняем иконку на кнопке
+    if (_sevROV.isConnected)
+    {
+        ui->pbStartStop->setIcon(QIcon(":/img/on_button_icon.png"));
+        ui->pbStartStop->setIconSize(QSize(64, 64));
+
+        setupCameraConnection(CameraConnection::ON);
+
+        // Joyjstick
+        _jsController->OpenJoystick(_appSet.JOYSTICK_ID);
+        _jsController->isRunning = true;
+        _jsController->start(); // Запуск процесса в поток
+
+        _controlTimer->start(_appSet.JOYSTICK_TIMER_INTERVAL);
+    }
+    else
+    {
+        ui->pbStartStop->setIcon(QIcon(":/img/off_button_icon.png"));
+        ui->pbStartStop->setIconSize(QSize(64, 64));
+
+        setupCameraConnection(CameraConnection::OFF);
+
+        // Joystick
+        _jsController->CloseJoystick();
+        _jsController->isRunning = false;
+        _jsController->quit();
+
+        _controlTimer->stop();
+    }
+
+    setupConnectedControlsStyle(_sevROV.isConnected);
+}
+
+
+void MainWindow::on_pbView_clicked()
+{
+    // Если нет соединения - выход
+    if (!_sevROV.isConnected)
+        return;
+
+    switch (_sevROV.cameraView)
+    {
+    case CameraView::MONO:
+        ui->pbView->setIcon(QIcon(":/img/video_icon.png"));
+        ui->pbView->setIconSize(QSize(64, 64));
+        _sevROV.cameraView = CameraView::STEREO;
+
+        break;
+    case CameraView::STEREO:
+        ui->pbView->setIcon(QIcon(":/img/display_icon.png"));
+        ui->pbView->setIconSize(QSize(64, 64));
+        _sevROV.cameraView = CameraView::MONO;
+        break;
+    default:
+        break;
+    }
+
+    setupCameraViewLayout(_sevROV.cameraView);
+}
+
+
 void MainWindow::on_pbScreenshot_clicked()
 {
     // Создаем инструмент Линейка
@@ -937,16 +1026,16 @@ void MainWindow::on_pbScreenshot_clicked()
 
     // FOR DEBUG ONLY
     // Загрузка данных
-    std::vector<Cloud3DItem> cloud = get_cloud_3D_points("C:\\TEMP\\cloud_3D.txt");
+    std::vector<Cloud3DItem> cloud = getCloud3DPoints("C:\\TEMP\\cloud_3D.txt");
     // std::vector<Cloud3DItem> cloud = get_cloud_3D_points("C:\\TEMP\\3d_points.txt");
 
     // Конвертация в старый формат
-    t_vuxyzrgb data = convert_cloud_3D_points(cloud);
+    t_vuxyzrgb data = convertCloud3DPoints(cloud);
 
-    _toolWindow->setup_window_geometry();
+    _toolWindow->setupWindowGeometry();
     // TODO: Переделать под новый формат данных
     // _toolWindow->set_data_cloud_3D(image_resized, cloud);
-    _toolWindow->set_data_cloud_3D(image_resized, data);
+    _toolWindow->setDataCloud3D(image_resized, data);
     _toolWindow->setWindowTitle("ТНПА :: AРМ Оператора :: " + _appSet.getAppVersion());
 
     // Центрировать инструментальную панель
@@ -967,7 +1056,7 @@ void MainWindow::on_pbScreenshot_clicked()
     // Массив данных описывающий облоко 3D точек
     t_vuxyzrgb data = get_cloud_3D_points(image.rows, image.cols);
 
-    // Show tool window    
+    // Show tool window
     _toolWindow->set_data_cloud_3D(image, data);
 
     // Центрировать инструментальную панель
@@ -985,3 +1074,83 @@ void MainWindow::on_pbScreenshot_clicked()
     ///////////////////////////////////////////////////////////////////////////
 }
 
+void MainWindow::on_pbSettings_clicked()
+{
+
+}
+
+void MainWindow::OnButtonA(short value)
+{
+    //ui->edA->setText(QString::number(value));
+    _xbox.A = value;
+}
+void MainWindow::OnButtonB(short value)
+{
+    //ui->edB->setText(QString::number(value));
+    _xbox.B = value;
+}
+void MainWindow::OnButtonX(short value)
+{
+    //ui->edX->setText(QString::number(value));
+    _xbox.X = value;
+}
+void MainWindow::OnButtonY(short value)
+{
+    //ui->edY->setText(QString::number(value));
+    _xbox.Y = value;
+}
+void MainWindow::OnButtonLBumper(short value)
+{
+    //ui->edLBumper->setText(QString::number(value));
+    _xbox.LBumper = value;
+}
+void MainWindow::OnButtonRBumper(short value)
+{
+    //ui->edRBumper->setText(QString::number(value));
+    _xbox.RBumper = value;
+}
+void MainWindow::OnButtonView(short value)
+{
+    //ui->edView->setText(QString::number(value));
+    _xbox.View = value;
+}
+void MainWindow::OnButtonMenu(short value)
+{
+    //ui->edMenu->setText(QString::number(value));
+    _xbox.Menu = value;
+}
+void MainWindow::OnDPad(short value)
+{
+    //ui->edDPad->setText(QString::number(value));
+    _xbox.DPad = value;
+}
+void MainWindow::OnAxisLStickX(short value)
+{
+    //ui->edLStickX->setText(QString::number(value));
+    _xbox.LStickX = value;
+}
+void MainWindow::OnAxisLStickY(short value)
+{
+    //ui->edLStickY->setText(QString::number(value));
+    _xbox.LStickY = value;
+}
+void MainWindow::OnAxisRStickX(short value)
+{
+    //ui->edRStickX->setText(QString::number(value));
+    _xbox.RStickX = value;
+}
+void MainWindow::OnAxisRStickY(short value)
+{
+    //ui->edRStickY->setText(QString::number(value));
+    _xbox.RStickY = value;
+}
+void MainWindow::OnAxisLTrigger(short value)
+{
+    //ui->edLTrigger->setText(QString::number(value));
+    _xbox.LTrigger = value;
+}
+void MainWindow::OnAxisRTrigger(short value)
+{
+    //ui->edRTrigger->setText(QString::number(value));
+    _xbox.RTrigger = value;
+}

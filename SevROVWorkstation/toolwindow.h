@@ -33,12 +33,12 @@ public:
 
     enum ToolMode {Mode2D, Mode3D};
     void setMode(ToolMode mode);
-    void set_data_cloud_3D(cv::Mat image, t_vuxyzrgb data);
-    void set_data_cloud_3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud);
+    void setDataCloud3D(cv::Mat image, t_vuxyzrgb data);
+    void setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud);
     ToolMode getMode();
-    void clear_data();
+    void clearData();
 
-    void setup_window_geometry();
+    void setupWindowGeometry();
 
 public slots:
     void updateInfoA(double X, double Y, double Z, double D);
