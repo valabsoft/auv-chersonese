@@ -12,6 +12,10 @@
 #include "datastructure.h"
 #include "toolwindow.h"
 
+#include "sevrovxboxcontroller.h"
+#include "sevrovlibrary.h"
+#include "sevrovconnector.h"
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>

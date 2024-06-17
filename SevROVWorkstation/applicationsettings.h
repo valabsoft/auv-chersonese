@@ -30,8 +30,8 @@ public:
     const int VIDEO_TIMER_INTERVAL = 50;
 
     const int CAMERA_ID = 0;
-    const int CAMERA_LEFT_ID = 0;
-    const int CAMERA_RIGHT_ID = 0;
+    const int CAMERA_LEFT_ID = 1;
+    const int CAMERA_RIGHT_ID = 2;
 };
 
 #endif // APPLICATIONSETTINGS_H

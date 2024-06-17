@@ -1,4 +1,4 @@
-QT       += core gui datavisualization
+QT       += core gui datavisualization network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -54,3 +54,29 @@ unix {
 
 RESOURCES += \
     SevROVWorkstation.qrc
+
+# SDL Library
+win32 {
+    LIBS += -L C:/SDL2-2.28.2-mingw/x86_64-w64-mingw32/lib -lSDL2
+    INCLUDEPATH += C:/SDL2-2.28.2-mingw/x86_64-w64-mingw32/include
+}
+unix
+{
+    LIBS += -L/usr/local/lib -lSDL2
+    INCLUDEPATH += /usr/include/SDL2
+}
+
+# SevROV Library
+
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../SevROVLibrary/release/ -lSevROVLibrary
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../SevROVLibrary/debug/ -lSevROVLibrary
+else:unix:!macx: LIBS += -L$$OUT_PWD/../SevROVLibrary/ -lSevROVLibrary
+
+INCLUDEPATH += $$PWD/../SevROVLibrary
+DEPENDPATH += $$PWD/../SevROVLibrary
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../SevROVLibrary/release/libSevROVLibrary.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../SevROVLibrary/debug/libSevROVLibrary.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../SevROVLibrary/release/SevROVLibrary.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../SevROVLibrary/debug/SevROVLibrary.lib
+else:unix:!macx: PRE_TARGETDEPS += $$OUT_PWD/../SevROVLibrary/libSevROVLibrary.a
