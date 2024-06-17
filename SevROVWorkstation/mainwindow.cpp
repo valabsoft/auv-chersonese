@@ -409,6 +409,13 @@ void MainWindow::onVideoTimer()
     int SIGHT_CROSS = 20;
     int SIGHT_DELTA = 5;
 
+    int JS_DELTA = 20;
+    int JSX0 = JS_DELTA;
+    int JSY0 = JS_DELTA;
+    int JSWIDTH = XV0 + 2 * GRID_SMALL_SIZE - JS_DELTA;
+
+    int JSTEXTDELTA = 30;
+
     cv::Mat overlayImage;
     cv::Mat transparencyiImage;
     double alpha = 0.5;
@@ -613,7 +620,153 @@ void MainWindow::onVideoTimer()
         ///////////////////////////////////////////////////////////////////////
         // Диагностика
 
-        cv::putText(_destinationMatO, "DIAGNOSTIC: 0.00 [-]; 0.00 [-] " + QTime::currentTime().toString("hh:mm:ss").toStdString(), cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 255, 255), 2);
+        cv::putText(_destinationMatO,
+                    "DIAGNOSTIC: 0.00 [-]; 0.00 [-] " +
+                        QTime::currentTime().toString("hh:mm:ss").toStdString(),
+                    cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
+                    cv::FONT_HERSHEY_SIMPLEX,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    2);
+
+        // Информация о состоянии кнопок джойстика
+        cv::rectangle(_destinationMatO,
+                      cv::Point(JSX0, JSY0),
+                      cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
+                      CV_RGB(255, 255, 255), 2, cv::LINE_8);
+        cv::rectangle(_destinationMatO,
+                      cv::Point(JSX0, JSY0),
+                      cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
+                      CV_RGB(0, 0, 0), -1);
+
+        cv::line(_destinationMatO,
+                 cv::Point(JSX0 + 5, JSY0 + 10),
+                 cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 10),
+                 CV_RGB(255, 255, 255),
+                 1,
+                 cv::LINE_8);
+        cv::line(_destinationMatO,
+                 cv::Point(JSX0 + 5, JSY0 + 27),
+                 cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 27),
+                 CV_RGB(255, 255, 255),
+                 1,
+                 cv::LINE_8);
+
+        cv::putText(_destinationMatO,
+                    "JOYSTICK INFO",
+                    cv::Point(JSX0 + 10, JSY0 + 24),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+
+        cv::putText(_destinationMatO,
+                    "LStickX: " + QString::number(_xbox.LStickX).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*1),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "LStickY: " + QString::number(_xbox.LStickY).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*2),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "RStickX: " + QString::number(_xbox.RStickX).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*3),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "RStickY: " + QString::number(_xbox.RStickY).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*4),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "LTrigger: " + QString::number(_xbox.LTrigger).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*5),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "RTrigger: " + QString::number(_xbox.RTrigger).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*6),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+
+
+        cv::putText(_destinationMatO,
+                    "A: " + QString::number(_xbox.A).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "B: " + QString::number(_xbox.B).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*8),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "X: " + QString::number(_xbox.X).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*9),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "Y: " + QString::number(_xbox.Y).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*10),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "LBumper: " + QString::number(_xbox.LBumper).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*11),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        cv::putText(_destinationMatO,
+                    "RBumper: " + QString::number(_xbox.RBumper).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*12),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        //cv::putText(_destinationMatO,
+        //            "View: " + QString::number(_xbox.View).toStdString(),
+        //            cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
+        //            cv::FONT_HERSHEY_PLAIN,
+        //            1,
+        //            CV_RGB(255, 255, 255),
+        //            1);
+        //cv::putText(_destinationMatO,
+        //            "Menu: " + QString::number(_xbox.Menu).toStdString(),
+        //            cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*14),
+        //            cv::FONT_HERSHEY_PLAIN,
+        //            1,
+        //            CV_RGB(255, 255, 255),
+        //            1);
+        cv::putText(_destinationMatO,
+                    "D-Pad: " + QString::number(_xbox.DPad).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
         ///////////////////////////////////////////////////////////////////////
         // Склейка
         cv::addWeighted(overlayImage, alpha, _destinationMatO, 1 - alpha, 0, transparencyiImage);
