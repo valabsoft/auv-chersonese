@@ -16,18 +16,25 @@ ToolWindow::ToolWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // Привязка сигналов к элементам
+    connect(ui->lswClusters, &QListWidget::itemSelectionChanged, this, &ToolWindow::onClustersItemSelectionChanged);
+    connect(ui->btn2D, &QPushButton::clicked, this, &ToolWindow::on2DButtonClicked);
+    connect(ui->btn3D, &QPushButton::clicked, this, &ToolWindow::on3DButtonClicked);
+    connect(ui->btnSave, &QPushButton::clicked, this, &ToolWindow::onSaveButtonClicked);
+    connect(ui->btnDelete, &QPushButton::clicked, this, &ToolWindow::onDeleteButtonClicked);
+
     // Инициализация указателей
-    cameraScene = nullptr;
-    series3D = nullptr;
-    graph3D = nullptr;
-    container3D = nullptr;
+    _cameraScene = nullptr;
+    _series3D = nullptr;
+    _graph3D = nullptr;
+    _container3D = nullptr;
 
     // Установка иконок и стилей
-    setup_icons();
-    setup_controls_style();
+    setupIcons();
+    setupСontrolsStyle();
 }
 
-void ToolWindow::move_window_to_center()
+void ToolWindow::moveWindowToCenter()
 {
     auto primaryScreen = QGuiApplication::primaryScreen(); // Главный экран
     QRect primaryScreenRect = primaryScreen->availableGeometry(); // Размер главного экрана
@@ -50,7 +57,7 @@ void ToolWindow::setupWindowGeometry()
     ui->graphicsView->setFixedHeight(_appSet.CAMERA_HEIGHT);
 
     // Центрируем окно в пределах экрана
-    move_window_to_center();
+    moveWindowToCenter();
 }
 
 void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud)
@@ -60,52 +67,52 @@ void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Clou
         return;
 
     // Image copy
-    source = image.clone();
+    _source = image.clone();
 
     // Data copy
-    allPoints = data;
+    _allPoints = data;
 
     // Get unique clusters IDs
     std::vector<int> clusterIDs;
     clusterIDs.push_back(0); // Для датасета Олега у нас только один кластер
 
     // Image preprocessing
-    cv::cvtColor(source, destination, cv::COLOR_BGR2RGB);
-    imgcam = QImage((uchar*) destination.data,
-                    destination.cols,
-                    destination.rows,
-                    destination.step,
+    cv::cvtColor(_source, _destination, cv::COLOR_BGR2RGB);
+    _imgcam = QImage((uchar*) _destination.data,
+                    _destination.cols,
+                    _destination.rows,
+                    _destination.step,
                     QImage::Format_RGB888);
 
-    cameraScene = new CameraScene(imgcam);
-    ui->graphicsView->setScene(cameraScene);
+    _cameraScene = new CameraScene(_imgcam);
+    ui->graphicsView->setScene(_cameraScene);
     // https://stackoverflow.com/questions/7772080/tracking-mouse-move-in-qgraphicsscene-class
     ui->graphicsView->setMouseTracking(true);
 
     // Добавляем слот-сигнал
-    QObject::connect(cameraScene, &CameraScene::updateInfo, this, &ToolWindow::updateInfoA);
+    QObject::connect(_cameraScene, &CameraScene::updateInfo, this, &ToolWindow::updateInfoA);
 
     ///////////////////////////////////////////////////////////////////////////
     // Создаем объекты для работы с 3D-графиком
-    graph3D = new Q3DScatter();
-    series3D = new QScatter3DSeries();
+    _graph3D = new Q3DScatter();
+    _series3D = new QScatter3DSeries();
 
-    series3D->setItemSize(0.2f);
-    series3D->setMeshSmooth(true);
+    _series3D->setItemSize(0.2f);
+    _series3D->setMeshSmooth(true);
 
-    graph3D->axisX()->setTitle("X");
-    graph3D->axisY()->setTitle("Y");
-    graph3D->axisZ()->setTitle("Z");
+    _graph3D->axisX()->setTitle("X");
+    _graph3D->axisY()->setTitle("Y");
+    _graph3D->axisZ()->setTitle("Z");
 
-    series3D->setItemLabelFormat(
+    _series3D->setItemLabelFormat(
         QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
 
-    graph3D->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
-    graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
+    _graph3D->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
+    _graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
 
-    graph3D->addSeries(series3D);
+    _graph3D->addSeries(_series3D);
 
-    container3D = QWidget::createWindowContainer(graph3D);
+    _container3D = QWidget::createWindowContainer(_graph3D);
     ///////////////////////////////////////////////////////////////////////////
 
     // Checkbox list generationi
@@ -136,7 +143,7 @@ void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Clou
     }
 
     // Установка темы
-    Q3DTheme *currentTheme = graph3D->activeTheme();
+    Q3DTheme *currentTheme = _graph3D->activeTheme();
     currentTheme->setBackgroundEnabled(false);
     currentTheme->setType(Q3DTheme::ThemeArmyBlue);
 
@@ -158,7 +165,7 @@ void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data)
     move(screen()->geometry().center() - frameGeometry().center());
 
     // Запоминаем текущую геометрию
-    originalSize = this->geometry();
+    _originalSize = this->geometry();
 
     // Фиксируем форму и запрещаем изменение размеров пользователем
     //this->layout()->setSizeConstraint(QLayout::SetFixedSize);
@@ -170,51 +177,51 @@ void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data)
         return;
 
     // Image copy
-    source = image.clone();
+    _source = image.clone();
 
     // Data copy
-    allPoints = data;
+    _allPoints = data;
     // Get unique clusters IDs
-    std::vector<int> clusterIDs = getClusterIDs(allPoints);
+    std::vector<int> clusterIDs = getClusterIDs(_allPoints);
 
 
     // Image preprocessing
-    cv::cvtColor(source, destination, cv::COLOR_BGR2RGB);
-    imgcam = QImage((uchar*) destination.data,
-                    destination.cols,
-                    destination.rows,
-                    destination.step,
+    cv::cvtColor(_source, _destination, cv::COLOR_BGR2RGB);
+    _imgcam = QImage((uchar*) _destination.data,
+                    _destination.cols,
+                    _destination.rows,
+                    _destination.step,
                     QImage::Format_RGB888);
 
-    cameraScene = new CameraScene(imgcam);
-    ui->graphicsView->setScene(cameraScene);
+    _cameraScene = new CameraScene(_imgcam);
+    ui->graphicsView->setScene(_cameraScene);
     // https://stackoverflow.com/questions/7772080/tracking-mouse-move-in-qgraphicsscene-class
     ui->graphicsView->setMouseTracking(true);
 
     // Добавляем слот-сигнал
-    QObject::connect(cameraScene, &CameraScene::updateInfo, this, &ToolWindow::updateInfoA);
+    QObject::connect(_cameraScene, &CameraScene::updateInfo, this, &ToolWindow::updateInfoA);
 
     ///////////////////////////////////////////////////////////////////////////
     // Создаем объекты для работы с 3D-графиком
-    graph3D = new Q3DScatter();
-    series3D = new QScatter3DSeries();
+    _graph3D = new Q3DScatter();
+    _series3D = new QScatter3DSeries();
 
-    series3D->setItemSize(0.2f);
-    series3D->setMeshSmooth(true);
+    _series3D->setItemSize(0.2f);
+    _series3D->setMeshSmooth(true);
 
-    graph3D->axisX()->setTitle("X");
-    graph3D->axisY()->setTitle("Y");
-    graph3D->axisZ()->setTitle("Z");
+    _graph3D->axisX()->setTitle("X");
+    _graph3D->axisY()->setTitle("Y");
+    _graph3D->axisZ()->setTitle("Z");
 
-    series3D->setItemLabelFormat(
+    _series3D->setItemLabelFormat(
         QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
 
-    graph3D->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
-    graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
+    _graph3D->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
+    _graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
 
-    graph3D->addSeries(series3D);
+    _graph3D->addSeries(_series3D);
 
-    container3D = QWidget::createWindowContainer(graph3D);
+    _container3D = QWidget::createWindowContainer(_graph3D);
     ///////////////////////////////////////////////////////////////////////////
 
     // Checkbox list generationi
@@ -245,7 +252,7 @@ void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data)
     }
 
     // Установка темы
-    Q3DTheme *currentTheme = graph3D->activeTheme();
+    Q3DTheme *currentTheme = _graph3D->activeTheme();
     currentTheme->setBackgroundEnabled(false);
     currentTheme->setType(Q3DTheme::ThemeArmyBlue);
 
@@ -259,46 +266,46 @@ void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data)
 
 ToolWindow::~ToolWindow()
 {
-    if (cameraScene != nullptr)
-        delete cameraScene;
+    if (_cameraScene != nullptr)
+        delete _cameraScene;
 
-    if (series3D != nullptr)
-        delete series3D;
+    if (_series3D != nullptr)
+        delete _series3D;
 
-    if (graph3D != nullptr)
-        delete graph3D;
+    if (_graph3D != nullptr)
+        delete _graph3D;
 
-    if (container3D != nullptr)
-        delete container3D;
+    if (_container3D != nullptr)
+        delete _container3D;
 
     delete ui;
 }
 ////////////////////////////////////////////////////////////////////////////////
 // Функции для рассчета геометрии точек
 ////////////////////////////////////////////////////////////////////////////////
-double ToolWindow::get_distance(Point3D p1, Point3D p2)
+double ToolWindow::getDistance(Point3D p1, Point3D p2)
 {
     return std::sqrt((p2.X - p1.X) * (p2.X - p1.X) +
                      (p2.Y - p1.Y) * (p2.Y - p1.Y) +
                      (p2.Z - p1.Z) * (p2.Z - p1.Z));
 }
 
-size_t ToolWindow::get_sum_count(std::vector<double> X,
+size_t ToolWindow::getSumCount(std::vector<double> X,
                                  std::vector<double> Y,
                                  std::vector<double> Z,
                                  Point3D MN, Point3D M0)
 {
-    double max_dist = get_distance(MN, M0);
+    double max_dist = getDistance(MN, M0);
     size_t N = 0;
     for (size_t i = 0; i < X.size(); i++) {
-        double dist = get_distance(MN, Point3D(X[i], Y[i], Z[i], "M"));
+        double dist = getDistance(MN, Point3D(X[i], Y[i], Z[i], "M"));
         if (dist < max_dist / 2)
             N += 1;
     }
     return N;
 }
 
-double ToolWindow::get_np_linalg_norm(std::vector<double> a)
+double ToolWindow::getNpLinalgNorm(std::vector<double> a)
 {
     double res = 0;
     for (size_t i = 0; i < a.size(); i++) {
@@ -327,18 +334,18 @@ std::vector<double> ToolWindow::substr(std::vector<double> a,
     return res;
 }
 
-double ToolWindow::lineseg_dist(std::vector<double> p,
+double ToolWindow::linesegDist(std::vector<double> p,
                                 std::vector<double> a,
                                 std::vector<double> b)
 {
     std::vector<double> AB = substr(b, a);
     std::vector<double> AC = substr(p, a);
-    double area = get_np_linalg_norm(cross(AB, AC));
-    double CD = area / get_np_linalg_norm(AB);
+    double area = getNpLinalgNorm(cross(AB, AC));
+    double CD = area / getNpLinalgNorm(AB);
     return CD;
 }
 
-void ToolWindow::calculate_sizes(t_vuxyzrgb data,
+void ToolWindow::calculateSizes(t_vuxyzrgb data,
                                  double* L,
                                  double* W,
                                  double* H,
@@ -385,14 +392,14 @@ void ToolWindow::calculate_sizes(t_vuxyzrgb data,
     Point3D M8 = Point3D(Xmin, Ymax, Zmax, "M8");
 
     // Поиск граничных точек, через которые пройдет ось
-    size_t m1 = get_sum_count(X, Y, Z, M1, M0);
-    size_t m2 = get_sum_count(X, Y, Z, M2, M0);
-    size_t m3 = get_sum_count(X, Y, Z, M3, M0);
-    size_t m4 = get_sum_count(X, Y, Z, M4, M0);
-    size_t m5 = get_sum_count(X, Y, Z, M5, M0);
-    size_t m6 = get_sum_count(X, Y, Z, M6, M0);
-    size_t m7 = get_sum_count(X, Y, Z, M7, M0);
-    size_t m8 = get_sum_count(X, Y, Z, M8, M0);
+    size_t m1 = getSumCount(X, Y, Z, M1, M0);
+    size_t m2 = getSumCount(X, Y, Z, M2, M0);
+    size_t m3 = getSumCount(X, Y, Z, M3, M0);
+    size_t m4 = getSumCount(X, Y, Z, M4, M0);
+    size_t m5 = getSumCount(X, Y, Z, M5, M0);
+    size_t m6 = getSumCount(X, Y, Z, M6, M0);
+    size_t m7 = getSumCount(X, Y, Z, M7, M0);
+    size_t m8 = getSumCount(X, Y, Z, M8, M0);
 
     // Устанавливаем кол-во точек около габаритной точки
     M1.setNumberOfPoint(m1);
@@ -437,8 +444,8 @@ void ToolWindow::calculate_sizes(t_vuxyzrgb data,
     // Начинаем проверку со второй точки
     for (auto it = std::next(M.begin()); it != M.end(); ++it)
     {
-        m0_dist = get_distance(*it, M0);  // Расстояние от текущей точки до центра масс
-        p0_dist = get_distance(*it, P0);  // Расстояние между точками P0 и текущей
+        m0_dist = getDistance(*it, M0);  // Расстояние от текущей точки до центра масс
+        p0_dist = getDistance(*it, P0);  // Расстояние между точками P0 и текущей
 
         // Проверяем, не лежат ли точки в одной плоскости
         same_x = it->X == P0.X;
@@ -467,21 +474,21 @@ void ToolWindow::calculate_sizes(t_vuxyzrgb data,
         std::vector<double> a = { P0.X, P0.Y, P0.Z };
         std::vector<double> b = { P1.X, P1.Y, P1.Z };
         std::vector<double> p = { X[i], Y[i], Z[i] };
-        dists.push_back(lineseg_dist(p, a, b));
+        dists.push_back(linesegDist(p, a, b));
     }
     double max_dist = *max_element(dists.begin(), dists.end()) * 2;
 
     // Вывод габаритов параллелепипеда, где (L-длина W-ширина H-высота )
-    *L = get_distance(M1, M2);
-    *W = get_distance(M2, M3);
-    *H = get_distance(M3, M7);
+    *L = getDistance(M1, M2);
+    *W = getDistance(M2, M3);
+    *H = getDistance(M3, M7);
 
     *Length = length;
     *Width = max_dist;
 
     // Расчет расстояния до камеры
     Point3D CaM0 = Point3D(0, 0, 0, "CaM0");
-    *Distance = get_distance(CaM0, M0);
+    *Distance = getDistance(CaM0, M0);
 }
 ////////////////////////////////////////////////////////////////////////////////
 std::vector<int> ToolWindow::getClusterIDs(t_vuxyzrgb points)
@@ -496,7 +503,7 @@ std::vector<int> ToolWindow::getClusterIDs(t_vuxyzrgb points)
     return clusterIDs;
 }
 
-void ToolWindow::on_lswClusters_itemSelectionChanged()
+void ToolWindow::onClustersItemSelectionChanged()
 {
     auto selectedItem = static_cast<QRadioButton*>(
         ui->lswClusters->itemWidget(ui->lswClusters->selectedItems().first()));
@@ -504,53 +511,53 @@ void ToolWindow::on_lswClusters_itemSelectionChanged()
     int ID = seletedText.remove("Cluster ").toInt();
 
     // Remove old data
-    clusterPoints.cluster.clear();
-    clusterPoints.rgb.clear();
-    clusterPoints.vu.clear();
-    clusterPoints.xyz.clear();
+    _clusterPoints.cluster.clear();
+    _clusterPoints.rgb.clear();
+    _clusterPoints.vu.clear();
+    _clusterPoints.xyz.clear();
 
     // Filter only selected cluster data
-    for (size_t i = 0; i < allPoints.cluster.size(); i++)
+    for (size_t i = 0; i < _allPoints.cluster.size(); i++)
     {
-        if (allPoints.cluster.at(i) == ID)
+        if (_allPoints.cluster.at(i) == ID)
         {
-            clusterPoints.cluster.push_back(allPoints.cluster.at(i));
-            clusterPoints.rgb.push_back(allPoints.rgb.at(i));
-            clusterPoints.vu.push_back(allPoints.vu.at(i));
-            clusterPoints.xyz.push_back(allPoints.xyz.at(i));
+            _clusterPoints.cluster.push_back(_allPoints.cluster.at(i));
+            _clusterPoints.rgb.push_back(_allPoints.rgb.at(i));
+            _clusterPoints.vu.push_back(_allPoints.vu.at(i));
+            _clusterPoints.xyz.push_back(_allPoints.xyz.at(i));
         }
     }
 
     // Debug Information
     qDebug() << "============================================================";
     qDebug() << "Selected Cluster ID: " << ID << "(" <<
-        clusterPoints.cluster.size() << "/" << allPoints.cluster.size() << ")";
+        _clusterPoints.cluster.size() << "/" << _allPoints.cluster.size() << ")";
     qDebug() << "============================================================";
 
-    cameraScene->removeRule(); // Удаляем старую линейку (если была создана)
-    cameraScene->set3DPoints(clusterPoints);
+    _cameraScene->removeRule(); // Удаляем старую линейку (если была создана)
+    _cameraScene->set3DPoints(_clusterPoints);
 
     ///////////////////////////////////////////////////////////////////////////
     // Обновляем набор точек для рисования 3D
     ///////////////////////////////////////////////////////////////////////////
 
     // Удалить старые точки
-    series3D->dataProxy()->removeItems(0, series3D->dataProxy()->itemCount());
+    _series3D->dataProxy()->removeItems(0, _series3D->dataProxy()->itemCount());
 
     // Получить новые точки
     QScatterDataArray data;
-    for (size_t i = 0; i < clusterPoints.cluster.size(); i++)
+    for (size_t i = 0; i < _clusterPoints.cluster.size(); i++)
     {
-        data << QVector3D(clusterPoints.xyz.at(i).at(0),
-                          clusterPoints.xyz.at(i).at(1),
-                          clusterPoints.xyz.at(i).at(2));
+        data << QVector3D(_clusterPoints.xyz.at(i).at(0),
+                          _clusterPoints.xyz.at(i).at(1),
+                          _clusterPoints.xyz.at(i).at(2));
     }
 
     // Предобратока облака точек (удаление выбросов)
 
     // Рассчет геометрии точек
     double L, W, H, Length, Width, Distance;
-    calculate_sizes(clusterPoints, &L, &W, &H, &Length, &Width, &Distance);
+    calculateSizes(_clusterPoints, &L, &W, &H, &Length, &Width, &Distance);
 
     qDebug() << "L: " << L;
     qDebug() << "W: " << W;
@@ -559,12 +566,12 @@ void ToolWindow::on_lswClusters_itemSelectionChanged()
     qDebug() << "Width: " << Width;
     qDebug() << "Distance: " << Distance;
 
-    geometryL = L;
-    geometryW = W;
-    geometryH = H;
-    geometryLength = Length;
-    geometryWidth = Width;
-    geometryDistance = Distance;
+    _geometryL = L;
+    _geometryW = W;
+    _geometryH = H;
+    _geometryLength = Length;
+    _geometryWidth = Width;
+    _geometryDistance = Distance;
 
     ui->lbInfo->setText("L:\t\t" + QString::number(L, 'f', 1) + "\n" +
                         "W:\t\t" + QString::number(W, 'f', 1) + "\n" +
@@ -574,18 +581,18 @@ void ToolWindow::on_lswClusters_itemSelectionChanged()
                         "Distance:\t\t" + QString::number(Distance, 'f', 1));
 
     // Передать точки в объект Series
-    series3D->dataProxy()->addItems(data);
+    _series3D->dataProxy()->addItems(data);
 
     ///////////////////////////////////////////////////////////////////////////
 }
 
-void ToolWindow::on_btn2D_clicked()
+void ToolWindow::on2DButtonClicked()
 {
     if (getMode() == ToolWindow::Mode3D)
     {
-        container3D->setVisible(false);
+        _container3D->setVisible(false);
 
-        ui->verticalLayout->removeWidget(container3D);
+        ui->verticalLayout->removeWidget(_container3D);
         ui->verticalLayout->addWidget(ui->graphicsView);
 
         ui->graphicsView->setVisible(true);
@@ -595,16 +602,16 @@ void ToolWindow::on_btn2D_clicked()
     }
 }
 
-void ToolWindow::on_btn3D_clicked()
+void ToolWindow::on3DButtonClicked()
 {
     if (getMode() == ToolWindow::Mode2D)
     {
         ui->graphicsView->setVisible(false);
 
         ui->verticalLayout->removeWidget(ui->graphicsView);
-        ui->verticalLayout->addWidget(container3D);
+        ui->verticalLayout->addWidget(_container3D);
 
-        container3D->setVisible(true);
+        _container3D->setVisible(true);
         ui->btnDelete->setVisible(true);
 
         // Восстанавливаем геометрию -- Костыль для фиксированной формы
@@ -618,15 +625,15 @@ void ToolWindow::on_btn3D_clicked()
 
 void ToolWindow::setMode(ToolMode mode)
 {
-    toolMode = mode;
+    _toolMode = mode;
 }
 
 ToolWindow::ToolMode ToolWindow::getMode()
 {
-    return toolMode;
+    return _toolMode;
 }
 
-void ToolWindow::on_btnSave_clicked()
+void ToolWindow::onSaveButtonClicked()
 {
     // Создаем папку output, если она не существует
     QDir dir("output");
@@ -653,7 +660,7 @@ void ToolWindow::on_btnSave_clicked()
     // Генерируем имя файла и сохраняем сцену 3D графика с линейкой
     QString chartImage = QString("output") + QDir::separator() +
                          QString("chart_" + timeStamp + ".png");
-    QImage graph3DImage = graph3D->renderToImage();
+    QImage graph3DImage = _graph3D->renderToImage();
     QPixmap chartMap;
     chartMap.convertFromImage(graph3DImage);
     chartMap.save(chartImage);
@@ -663,12 +670,12 @@ void ToolWindow::on_btnSave_clicked()
                        QString("odometry_" + timeStamp + ".txt");
 
     std::ofstream odomFile(odometry.toStdString(), std::ofstream::out | std::ofstream::trunc);
-    odomFile << "L:\t\t" + QString::number(geometryL, 'f', 1).toStdString() << std::endl;
-    odomFile << "H:\t\t" + QString::number(geometryH, 'f', 1).toStdString() << std::endl;
-    odomFile << "W:\t\t" + QString::number(geometryW, 'f', 1).toStdString() << std::endl;
-    odomFile << "Length:\t\t" + QString::number(geometryLength, 'f', 1).toStdString() << std::endl;
-    odomFile << "Width:\t\t" + QString::number(geometryWidth, 'f', 1).toStdString() << std::endl;
-    odomFile << "Distance:\t" + QString::number(geometryDistance, 'f', 1).toStdString() << std::endl;
+    odomFile << "L:\t\t" + QString::number(_geometryL, 'f', 1).toStdString() << std::endl;
+    odomFile << "H:\t\t" + QString::number(_geometryH, 'f', 1).toStdString() << std::endl;
+    odomFile << "W:\t\t" + QString::number(_geometryW, 'f', 1).toStdString() << std::endl;
+    odomFile << "Length:\t\t" + QString::number(_geometryLength, 'f', 1).toStdString() << std::endl;
+    odomFile << "Width:\t\t" + QString::number(_geometryWidth, 'f', 1).toStdString() << std::endl;
+    odomFile << "Distance:\t" + QString::number(_geometryDistance, 'f', 1).toStdString() << std::endl;
     odomFile.close();
 
     QMessageBox msgBox;
@@ -697,16 +704,16 @@ void ToolWindow::updateInfoA(double X, double Y, double Z, double D)
     ui->lineEditInfo->setText(text);
 }
 
-void ToolWindow::on_btnDelete_clicked()
+void ToolWindow::onDeleteButtonClicked()
 {
-    int ind = series3D->selectedItem();
+    int ind = _series3D->selectedItem();
     if (ind == -1)
         return;
 
     // Удалить выделенную точку
-    series3D->dataProxy()->removeItems(ind, 1);
+    _series3D->dataProxy()->removeItems(ind, 1);
 
-    auto data = series3D->dataProxy()->array();
+    auto data = _series3D->dataProxy()->array();
     t_vuxyzrgb newcluster;
 
     for (size_t i = 0; i < (size_t)data->size(); i++)
@@ -725,7 +732,7 @@ void ToolWindow::on_btnDelete_clicked()
     // Рассчет геометрии точек
 
     double L, W, H, Length, Width, Distance;
-    calculate_sizes(newcluster, &L, &W, &H, &Length, &Width, &Distance);
+    calculateSizes(newcluster, &L, &W, &H, &Length, &Width, &Distance);
 
     qDebug() << "L: " << L;
     qDebug() << "W: " << W;
@@ -734,12 +741,12 @@ void ToolWindow::on_btnDelete_clicked()
     qDebug() << "Width: " << Width;
     qDebug() << "Distance: " << Distance;
 
-    geometryL = L;
-    geometryW = W;
-    geometryH = H;
-    geometryLength = Length;
-    geometryWidth = Width;
-    geometryDistance = Distance;
+    _geometryL = L;
+    _geometryW = W;
+    _geometryH = H;
+    _geometryLength = Length;
+    _geometryWidth = Width;
+    _geometryDistance = Distance;
 
     ui->lbInfo->setText("L:\t\t" + QString::number(L, 'f', 1) + "\n" +
                         "W:\t\t" + QString::number(W, 'f', 1) + "\n" +
@@ -749,7 +756,7 @@ void ToolWindow::on_btnDelete_clicked()
                         "Distance:\t\t" + QString::number(Distance, 'f', 1));
 }
 
-void ToolWindow::setup_icons()
+void ToolWindow::setupIcons()
 {
     ui->btn2D->setIcon(QIcon(":/img/ruler_2d_icon.png"));
     ui->btn2D->setIconSize(QSize(64, 64));
@@ -761,7 +768,7 @@ void ToolWindow::setup_icons()
     ui->btnDelete->setIconSize(QSize(32, 32));
 }
 
-void ToolWindow::setup_controls_style()
+void ToolWindow::setupСontrolsStyle()
 {
     ui->graphicsView->setStyleSheet("QGraphicsView {"
                                     "border-style: solid;"

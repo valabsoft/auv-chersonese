@@ -44,50 +44,46 @@ public slots:
     void updateInfoA(double X, double Y, double Z, double D);
 
 private slots:
-    void on_lswClusters_itemSelectionChanged();
-
-    void on_btn2D_clicked();
-
-    void on_btn3D_clicked();
-
-    void on_btnSave_clicked();
-
-    void on_btnDelete_clicked();
+    void onClustersItemSelectionChanged();
+    void on2DButtonClicked();
+    void on3DButtonClicked();
+    void onSaveButtonClicked();
+    void onDeleteButtonClicked();
 
 private:
     Ui::ToolWindow *ui;
     ApplicationSettings _appSet;
-    cv::Mat source;
-    cv::Mat destination;
-    QImage imgcam;    
-    t_vuxyzrgb allPoints;
-    t_vuxyzrgb clusterPoints;
+    cv::Mat _source;
+    cv::Mat _destination;
+    QImage _imgcam;
+    t_vuxyzrgb _allPoints;
+    t_vuxyzrgb _clusterPoints;
 
-    ToolMode toolMode;
+    ToolMode _toolMode;
 
-    Q3DScatter *graph3D;
-    QScatter3DSeries *series3D;
-    QWidget *container3D;
+    Q3DScatter *_graph3D;
+    QScatter3DSeries *_series3D;
+    QWidget *_container3D;
 
     std::vector<int> getClusterIDs(t_vuxyzrgb points);
 
-    CameraScene *cameraScene;
-    QRect originalSize;
+    CameraScene *_cameraScene;
+    QRect _originalSize;
 
-    double geometryL;
-    double geometryW;
-    double geometryH;
-    double geometryLength;
-    double geometryWidth;
-    double geometryDistance;
+    double _geometryL;
+    double _geometryW;
+    double _geometryH;
+    double _geometryLength;
+    double _geometryWidth;
+    double _geometryDistance;
 
-    double get_distance(Point3D p1, Point3D p2);
-    size_t get_sum_count(std::vector<double> X,
-                         std::vector<double> Y,
-                         std::vector<double> Z,
-                         Point3D MN, Point3D M0);
+    double getDistance(Point3D p1, Point3D p2);
+    size_t getSumCount(std::vector<double> X,
+                       std::vector<double> Y,
+                       std::vector<double> Z,
+                       Point3D MN, Point3D M0);
 
-    double get_np_linalg_norm(std::vector<double> a);
+    double getNpLinalgNorm(std::vector<double> a);
 
     std::vector<double> cross(std::vector<double> a,
                               std::vector<double> b);
@@ -95,22 +91,21 @@ private:
     std::vector<double> substr(std::vector<double> a,
                                std::vector<double> b);
 
-    double lineseg_dist(std::vector<double> p,
+    double linesegDist(std::vector<double> p,
                         std::vector<double> a,
                         std::vector<double> b);
 
+    void calculateSizes(t_vuxyzrgb data,     // Входной массив точек кластера
+                        double* L,           // Выход - Длина
+                        double* W,           // Выход - Ширина
+                        double* H,           // Выход - Высота
+                        double* Length,      // Выход - Длина осевой линии
+                        double* Width,       // Выход - Ширина осевой линии
+                        double* Distance);   // Выход - Расстояние до центра масс
 
-    void calculate_sizes(t_vuxyzrgb data,     // Входной массив точек кластера
-                         double* L,           // Выход - Длина
-                         double* W,           // Выход - Ширина
-                         double* H,           // Выход - Высота
-                         double* Length,      // Выход - Длина осевой линии
-                         double* Width,       // Выход - Ширина осевой линии
-                         double* Distance);   // Выход - Расстояние до центра масс
-
-    void setup_icons();
-    void setup_controls_style();
-    void move_window_to_center();
+    void setupIcons();
+    void setupСontrolsStyle();
+    void moveWindowToCenter();
 };
 
 #endif // TOOLWINDOW_H

@@ -12,6 +12,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // Сигналы для кнопок
+    connect(ui->pbStartStop, &QPushButton::clicked, this, &MainWindow::onStartStopButtonClicked);
+    connect(ui->pbView, &QPushButton::clicked, this, &MainWindow::onViewButtonClicked);
+    connect(ui->pbScreenshot, &QPushButton::clicked, this, &MainWindow::onScreenshotButtonClicked);
+    connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
+
     // Загрузка настроек
     _appSet.load();
 
@@ -1090,7 +1096,7 @@ void MainWindow::onControlTimer()
 
 }
 
-void MainWindow::on_pbStartStop_clicked()
+void MainWindow::onStartStopButtonClicked()
 {
     // Меняем состояние флага
     _sevROV.isConnected = !_sevROV.isConnected;
@@ -1131,7 +1137,7 @@ void MainWindow::on_pbStartStop_clicked()
 }
 
 
-void MainWindow::on_pbView_clicked()
+void MainWindow::onViewButtonClicked()
 {
     // Если нет соединения - выход
     if (!_sevROV.isConnected)
@@ -1158,7 +1164,7 @@ void MainWindow::on_pbView_clicked()
 }
 
 
-void MainWindow::on_pbScreenshot_clicked()
+void MainWindow::onScreenshotButtonClicked()
 {
     // Создаем инструмент Линейка
     _toolWindow = new ToolWindow(this);
@@ -1227,7 +1233,7 @@ void MainWindow::on_pbScreenshot_clicked()
     ///////////////////////////////////////////////////////////////////////////
 }
 
-void MainWindow::on_pbSettings_clicked()
+void MainWindow::onSettingsButtonClicked()
 {
 
 }

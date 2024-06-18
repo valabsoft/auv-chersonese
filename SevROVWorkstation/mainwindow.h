@@ -113,13 +113,10 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pbStartStop_clicked();
-
-    void on_pbView_clicked();
-
-    void on_pbScreenshot_clicked();
-
-    void on_pbSettings_clicked();
+    void onStartStopButtonClicked();
+    void onViewButtonClicked();
+    void onScreenshotButtonClicked();
+    void onSettingsButtonClicked();
 
 private:
     Ui::MainWindow *ui;
