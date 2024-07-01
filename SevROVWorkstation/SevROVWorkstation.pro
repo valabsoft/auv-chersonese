@@ -13,6 +13,7 @@ SOURCES += \
     camerascene.cpp \
     main.cpp \
     mainwindow.cpp \
+    settingswindow.cpp \
     sevrovcontroller.cpp \
     toolwindow.cpp
 
@@ -22,11 +23,13 @@ HEADERS += \
     datastructure.h \
     enumclasses.h \
     mainwindow.h \
+    settingswindow.h \
     sevrovcontroller.h \
     toolwindow.h
 
 FORMS += \
     mainwindow.ui \
+    settingswindow.ui \
     toolwindow.ui
 
 # Default rules for deployment.

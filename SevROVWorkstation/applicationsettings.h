@@ -2,22 +2,23 @@
 #define APPLICATIONSETTINGS_H
 
 #include <QString>
+#include <QDir>
+#include <QSettings>
+#include <QApplication>
 
 class ApplicationSettings
 {
 private:
     const std::string APP_VERSION = "1.2.1";
+    QString _settingsFileName;
 public:
     ApplicationSettings();
     QString getAppVersion();
     void load();
 
-    //const int CAMERA_WIDTH = 640;
-    //const int CAMERA_HEIGHT = 480;
-    const int CAMERA_WIDTH = 1280;
-    const int CAMERA_HEIGHT = 960;
-    //const int CAMERA_WIDTH = 1920;
-    //const int CAMERA_HEIGHT = 1080;
+    int CAMERA_WIDTH = 1280;
+    int CAMERA_HEIGHT = 960;
+
     const int CAMERA_VIEW_X0 = 10;
     const int CAMERA_VIEW_Y0 = 10;
     const int CAMERA_VIEW_BORDER_WIDTH = 10;
@@ -25,16 +26,16 @@ public:
     const int TOOL_PANEL_WIDHT = 200;
     const int TOOL_PANEL_HEIGHT = 25;
 
-    const int CAMERA_FPS = 30;
+    int CAMERA_FPS = 30;
 
-    const int VIDEO_TIMER_INTERVAL = 50;
+    int VIDEO_TIMER_INTERVAL = 50;
 
-    const int CAMERA_ID = 0;
-    const int CAMERA_LEFT_ID = 1;
-    const int CAMERA_RIGHT_ID = 2;
+    int CAMERA_ID = 0;
+    int CAMERA_LEFT_ID = 1;
+    int CAMERA_RIGHT_ID = 2;
 
-    const int JOYSTICK_ID = 0;
-    const int JOYSTICK_TIMER_INTERVAL = 100;
+    int JOYSTICK_ID = 0;
+    int JOYSTICK_TIMER_INTERVAL = 100;
 };
 
 #endif // APPLICATIONSETTINGS_H

@@ -1235,7 +1235,7 @@ void MainWindow::onViewButtonClicked()
 void MainWindow::onScreenshotButtonClicked()
 {
     // Создаем инструмент Линейка
-    _toolWindow = new ToolWindow(this);
+    _toolWindow = new ToolWindow(this);    
 
     // Get current Image from camera
     cv::Mat image;
@@ -1303,7 +1303,21 @@ void MainWindow::onScreenshotButtonClicked()
 
 void MainWindow::onSettingsButtonClicked()
 {
+    // Если вызвать конструктор SettingsWindow(this),
+    // то копируются стили главного окна, поэтому вызываем с NULL
+    _settingsWindow = new SettingsWindow(NULL);
 
+    // Центрировать инструментальную панель
+    QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
+    int x = (screenGeometry.width() - _settingsWindow->width()) / 2;
+    int y = (screenGeometry.height() - _settingsWindow->height()) / 2;
+
+    _settingsWindow->setWindowTitle("ТНПА :: Настройки :: " + _appSet.getAppVersion());
+
+    _settingsWindow->move(x, y);
+    _settingsWindow->exec();
+
+    delete _settingsWindow;
 }
 
 void MainWindow::OnButtonA(short value)

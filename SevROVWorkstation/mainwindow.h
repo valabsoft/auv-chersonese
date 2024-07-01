@@ -11,6 +11,7 @@
 #include "enumclasses.h"
 #include "datastructure.h"
 #include "toolwindow.h"
+#include "settingswindow.h"
 
 #include "sevrovxboxcontroller.h"
 #include "sevrovlibrary.h"
@@ -117,7 +118,7 @@ public:
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-private:
+private:    
     ApplicationSettings _appSet; // Уставки приложения
     ControllerSettings _ctrSet; // Уставки контроллера
     SevROVController _sevROV;
@@ -130,6 +131,9 @@ private:
 
     // Инструмент "Линейка"
     ToolWindow *_toolWindow;
+
+    // Окно настроек
+    SettingsWindow *_settingsWindow;
 
     long _cnt; // Счетчик вызовов
 
