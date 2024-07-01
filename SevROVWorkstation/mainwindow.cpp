@@ -103,6 +103,15 @@ MainWindow::MainWindow(QWidget *parent)
     _xbox.RStickY = 0;
     _xbox.LTrigger = -32768;
     _xbox.RTrigger = -32768;
+
+    // Создаем коннектор с AUV. Клиент должен уметь писать управление и читать телеметрию
+    _rovConnector.setMode(SevROVConnector::Mode::CONTROL_WRITE |
+                         SevROVConnector::Mode::TELEMETRY_READ);
+
+
+    connect(&_rovConnector, SIGNAL(OnConnected()), this, SLOT(onSocketConnect()));
+    connect(&_rovConnector, SIGNAL(OnDisconnected()), this, SLOT(onSocketDisconnect()));
+    connect(&_rovConnector, SIGNAL(OnProcessTelemetryDatagram()), this, SLOT(onSocketProcessTelemetryDatagram()));
 }
 
 MainWindow::~MainWindow()
@@ -1093,7 +1102,66 @@ t_vuxyzrgb MainWindow:: MainWindow::convertCloud3DPoints(std::vector<Cloud3DItem
 
 void MainWindow::onControlTimer()
 {
+    // Пересчитываем состояние джойстика в управление
+    SevROVLibrary::XboxToControlData(_xbox,
+                                     _ctrSet.powerLimit,
+                                     _ctrSet.rollStabilization,
+                                     _ctrSet.pitchStabilization,
+                                     _ctrSet.yawStabilization,
+                                     _ctrSet.depthStabilization,
+                                     _ctrSet.rollPID,
+                                     _ctrSet.pitchPID,
+                                     _ctrSet.yawPID,
+                                     _ctrSet.depthPID,
+                                     _ctrSet.updatePID,
+                                     &_rovConnector.control);
 
+    // Считываем текущие сигналы контроля
+    _dataControl.HorizontalVectorX = _rovConnector.control.getHorizontalVectorX();
+    _dataControl.HorizontalVectorY = _rovConnector.control.getHorizontalVectorY();
+    _dataControl.VericalThrust = _rovConnector.control.getVericalThrust();
+    _dataControl.PowerTarget = _rovConnector.control.getPowerTarget();
+    _dataControl.AngularVelocityZ = _rovConnector.control.getAngularVelocityZ();
+
+    _dataControl.ManipulatorState = _rovConnector.control.getManipulatorState();
+    _dataControl.ManipulatorRotate = _rovConnector.control.getManipulatorRotate();
+    _dataControl.CameraRotate = _rovConnector.control.getCameraRotate();
+
+    _dataControl.ResetInitialization = _rovConnector.control.getResetInitialization();
+    _dataControl.LightsState = _rovConnector.control.getLightsState();
+    _dataControl.StabilizationState = _rovConnector.control.getStabilizationState();
+
+    _dataControl.RollInc = _rovConnector.control.getRollInc();
+    _dataControl.PitchInc = _rovConnector.control.getPitchInc();
+
+    _dataControl.ResetPosition = _rovConnector.control.getResetPosition();
+
+    _dataControl.RollKp = _rovConnector.control.getRollKp();
+    _dataControl.RollKi = _rovConnector.control.getRollKi();
+    _dataControl.RollKd = _rovConnector.control.getRollKd();
+
+    _dataControl.PitchKp = _rovConnector.control.getPitchKp();
+    _dataControl.PitchKi = _rovConnector.control.getPitchKi();
+    _dataControl.PitchKd = _rovConnector.control.getPitchKd();
+
+    _dataControl.YawKp = _rovConnector.control.getYawKp();
+    _dataControl.YawKi = _rovConnector.control.getYawKi();
+    _dataControl.YawKd = _rovConnector.control.getYawKd();
+
+    _dataControl.DepthKp = _rovConnector.control.getDepthKp();
+    _dataControl.DepthKi = _rovConnector.control.getDepthKi();
+    _dataControl.DepthKd = _rovConnector.control.getDepthKd();
+
+    _dataControl.UpdatePID = _rovConnector.control.getUpdatePID();
+
+
+    // При соединении уже задали IP и Port, которые будут использоваться для записи датаграммы
+    if (_rovConnector.getIsConnected())
+        _rovConnector.writeControlDatagram();
+
+    // Сброс флага обновления параметров ПИД-контроллера
+    if (_ctrSet.updatePID)
+        _ctrSet.updatePID = false;
 }
 
 void MainWindow::onStartStopButtonClicked()
@@ -1312,4 +1380,77 @@ void MainWindow::OnAxisRTrigger(short value)
 {
     //ui->edRTrigger->setText(QString::number(value));
     _xbox.RTrigger = value;
+}
+
+void MainWindow::onSocketProcessTelemetryDatagram()
+{
+    qDebug() << "Telemetry Datagram Received...";
+
+    // Проверяем, разрешено ли коннектору читать телеметрию
+    if ((_rovConnector.getMode() & SevROVConnector::Mode::TELEMETRY_READ)
+        == SevROVConnector::Mode::TELEMETRY_READ)
+    {
+        _dataTelemetry.Roll = _rovConnector.telemetry.getRoll();
+        _dataTelemetry.Pitch = _rovConnector.telemetry.getPitch();
+        _dataTelemetry.Yaw = _rovConnector.telemetry.getYaw();
+        _dataTelemetry.Heading = _rovConnector.telemetry.getHeading();
+        _dataTelemetry.Depth = _rovConnector.telemetry.getDepth();
+        _dataTelemetry.RollSetPoint = _rovConnector.telemetry.getRollSetPoint();
+        _dataTelemetry.PitchSetPoint = _rovConnector.telemetry.getPitchSetPoint();
+
+        /*
+    ui->edHorizontalVectorX->setText(QString::number(_dataControl.HorizontalVectorX, 'f', 2));
+    ui->edHorizontalVectorY->setText(QString::number(_dataControl.HorizontalVectorY, 'f', 2));
+    ui->edVericalThrust->setText(QString::number(_dataControl.VericalThrust, 'f', 2));
+    ui->edPowerTarget->setText(QString::number(_dataControl.PowerTarget, 'f', 2));
+    ui->edAngularVelocityZ->setText(QString::number(_dataControl.AngularVelocityZ, 'f', 2));
+
+    ui->edManipulatorState->setText(QString::number(_dataControl.ManipulatorState));
+    ui->edManipulatorRotate->setText(QString::number(_dataControl.ManipulatorRotate, 'f', 2));
+    ui->edCameraRotate->setText(QString::number(_dataControl.CameraRotate));
+
+    ui->edResetInitialization->setText(QString::number(_dataControl.ResetInitialization));
+    ui->edLightsState->setText(QString::number(_dataControl.LightsState));
+    ui->edStabilizationState->setText(QString::number(_dataControl.StabilizationState));
+
+    ui->edRollInc->setText(QString::number(_dataControl.RollInc));
+    ui->edPitchInc->setText(QString::number(_dataControl.PitchInc));
+
+    ui->edResetPosition->setText(QString::number(_dataControl.ResetPosition));
+
+    ui->edRollKp->setText(QString::number(_dataControl.RollKp));
+    ui->edRollKi->setText(QString::number(_dataControl.RollKi));
+    ui->edRollKd->setText(QString::number(_dataControl.RollKd));
+
+    ui->edPitchKp->setText(QString::number(_dataControl.PitchKp));
+    ui->edPitchKi->setText(QString::number(_dataControl.PitchKi));
+    ui->edPitchKd->setText(QString::number(_dataControl.PitchKd));
+
+    ui->edYawKp->setText(QString::number(_dataControl.YawKp));
+    ui->edYawKi->setText(QString::number(_dataControl.YawKi));
+    ui->edYawKd->setText(QString::number(_dataControl.YawKd));
+
+    ui->edDepthKp->setText(QString::number(_dataControl.DepthKp));
+    ui->edDepthKi->setText(QString::number(_dataControl.DepthKi));
+    ui->edDepthKd->setText(QString::number(_dataControl.DepthKd));
+
+    ui->edUpdatePID->setText(QString::number(_dataControl.UpdatePID));
+
+        ui->edRoll->setText(QString::number(_dataTelemetry.Roll, 'f', 2));
+        ui->edPitch->setText(QString::number(_dataTelemetry.Pitch, 'f', 2));
+        ui->edYaw->setText(QString::number(_dataTelemetry.Yaw, 'f', 2));
+        ui->edHeading->setText(QString::number(_dataTelemetry.Heading, 'f', 2));
+        ui->edDepthAUV->setText(QString::number(_dataTelemetry.Depth, 'f', 2));
+        ui->edRollSetPoint->setText(QString::number(_dataTelemetry.RollSetPoint, 'f', 2));
+        ui->edPitchSetPoint->setText(QString::number(_dataTelemetry.PitchSetPoint, 'f', 2));
+        */
+    }
+}
+void MainWindow::onSocketConnect()
+{
+    qDebug() << "Socket connected successfully";
+}
+void MainWindow::onSocketDisconnect()
+{
+    qDebug() << "Socket disconnected successfully";
 }
