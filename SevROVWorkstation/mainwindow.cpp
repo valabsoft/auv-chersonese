@@ -315,7 +315,7 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         //    break;
         //}
 
-        _webCamO = new cv::VideoCapture(_appSet.CAMERA_ID);
+        _webCamO = new cv::VideoCapture(_appSet.CAMERA_MONO_ID);
         _webCamL = new cv::VideoCapture(_appSet.CAMERA_LEFT_ID);
         _webCamR = new cv::VideoCapture(_appSet.CAMERA_RIGHT_ID);
 
@@ -1251,10 +1251,28 @@ void MainWindow::onScreenshotButtonClicked()
                0,
                cv::INTER_LINEAR);
 
-    // FOR DEBUG ONLY
+    // Для облака 3D-точек используем стереопару
+    cv::Mat imageL;
+    cv::Mat imageR;
+
+    _webCamL->read(imageL);
+    _webCamR->read(imageR);
+
+    std::string file_calibration_parameters =
+        (QCoreApplication::applicationDirPath() + "/сamera_calibration_parameters.yml").toStdString();
+
+    file_calibration_parameters = "C:\\SourceCode\\auv-chersonese\\Build\\SevROVWorkstation\\debug\\сamera_calibration_parameters.yml";
+    stereo_output_par_t calib_par = read_stereo_params(file_calibration_parameters);
+
+    // Поск 3D точек и сохранение их в формате x y 3d_x 3d_y 3d_z
+    std::vector<std::vector<double>> coords3d = point3d_finder(imageL, imageR, calib_par);
+
+    // Запись найденных точек в файл
+    std::string file_cloud_3D = (QCoreApplication::applicationDirPath() + "/cloud_3D.txt").toStdString();
+    write_coords_file(coords3d, file_cloud_3D);
+
     // Загрузка данных
-    std::vector<Cloud3DItem> cloud = getCloud3DPoints("C:\\TEMP\\cloud_3D.txt");
-    // std::vector<Cloud3DItem> cloud = get_cloud_3D_points("C:\\TEMP\\3d_points.txt");
+    std::vector<Cloud3DItem> cloud = getCloud3DPoints(file_cloud_3D);
 
     // Конвертация в старый формат
     t_vuxyzrgb data = convertCloud3DPoints(cloud);

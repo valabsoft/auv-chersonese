@@ -13,6 +13,9 @@ SOURCES += \
     camerascene.cpp \
     main.cpp \
     mainwindow.cpp \
+    pointcloud/calibrate.cpp \
+    pointcloud/disparity.cpp \
+    pointcloud/three_dimensional_proc.cpp \
     settingswindow.cpp \
     sevrovcontroller.cpp \
     toolwindow.cpp
@@ -23,6 +26,9 @@ HEADERS += \
     datastructure.h \
     enumclasses.h \
     mainwindow.h \
+    pointcloud/calibrate.h \
+    pointcloud/disparity.h \
+    pointcloud/three_dimensional_proc.h \
     settingswindow.h \
     sevrovcontroller.h \
     toolwindow.h
