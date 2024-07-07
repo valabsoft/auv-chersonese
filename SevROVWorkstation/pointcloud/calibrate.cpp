@@ -262,8 +262,8 @@ mono_output_par_t read_mono_params(std::string filename){
         fs << "PerViewErrors" << mono_params_struct.perViewErrors;
         fs << "STDIntrinsics" << mono_params_struct.stdDevIntrinsics;
         fs << "STDExtrinsics" << mono_params_struct.stdDevExtrinsics;
-        fs << "RotationVector" << mono_params_struct.rvecs;
-        fs << "TranslationVector" << mono_params_struct.tvecs;
+        //fs << "RotationVector" << mono_params_struct.rvecs;
+        //fs << "TranslationVector" << mono_params_struct.tvecs;
         fs << "RMS" << mono_params_struct.RMS;
         fs.release();
     } else {
@@ -288,8 +288,8 @@ stereo_output_par_t read_stereo_params(std::string filename){
             stereo_fs["TranslationMatrix"]          >> stereo_params_struct.T;
             stereo_fs["EssentialMatrix"]            >> stereo_params_struct.E;
             stereo_fs["FundamentalMatrix"]          >> stereo_params_struct.F;
-            stereo_fs["VectorOfRotationVectors"]    >> stereo_params_struct.rvecs;
-            stereo_fs["VectorOfTranslationVectors"] >> stereo_params_struct.tvecs;
+            //stereo_fs["VectorOfRotationVectors"]    >> stereo_params_struct.rvecs;
+            //stereo_fs["VectorOfTranslationVectors"] >> stereo_params_struct.tvecs;
             stereo_fs["PerViewErrors"]              >> stereo_params_struct.perViewErrors;
             stereo_fs["RMS"]                        >> stereo_params_struct.RMS;
             stereo_fs.release();
@@ -313,8 +313,8 @@ void write_mono_params(std::string filename, mono_output_par_t mono_params_struc
         fs << "PerViewErrors"       << mono_params_struct.perViewErrors;
         fs << "STDIntrinsics"       << mono_params_struct.stdDevIntrinsics;
         fs << "STDExtrinsics"       << mono_params_struct.stdDevExtrinsics;
-        fs << "RotationVector"      << mono_params_struct.rvecs;
-        fs << "TranslationVector"   << mono_params_struct.tvecs;
+        //fs << "RotationVector"      << mono_params_struct.rvecs;
+        //fs << "TranslationVector"   << mono_params_struct.tvecs;
         fs << "RMS"                 << mono_params_struct.RMS;
         fs.release();
     } else {
@@ -336,8 +336,8 @@ void write_stereo_params(std::string filename, stereo_output_par_t stereo_params
         stereo_fs << "TranslationMatrix"          << stereo_params_struct.T;
         stereo_fs << "EssentialMatrix"            << stereo_params_struct.E;
         stereo_fs << "FundamentalMatrix"          << stereo_params_struct.F;
-        stereo_fs << "VectorOfRotationVectors"    << stereo_params_struct.rvecs;
-        stereo_fs << "VectorOfTranslationVectors" << stereo_params_struct.tvecs;
+       // stereo_fs << "VectorOfRotationVectors"    << stereo_params_struct.rvecs;
+       // stereo_fs << "VectorOfTranslationVectors" << stereo_params_struct.tvecs;
         stereo_fs << "PerViewErrors"              << stereo_params_struct.perViewErrors;
         stereo_fs << "RMS"                        << stereo_params_struct.RMS;
         stereo_fs.release();

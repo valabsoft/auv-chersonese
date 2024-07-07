@@ -985,8 +985,10 @@ std::vector<Cloud3DItem> MainWindow::getCloud3DPoints(std::string pathtofile)
     {
         while (infile >> screenX >> screenY >> worldX >> worldY >> worldZ)
         {
-            item.screenX = screenX;
-            item.screenY = screenY;
+            // VA 07-07-2024: Разобраться, почему необходимо
+            // переставлять местами X и Y для координат экрана
+            item.screenX = screenY;
+            item.screenY = screenX;
             item.worldX = worldX;
             item.worldY = worldY;
             item.worldZ = worldZ;
@@ -1259,9 +1261,8 @@ void MainWindow::onScreenshotButtonClicked()
     _webCamR->read(imageR);
 
     std::string file_calibration_parameters =
-        (QCoreApplication::applicationDirPath() + "/сamera_calibration_parameters.yml").toStdString();
+        (QCoreApplication::applicationDirPath() + "/camera_calibration_parameters.yml").toStdString();
 
-    file_calibration_parameters = "C:\\SourceCode\\auv-chersonese\\Build\\SevROVWorkstation\\debug\\сamera_calibration_parameters.yml";
     stereo_output_par_t calib_par = read_stereo_params(file_calibration_parameters);
 
     // Поск 3D точек и сохранение их в формате x y 3d_x 3d_y 3d_z

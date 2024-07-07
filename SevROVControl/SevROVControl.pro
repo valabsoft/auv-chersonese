@@ -48,15 +48,15 @@ unix
 }
 
 win32 {
-    INCLUDEPATH += C:\OpenCV\build\include
+    INCLUDEPATH += c:\opencv-4.8.0-build\install\include\
 
-    LIBS += C:\opencv-build\bin\libopencv_core455.dll
-    LIBS += C:\opencv-build\bin\libopencv_highgui455.dll
-    LIBS += C:\opencv-build\bin\libopencv_imgcodecs455.dll
-    LIBS += C:\opencv-build\bin\libopencv_features2d455.dll
-    LIBS += C:\opencv-build\bin\libopencv_calib3d455.dll
-    LIBS += C:\opencv-build\bin\libopencv_videoio455.dll
-    LIBS += C:\opencv-build\bin\libopencv_imgproc455.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_core480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_highgui480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_imgcodecs480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_features2d480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_calib3d480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_videoio480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_imgproc480.dll
 }
 unix {
     INCLUDEPATH += /usr/include/opencv4
