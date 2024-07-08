@@ -75,6 +75,30 @@ void SettingsWindow::loadSettings()
     ui->cbJoystickID->setCurrentIndex(settings.value("/JoystickID", "0").toInt());
     ui->leJoystickTimerInterval->setText(settings.value("/TimerInterval", "100").toString());
     settings.endGroup();
+
+    settings.beginGroup("/CONTROLLER");
+
+    ui->sbRollKp->setValue(settings.value("/rollKp", 0.1).toDouble());
+    ui->sbRollKi->setValue(settings.value("/rollKi", 0.1).toDouble());
+    ui->sbRollKd->setValue(settings.value("/rollKd", 0.1).toDouble());
+    ui->cbRollStab->setChecked(settings.value("/rollStabilization", false).toBool());
+
+    ui->sbPitchKp->setValue(settings.value("/pitchKp", 0.1).toDouble());
+    ui->sbPitchKi->setValue(settings.value("/pitchKi", 0.1).toDouble());
+    ui->sbPitchKd->setValue(settings.value("/pitchKd", 0.1).toDouble());
+    ui->cbPitchStab->setChecked(settings.value("/pitchStabilization", false).toBool());
+
+    ui->sbYawKp->setValue(settings.value("/yawKp", 0.1).toDouble());
+    ui->sbYawKi->setValue(settings.value("/yawKi", 0.1).toDouble());
+    ui->sbYawKd->setValue(settings.value("/yawKd", 0.1).toDouble());
+    ui->cbYawStab->setChecked(settings.value("/yawStabilization", false).toBool());
+
+    ui->sbDepthKp->setValue(settings.value("/depthKp", 0.1).toDouble());
+    ui->sbDepthKi->setValue(settings.value("/depthKi", 0.1).toDouble());
+    ui->sbDepthKd->setValue(settings.value("/depthKd", 0.1).toDouble());
+    ui->cbDepthStab->setChecked(settings.value("/depthStabilization", false).toBool());
+
+    settings.endGroup();
 }
 
 void SettingsWindow::saveSettings()
@@ -95,5 +119,29 @@ void SettingsWindow::saveSettings()
     settings.beginGroup("/JOYSTICK");
     settings.setValue("/JoystickID", ui->cbJoystickID->currentIndex());
     settings.setValue("/TimerInterval", ui->leJoystickTimerInterval->text());
+    settings.endGroup();
+
+    settings.beginGroup("/CONTROLLER");
+
+    settings.setValue("/rollKp", ui->sbRollKp->value());
+    settings.setValue("/rollKi", ui->sbRollKi->value());
+    settings.setValue("/rollKd", ui->sbRollKd->value());
+    settings.setValue("/rollStabilization", ui->cbRollStab->isChecked());
+
+    settings.setValue("/pitchKp", ui->sbPitchKp->value());
+    settings.setValue("/pitchKi", ui->sbPitchKi->value());
+    settings.setValue("/pitchKd", ui->sbPitchKd->value());
+    settings.setValue("/pitchStabilization", ui->cbPitchStab->isChecked());
+
+    settings.setValue("/yawKp", ui->sbYawKp->value());
+    settings.setValue("/yawKi", ui->sbYawKi->value());
+    settings.setValue("/yawKd", ui->sbYawKd->value());
+    settings.setValue("/yawStabilization", ui->cbYawStab->isChecked());
+
+    settings.setValue("/depthKp", ui->sbDepthKp->value());
+    settings.setValue("/depthKi", ui->sbDepthKi->value());
+    settings.setValue("/depthKd", ui->sbDepthKd->value());
+    settings.setValue("/depthStabilization", ui->cbDepthStab->isChecked());
+
     settings.endGroup();
 }
