@@ -61,6 +61,20 @@ typedef struct StereoBMstruct{
 */
 void stereo_d_map(cv::Mat rectifiedLeft, cv::Mat rectifiedRight, cv::Mat &disparity, cv::Ptr<cv::StereoSGBM> &stereo);
 
+/*!
+ *  \brief Функция для вычисления карты диспарантности методом BM
+ *
+ *  \param[in] rectifiedLeft Ректифицированное левое изображение
+ *  \param[in] rectifiedRight Ректифицированное правое изображение
+ *  \param[in] cameraMatrixLeft Матрица левой камеры
+ *  \param[in] cameraMatrixRight Матрица правой камеры
+ *  \param[in] T Матрица смещений, получаемая при калибровке
+ *  \param[in] numDisparities Количество диспарантностей
+ *  \param[in] minDisparity Минимальное значение диспарантности
+ *  \param[in] stereo Объект StereoBM
+ *
+ *  \param[out] disparity Матрица значенией диспарантности
+*/
 void stereo_d_map(cv::Mat rectifiedImageLeft, cv::Mat rectifiedImageRight, cv::Mat &disparity, cv::Ptr<cv::StereoBM> &stereo);
 
 #endif // DISPARITY_H

@@ -56,11 +56,9 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
     //std::vector<std::vector<double>> xyz;         // 3D координаты точки в пространстве
     //std::vector<std::vector<int>> rgb;            // цвет 3D точки
 
-
     std::vector<double> limit_outlierArea {-8.0e3, -8.0e3, 250, 8.0e3, 8.0e3, 15.20e3};
 
     int valid_points = 0;
-
 
     for(int v = 0; v < points23D.rows; v++)
     {
