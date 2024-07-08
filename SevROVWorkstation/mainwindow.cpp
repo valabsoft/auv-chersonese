@@ -636,7 +636,7 @@ void MainWindow::onVideoTimer()
         // Диагностика
 
         cv::putText(_destinationMatO,
-                    "DIAGNOSTIC: 0.00 [-]; 0.00 [-] " +
+                    "DIAGNOSTIC: " +
                         QTime::currentTime().toString("hh:mm:ss").toStdString(),
                     cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
                     cv::FONT_HERSHEY_SIMPLEX,

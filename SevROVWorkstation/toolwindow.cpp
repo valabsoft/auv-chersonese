@@ -32,6 +32,9 @@ ToolWindow::ToolWindow(QWidget *parent) :
     // Установка иконок и стилей
     setupIcons();
     setupСontrolsStyle();
+
+    // Загрузка настроек
+    _appSet.load();
 }
 
 void ToolWindow::moveWindowToCenter()
@@ -52,6 +55,7 @@ void ToolWindow::setupWindowGeometry()
 
     // Фиксируем размер окна и убираем иконку ресайза
     setFixedSize(QSize(windowWidth, windowHeight));
+    resize(QSize(windowWidth, windowHeight));
 
     ui->graphicsView->setFixedWidth(_appSet.CAMERA_WIDTH);
     ui->graphicsView->setFixedHeight(_appSet.CAMERA_HEIGHT);
@@ -578,7 +582,7 @@ void ToolWindow::onClustersItemSelectionChanged()
                         "H:\t\t" + QString::number(H, 'f', 1) + "\n" +
                         "Length:\t\t" + QString::number(Length, 'f', 1) + "\n" +
                         "Width:\t\t" + QString::number(Width, 'f', 1) + "\n" +
-                        "Distance:\t\t" + QString::number(Distance, 'f', 1));
+                        "Distance:\t" + QString::number(Distance, 'f', 1));
 
     // Передать точки в объект Series
     _series3D->dataProxy()->addItems(data);
@@ -753,7 +757,7 @@ void ToolWindow::onDeleteButtonClicked()
                         "H:\t\t" + QString::number(H, 'f', 1) + "\n" +
                         "Length:\t\t" + QString::number(Length, 'f', 1) + "\n" +
                         "Width:\t\t" + QString::number(Width, 'f', 1) + "\n" +
-                        "Distance:\t\t" + QString::number(Distance, 'f', 1));
+                        "Distance:\t" + QString::number(Distance, 'f', 1));
 }
 
 void ToolWindow::setupIcons()
@@ -784,10 +788,10 @@ void ToolWindow::setupСontrolsStyle()
     ui->lswClusters->setStyleSheet("border-style: solid; border-width: 1px; border-color: #F0BE50; ");
 
     QFont fontBold12("GOST type A", 12, QFont::Bold);
-    QFont fontNormal12("GOST type A", 12, QFont::Bold);
+    QFont fontNormal12("GOST type A", 12, QFont::Normal);
 
     ui->lbInfo->setStyleSheet("background-color : black; color : silver;");
-    ui->lbInfo->setFont(fontBold12);
+    ui->lbInfo->setFont(fontNormal12);
 
     ui->lswClusters->setStyleSheet("background-color : black; color : silver;");
     ui->lswClusters->setFont(fontNormal12);
