@@ -6,6 +6,8 @@
 #include <QSettings>
 #include <QApplication>
 
+#include "datastructure.h"
+
 class ApplicationSettings
 {
 private:
@@ -15,6 +17,7 @@ public:
     ApplicationSettings();
     QString getAppVersion();
     void load();
+    void load(ControllerSettings &ctrset);
 
     int CAMERA_WIDTH = 1280;
     int CAMERA_HEIGHT = 960;

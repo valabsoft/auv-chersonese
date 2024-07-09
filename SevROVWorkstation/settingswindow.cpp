@@ -18,10 +18,12 @@ SettingsWindow::SettingsWindow(QWidget *parent)
 
     connect(ui->pbOK, &QPushButton::clicked, this, &SettingsWindow::onOKButtonClicked);
     connect(ui->pbCancel, &QPushButton::clicked, this, &SettingsWindow::onCancelButtonClicked);
+    connect(ui->pbPIDUpdate, &QPushButton::clicked, this, &SettingsWindow::onPIDUpdateClicked);
 
     // Загрузка настроек
     _settingsFileName = QApplication::applicationDirPath() + QDir::separator() + "settings.ini";
     loadSettings();
+    updatePID = false;
 }
 
 SettingsWindow::~SettingsWindow()
@@ -45,15 +47,16 @@ void SettingsWindow::onOKButtonClicked()
 {
     // Сохранить настройки
     saveSettings();
-
     // Закрыть форму
-    this->close();
+    this->accept();
+    // this->close();
 }
 
 void SettingsWindow::onCancelButtonClicked()
 {
     // Закрыть форму
-    this->close();
+    this->reject();
+    // this->close();
 }
 
 void SettingsWindow::loadSettings()
@@ -97,6 +100,8 @@ void SettingsWindow::loadSettings()
     ui->sbDepthKi->setValue(settings.value("/depthKi", 0.1).toDouble());
     ui->sbDepthKd->setValue(settings.value("/depthKd", 0.1).toDouble());
     ui->cbDepthStab->setChecked(settings.value("/depthStabilization", false).toBool());
+
+    ui->sbPowerLimit->setValue(settings.value("/powerLimit", 0.1).toDouble());
 
     settings.endGroup();
 }
@@ -143,5 +148,17 @@ void SettingsWindow::saveSettings()
     settings.setValue("/depthKd", ui->sbDepthKd->value());
     settings.setValue("/depthStabilization", ui->cbDepthStab->isChecked());
 
+    settings.value("/powerLimit", ui->sbPowerLimit->value());
+
     settings.endGroup();
+}
+
+void SettingsWindow::onPIDUpdateClicked()
+{
+    updatePID = true;
+}
+
+bool SettingsWindow::getUpdatePID()
+{
+    return updatePID;
 }

@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
 
     // Загрузка настроек
-    _appSet.load();
+    _appSet.load(_ctrSet);
 
     // TODO VA (23-05-2024): После подключения общей библиотеки, использовать
     // setWindowTitle("ТНПА :: Контроль :: " + QString(APP_VERSION.c_str()));
@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     _controlTimer = new QTimer(this);
     connect(_controlTimer, &QTimer::timeout, this, &MainWindow::onControlTimer);
 
-    QObject::connect(this, SIGNAL(update_fps_value(QString)), ui->lbFPS, SLOT(setText(QString)));
+    QObject::connect(this, SIGNAL(updateCntValue(QString)), ui->lbFPS, SLOT(setText(QString)));
 
     // Работа с джойстиком
     _jsController = new SevROVXboxController();
@@ -443,7 +443,7 @@ void MainWindow::onVideoTimer()
     // double fps;
     // fps = _webCamO->get(cv::CAP_PROP_FPS);
 
-    Q_EMIT update_fps_value("CNT: " + QString::number(_cnt++));
+    Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
 
     switch (_sevROV.cameraView)
     {
@@ -1002,7 +1002,7 @@ std::vector<Cloud3DItem> MainWindow::getCloud3DPoints(std::string pathtofile)
     return cloud;
 }
 
-t_vuxyzrgb MainWindow:: MainWindow::convertCloud3DPoints(std::vector<Cloud3DItem> cloud, bool norm = true)
+t_vuxyzrgb MainWindow::convertCloud3DPoints(std::vector<Cloud3DItem> cloud)
 {
     t_vuxyzrgb data;
     Data3DItem data3DItem;
@@ -1085,20 +1085,6 @@ t_vuxyzrgb MainWindow:: MainWindow::convertCloud3DPoints(std::vector<Cloud3DItem
         data.cluster.push_back(data3DItem.cluster);
     }
 
-    // Нормирование
-    //if (norm)
-    //{
-    //    for (size_t i = 0; i < data.vu.size(); i++)
-    //    {
-    //        if (Xmax != Xmin)
-    //            data.vu.at(i).at(1) = cols * (data.vu.at(i).at(1) - Xmin) /
-    //                                  (Xmax - Xmin);
-    //        if (Ymax != Ymin)
-    //            data.vu.at(i).at(0) = rows * (data.vu.at(i).at(0) - Ymin) /
-    //                                  (Ymax - Ymin);
-    //    }
-    //}
-
     return data;
 }
 
@@ -1171,7 +1157,7 @@ void MainWindow::onStartStopButtonClicked()
     // Меняем состояние флага
     _sevROV.isConnected = !_sevROV.isConnected;
     _cnt = 0; // Сбрасываем счетчик
-    Q_EMIT update_fps_value("CNT: " + QString::number(_cnt++));
+    Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
 
     // Меняем иконку на кнопке
     if (_sevROV.isConnected)
@@ -1202,6 +1188,27 @@ void MainWindow::onStartStopButtonClicked()
 
         _controlTimer->stop();
     }
+    /*
+    // Будем использовать connectToHost и disconnectFromHost
+    if (_rovConnector.getIsConnected())
+    {
+        // Отключаемся
+        _rovConnector.disconnectFromHost();
+    }
+    else
+    {
+        // Запоминаем IP и Port сервера
+        _rovConnector.setIP(ui->edIP->text());
+        _rovConnector.setPort(ui->edPort->text().toInt());
+
+        // Соединяемся с хостом
+        _rovConnector.connectToHost(ui->edIP->text(),
+                                   ui->edPort->text().toInt());
+
+        if (_rovConnector.getIsConnected())
+            _rovConnector.writeConnectDatagram();
+    }
+    */
 
     setupConnectedControlsStyle(_sevROV.isConnected);
 }
@@ -1294,29 +1301,6 @@ void MainWindow::onScreenshotButtonClicked()
 
     // Очищаем ресурсы
     delete _toolWindow;
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Реализация работы с Пашиным облоком
-    /*
-
-    // Массив данных описывающий облоко 3D точек
-    t_vuxyzrgb data = get_cloud_3D_points(image.rows, image.cols);
-
-    // Show tool window
-    _toolWindow->set_data_cloud_3D(image, data);
-
-    // Центрировать инструментальную панель
-    QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
-    int x = (screenGeometry.width() - _toolWindow->width()) / 2;
-    int y = (screenGeometry.height() - _toolWindow->height()) / 2;
-    _toolWindow->move(x, y);
-
-    _toolWindow->exec();
-
-    // Очищаем ресурсы
-    delete _toolWindow;
-
-    */
     ///////////////////////////////////////////////////////////////////////////
 }
 
@@ -1334,7 +1318,11 @@ void MainWindow::onSettingsButtonClicked()
     _settingsWindow->setWindowTitle("ТНПА :: Настройки :: " + _appSet.getAppVersion());
 
     _settingsWindow->move(x, y);
-    _settingsWindow->exec();
+    if (_settingsWindow->exec() == QDialog::Accepted)
+    {
+        _appSet.load(_ctrSet);
+        _ctrSet.updatePID = _settingsWindow->getUpdatePID();
+    }
 
     delete _settingsWindow;
 }

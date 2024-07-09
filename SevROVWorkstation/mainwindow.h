@@ -31,92 +31,6 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-// Данные телеметрии
-struct DataControl
-{
-    float HorizontalVectorX;
-    float HorizontalVectorY;
-    float VericalThrust;
-    float PowerTarget;
-    float AngularVelocityZ;
-    float ManipulatorState;
-    float ManipulatorRotate;
-    float CameraRotate;
-    int8_t ResetInitialization;
-    int8_t LightsState;
-    int8_t StabilizationState;
-    float RollInc;
-    float PitchInc;
-    int8_t ResetPosition;
-    float RollKp;
-    float RollKi;
-    float RollKd;
-    float PitchKp;
-    float PitchKi;
-    float PitchKd;
-    float YawKp;
-    float YawKi;
-    float YawKd;
-    float DepthKp;
-    float DepthKi;
-    float DepthKd;
-    int8_t UpdatePID;
-};
-
-// Данные управления
-struct DataTelemetry
-{
-    float Roll;
-    float Pitch;
-    float Yaw;
-    float Heading;
-    float Depth;
-    float RollSetPoint;
-    float PitchSetPoint;
-};
-
-class ControllerSettings
-{
-public:
-    ControllerSettings() {
-        powerLimit = 0.0;
-        rollStabilization = false;
-        pitchStabilization = false;
-        yawStabilization = false;
-        depthStabilization = false;
-
-        updatePID = false;
-
-        rollPID.setKp(0.1);
-        rollPID.setKi(0.1);
-        rollPID.setKd(0.1);
-
-        pitchPID.setKp(0.1);
-        pitchPID.setKi(0.1);
-        pitchPID.setKd(0.1);
-
-        yawPID.setKp(0.1);
-        yawPID.setKi(0.1);
-        yawPID.setKd(0.1);
-
-        depthPID.setKp(0.1);
-        depthPID.setKi(0.1);
-        depthPID.setKd(0.1);
-    };
-
-    float powerLimit;
-    bool rollStabilization;
-    bool pitchStabilization;
-    bool yawStabilization;
-    bool depthStabilization;
-    bool updatePID;
-
-    SevROVPIDController rollPID;
-    SevROVPIDController pitchPID;
-    SevROVPIDController yawPID;
-    SevROVPIDController depthPID;
-};
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -174,7 +88,7 @@ private:
     void onVideoTimer();
     t_vuxyzrgb getCloud3DPoints(int rows, int cols, bool norm);
     std::vector<Cloud3DItem> getCloud3DPoints(std::string pathtofile);
-    t_vuxyzrgb convertCloud3DPoints(std::vector<Cloud3DItem> cloud, bool);
+    t_vuxyzrgb convertCloud3DPoints(std::vector<Cloud3DItem> cloud);
 
     void moveWindowToCenter();
     void roundedRectangle(
@@ -224,6 +138,6 @@ private:
     Ui::MainWindow *ui;
 
 Q_SIGNALS:
-    void update_fps_value(QString fps);
+    void updateCntValue(QString fps);
 };
 #endif // MAINWINDOW_H

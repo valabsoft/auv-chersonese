@@ -17,10 +17,13 @@ public:
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();
 
+    bool getUpdatePID();
+
 private slots:
     void onCameraResolutionComboboxCurrentIndexChanged(int index);
     void onOKButtonClicked();
     void onCancelButtonClicked();
+    void onPIDUpdateClicked();
 
 private:
     Ui::SettingsWindow *ui;
@@ -28,6 +31,8 @@ private:
 
     void loadSettings();
     void saveSettings();
+
+    bool updatePID;
 };
 
 #endif // SETTINGSWINDOW_H
