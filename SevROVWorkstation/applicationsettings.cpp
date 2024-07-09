@@ -29,6 +29,11 @@ void ApplicationSettings::load()
     JOYSTICK_ID = settings.value("/JoystickID", "0").toInt();
     JOYSTICK_TIMER_INTERVAL = settings.value("/TimerInterval", "100").toInt();
     settings.endGroup();
+
+    settings.beginGroup("/ROV");
+    ROV_IP = settings.value("/IP", "127.0.0.1").toString();
+    ROV_PORT = settings.value("/Port", 1234).toInt();
+    settings.endGroup();
 }
 
 void ApplicationSettings::load(ControllerSettings &ctrset)

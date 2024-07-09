@@ -64,19 +64,19 @@ void SettingsWindow::loadSettings()
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
     settings.beginGroup("/CAMERA SETTINGS");
-    ui->cbCameraResolution->setCurrentIndex(settings.value("/ResulutionIndex", "0").toInt());
-    ui->leW->setText(settings.value("/Width", "640").toString());
-    ui->leH->setText(settings.value("/Height", "480").toString());
-    ui->leFPS->setText(settings.value("/FPS", "30").toString());
-    ui->cbCameraMonoID->setCurrentIndex(settings.value("/MonoID", "0").toInt());
-    ui->cbCameraLeftID->setCurrentIndex(settings.value("/LeftID", "1").toInt());
-    ui->cbCameraRightID->setCurrentIndex(settings.value("/RightID", "2").toInt());
-    ui->leVideoTimerInterval->setText(settings.value("/TimerInterval", "50").toString());
+    ui->cbCameraResolution->setCurrentIndex(settings.value("/ResulutionIndex", 0).toInt());
+    ui->leW->setText(settings.value("/Width", 640).toString());
+    ui->leH->setText(settings.value("/Height", 480).toString());
+    ui->leFPS->setText(settings.value("/FPS", 30).toString());
+    ui->cbCameraMonoID->setCurrentIndex(settings.value("/MonoID", 0).toInt());
+    ui->cbCameraLeftID->setCurrentIndex(settings.value("/LeftID", 1).toInt());
+    ui->cbCameraRightID->setCurrentIndex(settings.value("/RightID", 2).toInt());
+    ui->leVideoTimerInterval->setText(settings.value("/TimerInterval", 50).toString());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");
-    ui->cbJoystickID->setCurrentIndex(settings.value("/JoystickID", "0").toInt());
-    ui->leJoystickTimerInterval->setText(settings.value("/TimerInterval", "100").toString());
+    ui->cbJoystickID->setCurrentIndex(settings.value("/JoystickID", 0).toInt());
+    ui->leJoystickTimerInterval->setText(settings.value("/TimerInterval", 100).toString());
     settings.endGroup();
 
     settings.beginGroup("/CONTROLLER");
@@ -103,6 +103,11 @@ void SettingsWindow::loadSettings()
 
     ui->sbPowerLimit->setValue(settings.value("/powerLimit", 0.1).toDouble());
 
+    settings.endGroup();
+
+    settings.beginGroup("/ROV");
+    ui->leIP->setText(settings.value("/IP", "127.0.0.1").toString());
+    ui->lePort->setText(settings.value("/Port", 1234).toString());
     settings.endGroup();
 }
 
@@ -150,6 +155,11 @@ void SettingsWindow::saveSettings()
 
     settings.value("/powerLimit", ui->sbPowerLimit->value());
 
+    settings.endGroup();
+
+    settings.beginGroup("/ROV");
+    settings.value("/IP", ui->leIP->text());
+    settings.value("/Port", ui->lePort->text());
     settings.endGroup();
 }
 

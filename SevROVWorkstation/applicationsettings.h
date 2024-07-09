@@ -39,6 +39,9 @@ public:
 
     int JOYSTICK_ID = 0;
     int JOYSTICK_TIMER_INTERVAL = 100;
+
+    QString ROV_IP;
+    int ROV_PORT;
 };
 
 #endif // APPLICATIONSETTINGS_H

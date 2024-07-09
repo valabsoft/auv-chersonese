@@ -1188,7 +1188,7 @@ void MainWindow::onStartStopButtonClicked()
 
         _controlTimer->stop();
     }
-    /*
+
     // Будем использовать connectToHost и disconnectFromHost
     if (_rovConnector.getIsConnected())
     {
@@ -1198,17 +1198,18 @@ void MainWindow::onStartStopButtonClicked()
     else
     {
         // Запоминаем IP и Port сервера
-        _rovConnector.setIP(ui->edIP->text());
-        _rovConnector.setPort(ui->edPort->text().toInt());
+        _rovConnector.setIP(_appSet.ROV_IP);
+        _rovConnector.setPort(_appSet.ROV_PORT);
 
         // Соединяемся с хостом
-        _rovConnector.connectToHost(ui->edIP->text(),
-                                   ui->edPort->text().toInt());
+        _rovConnector.connectToHost(_appSet.ROV_IP, _appSet.ROV_PORT);
 
+        // Отправка служебной последовательности
+        // stream << (std::byte)0xAA;
+        // stream << (std::byte)0xFF;
         if (_rovConnector.getIsConnected())
             _rovConnector.writeConnectDatagram();
     }
-    */
 
     setupConnectedControlsStyle(_sevROV.isConnected);
 }
@@ -1318,6 +1319,7 @@ void MainWindow::onSettingsButtonClicked()
     _settingsWindow->setWindowTitle("ТНПА :: Настройки :: " + _appSet.getAppVersion());
 
     _settingsWindow->move(x, y);
+
     if (_settingsWindow->exec() == QDialog::Accepted)
     {
         _appSet.load(_ctrSet);
