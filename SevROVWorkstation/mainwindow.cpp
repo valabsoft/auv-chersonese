@@ -634,7 +634,8 @@ void MainWindow::onVideoTimer()
                     CV_RGB(255, 255, 255),
                     2);
 
-        // Информация о состоянии кнопок джойстика
+        ///////////////////////////////////////////////////////////////////////
+        // Левая информацияонная панель (CONTROL)
         cv::rectangle(_destinationMatO,
                       cv::Point(JSX0, JSY0),
                       cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
@@ -650,12 +651,129 @@ void MainWindow::onVideoTimer()
                  CV_RGB(255, 255, 255),
                  1,
                  cv::LINE_8);
+
         cv::line(_destinationMatO,
                  cv::Point(JSX0 + 5, JSY0 + 27),
                  cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 27),
                  CV_RGB(255, 255, 255),
                  1,
                  cv::LINE_8);
+
+        // Текстовка
+        cv::putText(_destinationMatO,
+                    "CONTROL",
+                    cv::Point(JSX0 + 10, JSY0 + 24),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+
+        // HorizontalVectorX
+        cv::putText(_destinationMatO,
+                    "HRZV.X: " + QString::number(_dataControl.HorizontalVectorX, 'f', 2).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*1),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // HorizontalVectorY
+        cv::putText(_destinationMatO,
+                    "HRZV.Y: " + QString::number(_dataControl.HorizontalVectorY, 'f', 2).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*2),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // VericalThrust
+        cv::putText(_destinationMatO,
+                    "VERT.TH: " + QString::number(_dataControl.VericalThrust, 'f', 2).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*3),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);        
+        // AngularVelocityZ
+        cv::putText(_destinationMatO,
+                    "ANGV.Z: " + QString::number(_dataControl.AngularVelocityZ, 'f', 2).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*4),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // PowerTarget
+        cv::putText(_destinationMatO,
+                    "PWR.TRG: " + QString::number(_dataControl.PowerTarget, 'f', 2).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*5),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // ManipulatorState
+        cv::putText(_destinationMatO,
+                    "MNP.ST: " + QString::number(_dataControl.ManipulatorState).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*6),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // ManipulatorRotate
+        cv::putText(_destinationMatO,
+                    "MNP.ROT: " + QString::number(_dataControl.ManipulatorRotate, 'f', 2).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // CameraRotate
+        cv::putText(_destinationMatO,
+                    "CAM.ROT: " + QString::number(_dataControl.CameraRotate).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*8),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // ResetInitialization
+        cv::putText(_destinationMatO,
+                    "RESET.INI: " + QString::number(_dataControl.ResetInitialization).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*9),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // LightsState
+        cv::putText(_destinationMatO,
+                    "LIGHT: " + QString::number(_dataControl.LightsState).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*10),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // RollInc
+        cv::putText(_destinationMatO,
+                    "ROLL.INC: " + QString::number(_dataControl.RollInc).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*11),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // PitchInc
+        cv::putText(_destinationMatO,
+                    "PITCH.INC: " + QString::number(_dataControl.PitchInc).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*12),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+        // ResetPosition
+        cv::putText(_destinationMatO,
+                    "RESET.POS: " + QString::number(_dataControl.ResetPosition).toStdString(),
+                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
+                    cv::FONT_HERSHEY_PLAIN,
+                    1,
+                    CV_RGB(255, 255, 255),
+                    1);
+
+        /*
 
         cv::putText(_destinationMatO,
                     "JOYSTICK INFO",
@@ -708,7 +826,6 @@ void MainWindow::onVideoTimer()
                     CV_RGB(255, 255, 255),
                     1);
 
-
         cv::putText(_destinationMatO,
                     "A: " + QString::number(_xbox.A).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
@@ -751,20 +868,6 @@ void MainWindow::onVideoTimer()
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        //cv::putText(_destinationMatO,
-        //            "View: " + QString::number(_xbox.View).toStdString(),
-        //            cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
-        //            cv::FONT_HERSHEY_PLAIN,
-        //            1,
-        //            CV_RGB(255, 255, 255),
-        //            1);
-        //cv::putText(_destinationMatO,
-        //            "Menu: " + QString::number(_xbox.Menu).toStdString(),
-        //            cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*14),
-        //            cv::FONT_HERSHEY_PLAIN,
-        //            1,
-        //            CV_RGB(255, 255, 255),
-        //            1);
         cv::putText(_destinationMatO,
                     "D-Pad: " + QString::number(_xbox.DPad).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
@@ -772,6 +875,8 @@ void MainWindow::onVideoTimer()
                     1,
                     CV_RGB(255, 255, 255),
                     1);
+
+        */
 
         ///////////////////////////////////////////////////////////////////////
         // Телеметрия
@@ -1348,7 +1453,6 @@ void MainWindow::onStartStopButtonClicked()
     setupConnectedControlsStyle(_sevROV.isConnected);
 }
 
-
 void MainWindow::onViewButtonClicked()
 {
     // Если нет соединения - выход
@@ -1374,7 +1478,6 @@ void MainWindow::onViewButtonClicked()
 
     setupCameraViewLayout(_sevROV.cameraView);
 }
-
 
 void MainWindow::onScreenshotButtonClicked()
 {
