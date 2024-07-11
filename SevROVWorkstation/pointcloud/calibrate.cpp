@@ -255,7 +255,7 @@ mono_output_par_t read_mono_params(std::string filename){
     mono_output_par_t mono_params_struct = {};
 
     cv::FileStorage fs;
-    fs.open(filename, cv::FileStorage::WRITE);
+    fs.open(filename, cv::FileStorage::READ);
     if (fs.isOpened()) {
         fs << "cameraMatrix" << mono_params_struct.cameraMatrix;
         fs << "distCoeffs" << mono_params_struct.distCoeffs;
@@ -272,33 +272,6 @@ mono_output_par_t read_mono_params(std::string filename){
     return mono_params_struct;
 }
 
-/// Функция чтения параметров калибровки двух камер из файлов
-stereo_output_par_t read_stereo_params(std::string filename){
-
-    stereo_output_par_t stereo_params_struct = {};
-
-    cv::FileStorage stereo_fs;
-    if (stereo_fs.open(filename, cv::FileStorage::READ)){
-        if (stereo_fs.isOpened()){
-            stereo_fs["cameraMatrixL"]              >> stereo_params_struct.cameraM1;
-            stereo_fs["cameraMatrixR"]              >> stereo_params_struct.cameraM2;
-            stereo_fs["DistorsionCoeffsL"]          >> stereo_params_struct.distCoeffs1;
-            stereo_fs["DistorsionCoeffsR"]          >> stereo_params_struct.distCoeffs2;
-            stereo_fs["RotationMatrix"]             >> stereo_params_struct.R;
-            stereo_fs["TranslationMatrix"]          >> stereo_params_struct.T;
-            stereo_fs["EssentialMatrix"]            >> stereo_params_struct.E;
-            stereo_fs["FundamentalMatrix"]          >> stereo_params_struct.F;
-            //stereo_fs["VectorOfRotationVectors"]    >> stereo_params_struct.rvecs;
-            //stereo_fs["VectorOfTranslationVectors"] >> stereo_params_struct.tvecs;
-            stereo_fs["PerViewErrors"]              >> stereo_params_struct.perViewErrors;
-            stereo_fs["RMS"]                        >> stereo_params_struct.RMS;
-            stereo_fs.release();
-        } else {
-            std::cerr << "Ошибка при открытии файла " << filename << std::endl;
-        }
-    }
-    return stereo_params_struct;
-}
 
 /// Функция для записи параметров калибровки одной камеры
 void write_mono_params(std::string filename, mono_output_par_t mono_params_struct){
@@ -328,20 +301,79 @@ void write_stereo_params(std::string filename, stereo_output_par_t stereo_params
     cv::FileStorage stereo_fs;
     stereo_fs.open(filename, cv::FileStorage::WRITE);
     if (stereo_fs.isOpened()) {
-        stereo_fs << "cameraMatrixL"              << stereo_params_struct.cameraM1;
-        stereo_fs << "cameraMatrixR"              << stereo_params_struct.cameraM2;
-        stereo_fs << "DistorsionCoeffsL"          << stereo_params_struct.distCoeffs1;
-        stereo_fs << "DistorsionCoeffsR"          << stereo_params_struct.distCoeffs2;
-        stereo_fs << "RotationMatrix"             << stereo_params_struct.R;
-        stereo_fs << "TranslationMatrix"          << stereo_params_struct.T;
-        stereo_fs << "EssentialMatrix"            << stereo_params_struct.E;
-        stereo_fs << "FundamentalMatrix"          << stereo_params_struct.F;
-       // stereo_fs << "VectorOfRotationVectors"    << stereo_params_struct.rvecs;
-       // stereo_fs << "VectorOfTranslationVectors" << stereo_params_struct.tvecs;
-        stereo_fs << "PerViewErrors"              << stereo_params_struct.perViewErrors;
-        stereo_fs << "RMS"                        << stereo_params_struct.RMS;
+        if (filename.find(".xml") != std::string::npos){
+            stereo_fs << "M1"   <<  stereo_params_struct.cameraM1;
+            stereo_fs << "M2"   <<  stereo_params_struct.cameraM2;
+            stereo_fs << "D1"   <<  stereo_params_struct.distCoeffs1;
+            stereo_fs << "D2"   <<  stereo_params_struct.distCoeffs2;
+            stereo_fs << "R"    <<  stereo_params_struct.R;
+            stereo_fs << "T"    <<  stereo_params_struct.T;
+            stereo_fs << "E"    <<  stereo_params_struct.E;
+            stereo_fs << "F"    <<  stereo_params_struct.F;
+            //stereo_fs["R1"]    >> stereo_params_struct.rvecs;
+            //stereo_fs["VectorOfTranslationVectors"] >> stereo_params_struct.tvecs;
+            //stereo_fs["PerViewErrors"]              >> stereo_params_struct.perViewErrors;
+            stereo_fs << "rmsStereo"  << stereo_params_struct.RMS;
+        } else if(filename.find(".yml") != std::string::npos) {
+            stereo_fs << "cameraMatrixL" <<                stereo_params_struct.cameraM1;
+            stereo_fs << "cameraMatrixR" <<                stereo_params_struct.cameraM2;
+            stereo_fs << "DistorsionCoeffsL" <<            stereo_params_struct.distCoeffs1;
+            stereo_fs << "DistorsionCoeffsR" <<            stereo_params_struct.distCoeffs2;
+            stereo_fs << "RotationMatrix" <<               stereo_params_struct.R;
+            stereo_fs << "TranslationMatrix" <<            stereo_params_struct.T;
+            stereo_fs << "EssentialMatrix" <<              stereo_params_struct.E;
+            stereo_fs << "FundamentalMatrix" <<            stereo_params_struct.F;
+            //stereo_fs << "VectorOfRotationVectors" <<     >> stereo_params_struct.rvecs;
+            //stereo_fs << "VectorOfTranslationVectors" <<  >> stereo_params_struct.tvecs;
+            stereo_fs << "PerViewErrors" <<                stereo_params_struct.perViewErrors;
+            stereo_fs << "RMS" <<                          stereo_params_struct.RMS;
+        }
         stereo_fs.release();
     } else {
         std::cerr << "Ошибка при открытии файла " << filename << "." << std::endl;
     }
 }
+
+/// Функция чтения параметров калибровки двух камер из файлов
+stereo_output_par_t read_stereo_params(std::string filename){
+
+    stereo_output_par_t stereo_params_struct = {};
+
+    cv::FileStorage stereo_fs;
+    if (stereo_fs.open(filename, cv::FileStorage::READ)){
+        if (stereo_fs.isOpened()){
+            if (filename.find(".xml") != std::string::npos){
+                stereo_fs["M1"]         >> stereo_params_struct.cameraM1;
+                stereo_fs["M2"]         >> stereo_params_struct.cameraM2;
+                stereo_fs["D1"]         >> stereo_params_struct.distCoeffs1;
+                stereo_fs["D2"]         >> stereo_params_struct.distCoeffs2;
+                stereo_fs["R"]          >> stereo_params_struct.R;
+                stereo_fs["T"]          >> stereo_params_struct.T;
+                stereo_fs["E"]          >> stereo_params_struct.E;
+                stereo_fs["F"]          >> stereo_params_struct.F;
+                //stereo_fs["R1"]    >> stereo_params_struct.rvecs;
+                //stereo_fs["VectorOfTranslationVectors"] >> stereo_params_struct.tvecs;
+                //stereo_fs["PerViewErrors"]              >> stereo_params_struct.perViewErrors;
+                stereo_fs["rmsStereo"]  >> stereo_params_struct.RMS;
+            } else if(filename.find(".yml") != std::string::npos) {
+                stereo_fs["cameraMatrixL"]              >> stereo_params_struct.cameraM1;
+                stereo_fs["cameraMatrixR"]              >> stereo_params_struct.cameraM2;
+                stereo_fs["DistorsionCoeffsL"]          >> stereo_params_struct.distCoeffs1;
+                stereo_fs["DistorsionCoeffsR"]          >> stereo_params_struct.distCoeffs2;
+                stereo_fs["RotationMatrix"]             >> stereo_params_struct.R;
+                stereo_fs["TranslationMatrix"]          >> stereo_params_struct.T;
+                stereo_fs["EssentialMatrix"]            >> stereo_params_struct.E;
+                stereo_fs["FundamentalMatrix"]          >> stereo_params_struct.F;
+                //stereo_fs["VectorOfRotationVectors"]    >> stereo_params_struct.rvecs;
+                //stereo_fs["VectorOfTranslationVectors"] >> stereo_params_struct.tvecs;
+                stereo_fs["PerViewErrors"]              >> stereo_params_struct.perViewErrors;
+                stereo_fs["RMS"]                        >> stereo_params_struct.RMS;
+            }
+            stereo_fs.release();
+        } else {
+            std::cerr << "Ошибка при открытии файла " << filename << std::endl;
+        }
+    }
+    return stereo_params_struct;
+}
+

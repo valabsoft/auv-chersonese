@@ -41,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     QFont fontLabel("GOST type A", 8, QFont::Bold);
     ui->lbFPS->setStyleSheet("background-color : black; color : silver;");
     ui->lbFPS->setFont(fontLabel);
+    ui->lbFPS->setVisible(false);
 
     _videoTimer = new QTimer(this);
     connect(_videoTimer, &QTimer::timeout, this, &MainWindow::onVideoTimer);
@@ -48,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     _controlTimer = new QTimer(this);
     connect(_controlTimer, &QTimer::timeout, this, &MainWindow::onControlTimer);
 
-    QObject::connect(this, SIGNAL(updateCntValue(QString)), ui->lbFPS, SLOT(setText(QString)));
+    // QObject::connect(this, SIGNAL(updateCntValue(QString)), ui->lbFPS, SLOT(setText(QString)));
 
     // Работа с джойстиком
     _jsController = new SevROVXboxController();
@@ -436,6 +437,7 @@ void MainWindow::onVideoTimer()
     // double fps;
     // fps = _webCamO->get(cv::CAP_PROP_FPS);
 
+    // Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
     //Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
     //******************************************************
     int nRet = MV_OK;
@@ -1804,7 +1806,7 @@ void MainWindow::onStartStopButtonClicked()
     // Меняем состояние флага
     _sevROV.isConnected = !_sevROV.isConnected;
     _cnt = 0; // Сбрасываем счетчик
-    Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
+    // Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
 
     // Меняем иконку на кнопке
     if (_sevROV.isConnected)
