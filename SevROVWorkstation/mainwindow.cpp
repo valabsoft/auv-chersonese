@@ -116,6 +116,7 @@ MainWindow::~MainWindow()
         delete _controlTimer;
 
     // Веб-камеры
+
     if (_webCamO->isOpened())
         _webCamO->release();
     if (_webCamL->isOpened())
@@ -429,17 +430,158 @@ void MainWindow::onVideoTimer()
     cv::Mat resizedMatL;
     cv::Mat resizedMatR;
 
+    int nRet = MV_OK;
+    void* handle = NULL;
+
     // VA (23-05-2024) Не работает...
     // double fps;
     // fps = _webCamO->get(cv::CAP_PROP_FPS);
 
     Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
 
+
+    //******************************************************
+    if (MV_OK != nRet)
+    {
+        printf("Initialize SDK fail! nRet [0x%x]\n", nRet);
+    }
+
+    // Enumerate devices.
+    MV_CC_DEVICE_INFO_LIST stDeviceList;
+    memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+    nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
+    if (MV_OK != nRet)
+    {
+        printf("Enum Devices fail! nRet [0x%x]\n", nRet);
+    }
+
+
+    unsigned int nIndex = 0;
+
+    MVCC_ENUMVALUE stEnumValue = {0};
+    MVCC_ENUMENTRY stEnumEntry = {0};
+    MV_FRAME_OUT stOutFrame = {0};
+    unsigned char* pData = NULL;
+    MV_CC_DEVICE_INFO* pDeviceInfo;
+
+
+    //******************************************************
+
     switch (_sevROV.cameraView)
     {
     case CameraView::MONO:
+/*
+        if (stDeviceList.nDeviceNum > 0)
+        {
+            for (unsigned int i = 0; i < stDeviceList.nDeviceNum; i++)
+            {
+                //printf("[device %d]:\n", i);
+                pDeviceInfo = stDeviceList.pDeviceInfo[i];
+                if (NULL == pDeviceInfo)
+                {
+                    break;
+                }
 
-        _webCamO->read(_sourceMatO);
+                if (pDeviceInfo[i].SpecialInfo.stGigEInfo.chUserDefinedName == "LCamera")
+                {
+                    nIndex = 0;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            printf("Find No Devices!\n");
+        }
+*/
+        //_webCamO->read(_sourceMatO);  //тут должно записывать кадр!
+        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[nIndex]);
+        if (MV_OK != nRet)
+        {
+            printf("Create Handle fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Open device.
+        nRet = MV_CC_OpenDevice(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Open Device fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Detect network optimal package size (only works for GigE cameras).
+        if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+        {
+            int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
+            if (nPacketSize > 0)
+            {
+                nRet = MV_CC_SetIntValue(handle,"GevSCPSPacketSize",nPacketSize);
+                if(nRet != MV_OK)
+                {
+                    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                }
+            }
+            else
+            {
+                printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            }
+        }
+        // Get the symbol of the specified value of the enum type node.
+
+        nRet = MV_CC_GetEnumValue(handle, "PixelFormat", &stEnumValue);
+        if (MV_OK != nRet)
+        {
+            printf("Get PixelFormat's value fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        stEnumEntry.nValue = stEnumValue.nCurValue;
+        nRet = MV_CC_GetEnumEntrySymbolic(handle, "PixelFormat", &stEnumEntry);
+        if (MV_OK != nRet)
+        {
+            printf("Get PixelFormat's symbol fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+        else
+        {
+            printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        }
+
+        // Start image acquisition.
+        nRet = MV_CC_StartGrabbing(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Start Grabbing fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        nRet = MV_CC_GetImageBuffer(handle, &stOutFrame, 1000);
+        if (nRet == MV_OK)
+        {
+            printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
+                   stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
+
+            //pData = stOutFrame.pBufAddr;
+            //std::cout << stOutFrame.pBufAddr << std::endl;
+            //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
+            _sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
+            //cv::imwrite("D:/Image_Mat.png", srcImage);
+
+
+            nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
+            if(nRet != MV_OK)
+            {
+                printf("Free Image Buffer fail! nRet [0x%x]\n", nRet);
+            }
+        }
+        else
+        {
+            printf("Get Image fail! nRet [0x%x]\n", nRet);
+        }
+
+
+        //******************************************************
 
         if (_sourceMatO.empty())
             return;
@@ -1040,11 +1182,133 @@ void MainWindow::onVideoTimer()
         //                  QImage::Format_RGB888);
 
         ui->lbCamera->setPixmap(QPixmap::fromImage(_imgCamO));
+
+        //******************************************************
+        nRet = MV_CC_StopGrabbing(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Stop Grabbing fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Close device.
+        nRet = MV_CC_CloseDevice(handle);
+        if (MV_OK != nRet)
+        {
+            printf("ClosDevice fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Destroy handle.
+        nRet = MV_CC_DestroyHandle(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Destroy Handle fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+        handle = NULL;
+
+        if (handle != NULL)
+        {
+            MV_CC_DestroyHandle(handle);
+            handle = NULL;
+        }
+        //******************************************************
+
         break;
     case CameraView::STEREO:
         ///////////////////////////////////////////////////////////////////////
         // Left Camera
-        _webCamL->read(_sourceMatL);
+
+
+
+        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[0]);
+        if (MV_OK != nRet)
+        {
+            printf("Create Handle fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Open device.
+        nRet = MV_CC_OpenDevice(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Open Device fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Detect network optimal package size (only works for GigE cameras).
+        if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+        {
+            int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
+            if (nPacketSize > 0)
+            {
+                nRet = MV_CC_SetIntValue(handle,"GevSCPSPacketSize",nPacketSize);
+                if(nRet != MV_OK)
+                {
+                    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                }
+            }
+            else
+            {
+                printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            }
+        }
+        // Get the symbol of the specified value of the enum type node.
+
+        nRet = MV_CC_GetEnumValue(handle, "PixelFormat", &stEnumValue);
+        if (MV_OK != nRet)
+        {
+            printf("Get PixelFormat's value fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        stEnumEntry.nValue = stEnumValue.nCurValue;
+        nRet = MV_CC_GetEnumEntrySymbolic(handle, "PixelFormat", &stEnumEntry);
+        if (MV_OK != nRet)
+        {
+            printf("Get PixelFormat's symbol fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+        else
+        {
+            printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        }
+
+        // Start image acquisition.
+        nRet = MV_CC_StartGrabbing(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Start Grabbing fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        nRet = MV_CC_GetImageBuffer(handle, &stOutFrame, 1000);
+        if (nRet == MV_OK)
+        {
+            printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
+                   stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
+
+            //pData = stOutFrame.pBufAddr;
+            //std::cout << stOutFrame.pBufAddr << std::endl;
+            //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
+            _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
+            //cv::imwrite("D:/Image_Mat.png", srcImage);
+
+
+            nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
+            if(nRet != MV_OK)
+            {
+                printf("Free Image Buffer fail! nRet [0x%x]\n", nRet);
+            }
+        }
+        else
+        {
+            printf("Get Image fail! nRet [0x%x]\n", nRet);
+        }
+
+
+        //_webCamL->read(_sourceMatL);
 
         if (_sourceMatL.empty())
             return;
@@ -1061,9 +1325,129 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraL->setPixmap(QPixmap::fromImage(_imgCamL));
 
+        //******************************************************
+        nRet = MV_CC_StopGrabbing(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Stop Grabbing fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Close device.
+        nRet = MV_CC_CloseDevice(handle);
+        if (MV_OK != nRet)
+        {
+            printf("ClosDevice fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Destroy handle.
+        nRet = MV_CC_DestroyHandle(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Destroy Handle fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+        handle = NULL;
+
+        if (handle != NULL)
+        {
+            MV_CC_DestroyHandle(handle);
+            handle = NULL;
+        }
+        //******************************************************
+
+
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
-        _webCamR->read(_sourceMatR);
+
+        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[1]);
+        if (MV_OK != nRet)
+        {
+            printf("Create Handle fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Open device.
+        nRet = MV_CC_OpenDevice(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Open Device fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Detect network optimal package size (only works for GigE cameras).
+        if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+        {
+            int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
+            if (nPacketSize > 0)
+            {
+                nRet = MV_CC_SetIntValue(handle,"GevSCPSPacketSize",nPacketSize);
+                if(nRet != MV_OK)
+                {
+                    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                }
+            }
+            else
+            {
+                printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            }
+        }
+        // Get the symbol of the specified value of the enum type node.
+
+        nRet = MV_CC_GetEnumValue(handle, "PixelFormat", &stEnumValue);
+        if (MV_OK != nRet)
+        {
+            printf("Get PixelFormat's value fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        stEnumEntry.nValue = stEnumValue.nCurValue;
+        nRet = MV_CC_GetEnumEntrySymbolic(handle, "PixelFormat", &stEnumEntry);
+        if (MV_OK != nRet)
+        {
+            printf("Get PixelFormat's symbol fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+        else
+        {
+            printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        }
+
+        // Start image acquisition.
+        nRet = MV_CC_StartGrabbing(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Start Grabbing fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        nRet = MV_CC_GetImageBuffer(handle, &stOutFrame, 1000);
+        if (nRet == MV_OK)
+        {
+            printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
+                   stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
+
+            //pData = stOutFrame.pBufAddr;
+            //std::cout << stOutFrame.pBufAddr << std::endl;
+            //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
+            _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
+            //cv::imwrite("D:/Image_Mat.png", srcImage);
+
+
+            nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
+            if(nRet != MV_OK)
+            {
+                printf("Free Image Buffer fail! nRet [0x%x]\n", nRet);
+            }
+        }
+        else
+        {
+            printf("Get Image fail! nRet [0x%x]\n", nRet);
+        }
+
+
+        //_webCamR->read(_sourceMatR);
 
         if (_sourceMatR.empty())
             return;
@@ -1079,6 +1463,40 @@ void MainWindow::onVideoTimer()
                           QImage::Format_RGB888);
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
+
+        //******************************************************
+        nRet = MV_CC_StopGrabbing(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Stop Grabbing fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Close device.
+        nRet = MV_CC_CloseDevice(handle);
+        if (MV_OK != nRet)
+        {
+            printf("ClosDevice fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+
+        // Destroy handle.
+        nRet = MV_CC_DestroyHandle(handle);
+        if (MV_OK != nRet)
+        {
+            printf("Destroy Handle fail! nRet [0x%x]\n", nRet);
+            break;
+        }
+        handle = NULL;
+
+        if (handle != NULL)
+        {
+            MV_CC_DestroyHandle(handle);
+            handle = NULL;
+        }
+        //******************************************************
+
+
         break;
     default:
         break;

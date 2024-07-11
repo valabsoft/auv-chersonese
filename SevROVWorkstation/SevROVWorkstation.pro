@@ -89,3 +89,15 @@ unix
     LIBS += -L/usr/local/lib -lSDL2
     INCLUDEPATH += /usr/include/SDL2
 }
+
+# MVS Library
+win32 {
+    LIBS += -LD:/MVS/Development/Libraries/win64 -lMvCameraControl
+    INCLUDEPATH += D:/MVS/Development/Includes
+}
+unix
+{
+
+}
+
+

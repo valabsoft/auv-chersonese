@@ -23,6 +23,8 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include "MvCameraControl.h"
+
 #include "pointcloud/three_dimensional_proc.h"
 
 QT_BEGIN_NAMESPACE
