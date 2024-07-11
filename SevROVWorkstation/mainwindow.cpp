@@ -459,7 +459,7 @@ void MainWindow::onVideoTimer()
     }
 
 
-    unsigned int nIndex = 0;
+    //unsigned int nIndex = 0;
 
     MVCC_ENUMVALUE stEnumValue = {0};
     MVCC_ENUMENTRY stEnumEntry = {0};
@@ -498,7 +498,7 @@ void MainWindow::onVideoTimer()
         }
 */
         //_webCamO->read(_sourceMatO);  //тут должно записывать кадр!
-        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[nIndex]);
+        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[_appSet.CAMERA_MONO_ID]);
         if (MV_OK != nRet)
         {
             printf("Create Handle fail! nRet [0x%x]\n", nRet);
@@ -514,7 +514,7 @@ void MainWindow::onVideoTimer()
         }
 
         // Detect network optimal package size (only works for GigE cameras).
-        if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+        if (stDeviceList.pDeviceInfo[_appSet.CAMERA_MONO_ID]->nTLayerType == MV_GIGE_DEVICE)
         {
             int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
             if (nPacketSize > 0)
@@ -1222,7 +1222,7 @@ void MainWindow::onVideoTimer()
 
 
 
-        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[0]);
+        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]);
         if (MV_OK != nRet)
         {
             printf("Create Handle fail! nRet [0x%x]\n", nRet);
@@ -1238,7 +1238,7 @@ void MainWindow::onVideoTimer()
         }
 
         // Detect network optimal package size (only works for GigE cameras).
-        if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+        if (stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]->nTLayerType == MV_GIGE_DEVICE)
         {
             int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
             if (nPacketSize > 0)
@@ -1357,7 +1357,7 @@ void MainWindow::onVideoTimer()
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
 
-        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[1]);
+        nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[_appSet.CAMERA_RIGHT_ID]);
         if (MV_OK != nRet)
         {
             printf("Create Handle fail! nRet [0x%x]\n", nRet);
@@ -1373,7 +1373,7 @@ void MainWindow::onVideoTimer()
         }
 
         // Detect network optimal package size (only works for GigE cameras).
-        if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+        if (stDeviceList.pDeviceInfo[_appSet.CAMERA_RIGHT_ID]->nTLayerType == MV_GIGE_DEVICE)
         {
             int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
             if (nPacketSize > 0)
@@ -1919,7 +1919,7 @@ void MainWindow::onScreenshotButtonClicked()
     }
 
 
-    unsigned int nIndex = 0;
+    //unsigned int nIndex = 0;
 
     MVCC_ENUMVALUE stEnumValue = {0};
     MVCC_ENUMENTRY stEnumEntry = {0};
@@ -1929,7 +1929,7 @@ void MainWindow::onScreenshotButtonClicked()
 
     //******************************************************
 
-    nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[0]);
+    nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[_appSet.CAMERA_MONO_ID]);
     if (MV_OK != nRet)
     {
         printf("Create Handle fail! nRet [0x%x]\n", nRet);
@@ -1945,7 +1945,7 @@ void MainWindow::onScreenshotButtonClicked()
     }
 
     // Detect network optimal package size (only works for GigE cameras).
-    if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_MONO_ID]->nTLayerType == MV_GIGE_DEVICE)
     {
         int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
         if (nPacketSize > 0)
@@ -2064,7 +2064,7 @@ void MainWindow::onScreenshotButtonClicked()
 
     //****************************************************** L
 
-    nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[0]);
+    nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]);
     if (MV_OK != nRet)
     {
         printf("Create Handle fail! nRet [0x%x]\n", nRet);
@@ -2080,7 +2080,7 @@ void MainWindow::onScreenshotButtonClicked()
     }
 
     // Detect network optimal package size (only works for GigE cameras).
-    if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]->nTLayerType == MV_GIGE_DEVICE)
     {
         int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
         if (nPacketSize > 0)
@@ -2181,7 +2181,7 @@ void MainWindow::onScreenshotButtonClicked()
 
     //****************************************************** R
 
-    nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[1]);
+    nRet = MV_CC_CreateHandle(&handle, stDeviceList.pDeviceInfo[_appSet.CAMERA_RIGHT_ID]);
     if (MV_OK != nRet)
     {
         printf("Create Handle fail! nRet [0x%x]\n", nRet);
@@ -2197,7 +2197,7 @@ void MainWindow::onScreenshotButtonClicked()
     }
 
     // Detect network optimal package size (only works for GigE cameras).
-    if (stDeviceList.pDeviceInfo[nIndex]->nTLayerType == MV_GIGE_DEVICE)
+    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_RIGHT_ID]->nTLayerType == MV_GIGE_DEVICE)
     {
         int nPacketSize = MV_CC_GetOptimalPacketSize(handle);
         if (nPacketSize > 0)
