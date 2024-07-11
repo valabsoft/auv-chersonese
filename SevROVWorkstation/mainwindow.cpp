@@ -563,14 +563,8 @@ void MainWindow::onVideoTimer()
             printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
                    stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
 
-            //pData = stOutFrame.pBufAddr;
-            //std::cout << stOutFrame.pBufAddr << std::endl;
-            //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
-            _sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
-            //_sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, CV_8UC1, stOutFrame.pBufAddr);
-            //_sourceMatO = cv::Mat(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT, CV_8UC1, stOutFrame.pBufAddr);
-            //cv::imwrite("D:/Image_Mat.png", srcImage);
-
+            _sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr);
+            cv::cvtColor(_sourceMatO, _sourceMatO, cv::COLOR_BayerRG2RGB);
 
             nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
             if(nRet != MV_OK)
@@ -1293,12 +1287,8 @@ void MainWindow::onVideoTimer()
             printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
                    stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
 
-            //pData = stOutFrame.pBufAddr;
-            //std::cout << stOutFrame.pBufAddr << std::endl;
-            //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
-            _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
-            //cv::imwrite("D:/Image_Mat.png", srcImage);
-
+            _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr);
+            cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
             nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
             if(nRet != MV_OK)
@@ -1432,12 +1422,8 @@ void MainWindow::onVideoTimer()
             printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
                    stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
 
-            //pData = stOutFrame.pBufAddr;
-            //std::cout << stOutFrame.pBufAddr << std::endl;
-            //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
-            _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
-            //cv::imwrite("D:/Image_Mat.png", srcImage);
-
+            _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr);
+            cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
 
             nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
             if(nRet != MV_OK)
@@ -2008,14 +1994,9 @@ void MainWindow::onScreenshotButtonClicked()
         printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
                stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
 
-        //pData = stOutFrame.pBufAddr;
-        //std::cout << stOutFrame.pBufAddr << std::endl;
-        //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
-        image = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
-        //_sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, CV_8UC1, stOutFrame.pBufAddr);
-        //_sourceMatO = cv::Mat(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT, CV_8UC1, stOutFrame.pBufAddr);
-        //cv::imwrite("D:/Image_Mat.png", srcImage);
 
+        image = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr);
+        cv::cvtColor(image, image, cv::COLOR_BayerRG2RGB);
 
         nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
         if(nRet != MV_OK)
@@ -2148,13 +2129,9 @@ void MainWindow::onScreenshotButtonClicked()
         printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
                stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
 
-        //pData = stOutFrame.pBufAddr;
-        //std::cout << stOutFrame.pBufAddr << std::endl;
-        //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
-        imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
-        //_sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, CV_8UC1, stOutFrame.pBufAddr);
-        //_sourceMatO = cv::Mat(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT, CV_8UC1, stOutFrame.pBufAddr);
-        //cv::imwrite("D:/Image_Mat.png", srcImage);
+
+        imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr);
+        cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
 
 
         nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
@@ -2168,6 +2145,37 @@ void MainWindow::onScreenshotButtonClicked()
         printf("Get Image fail! nRet [0x%x]\n", nRet);
     }
 
+    //******************************************************
+    nRet = MV_CC_StopGrabbing(handle);
+    if (MV_OK != nRet)
+    {
+        printf("Stop Grabbing fail! nRet [0x%x]\n", nRet);
+        //break;
+    }
+
+    // Close device.
+    nRet = MV_CC_CloseDevice(handle);
+    if (MV_OK != nRet)
+    {
+        printf("ClosDevice fail! nRet [0x%x]\n", nRet);
+        //break;
+    }
+
+    // Destroy handle.
+    nRet = MV_CC_DestroyHandle(handle);
+    if (MV_OK != nRet)
+    {
+        printf("Destroy Handle fail! nRet [0x%x]\n", nRet);
+        //break;
+    }
+    handle = NULL;
+
+    if (handle != NULL)
+    {
+        MV_CC_DestroyHandle(handle);
+        handle = NULL;
+    }
+    //******************************************************
 
     //****************************************************** R
 
@@ -2238,13 +2246,8 @@ void MainWindow::onScreenshotButtonClicked()
         printf("Get Image Buffer: Width[%d], Height[%d], FrameNum[%d]\n",
                stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum);
 
-        //pData = stOutFrame.pBufAddr;
-        //std::cout << stOutFrame.pBufAddr << std::endl;
-        //cv::cvtColor(nData, pData, cv::COLOR_GRAY2RGB);
-        imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC1, stOutFrame.pBufAddr);
-        //_sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, CV_8UC1, stOutFrame.pBufAddr);
-        //_sourceMatO = cv::Mat(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT, CV_8UC1, stOutFrame.pBufAddr);
-        //cv::imwrite("D:/Image_Mat.png", srcImage);
+        imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr);
+        cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
 
 
         nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
@@ -2261,10 +2264,11 @@ void MainWindow::onScreenshotButtonClicked()
     //_webCamL->read(imageL);
     //_webCamR->read(imageR);
 
-    cv::imshow("Left" ,imageL);
-    cv::waitKey(0);
-    cv::imshow("Right" ,imageR);
-    cv::waitKey(0);
+    //cv::imshow("Left" ,imageL);
+    //cv::waitKey(0);
+    //cv::imshow("Right" ,imageR);
+    //cv::waitKey(0);
+
 
     std::string file_calibration_parameters =
         (QCoreApplication::applicationDirPath() + "/camera_calibration_parameters.yml").toStdString();
