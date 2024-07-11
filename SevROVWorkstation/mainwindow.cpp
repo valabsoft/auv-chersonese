@@ -437,7 +437,7 @@ void MainWindow::onVideoTimer()
     // double fps;
     // fps = _webCamO->get(cv::CAP_PROP_FPS);
 
-    Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
+    //Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
 
 
     //******************************************************

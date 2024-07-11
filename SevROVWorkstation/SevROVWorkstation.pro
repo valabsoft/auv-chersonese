@@ -92,8 +92,8 @@ unix
 
 # MVS Library
 win32 {
-    LIBS += -LD:/MVS/Development/Libraries/win64 -lMvCameraControl
-    INCLUDEPATH += D:/MVS/Development/Includes
+    LIBS += -LC:/MVS/Development/Libraries/win64 -lMvCameraControl
+    INCLUDEPATH += C:/MVS/Development/Includes
 }
 unix
 {
