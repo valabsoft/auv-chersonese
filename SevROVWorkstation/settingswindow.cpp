@@ -153,13 +153,13 @@ void SettingsWindow::saveSettings()
     settings.setValue("/depthKd", ui->sbDepthKd->value());
     settings.setValue("/depthStabilization", ui->cbDepthStab->isChecked());
 
-    settings.value("/powerLimit", ui->sbPowerLimit->value());
+    settings.setValue("/powerLimit", ui->sbPowerLimit->value());
 
     settings.endGroup();
 
     settings.beginGroup("/ROV");
-    settings.value("/IP", ui->leIP->text());
-    settings.value("/Port", ui->lePort->text());
+    settings.setValue("/IP", ui->leIP->text());
+    settings.setValue("/Port", ui->lePort->text());
     settings.endGroup();
 }
 
