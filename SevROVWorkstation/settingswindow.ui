@@ -105,6 +105,16 @@
     </item>
     <item>
      <property name="text">
+      <string>1440 x 960</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>1440 x 1080</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
       <string>1920 x 1080</string>
      </property>
     </item>
