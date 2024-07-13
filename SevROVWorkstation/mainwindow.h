@@ -54,7 +54,7 @@ private:
     // Окно настроек
     SettingsWindow *_settingsWindow;
 
-    long _cnt; // Счетчик вызовов
+    // long _cnt; // Счетчик вызовов
 
     // Joystick related
     QTimer *_controlTimer;
@@ -124,7 +124,7 @@ private:
 
     // Функции для инициализации модуля Hikrobot
     int MV_SDK_Initialization();
-    void MV_SDK_Finalization();
+    int MV_SDK_Finalization();
 
 public:
     MainWindow(QWidget *parent = nullptr);
