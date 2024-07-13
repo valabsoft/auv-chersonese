@@ -142,6 +142,127 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+int MainWindow::MV_SDK_Initialization()
+{
+    handleL = NULL;
+    handleR = NULL;
+
+    // Initialize SDK
+    int nRet = MV_OK;
+    if (MV_OK != nRet)
+        return 1;
+
+    // Enumerate devices
+    MV_CC_DEVICE_INFO_LIST stDeviceList;
+    memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
+    nRet = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &stDeviceList);
+    if (MV_OK != nRet)
+        return 2;
+
+    MVCC_ENUMVALUE stEnumValue = {0};
+    MVCC_ENUMENTRY stEnumEntry = {0};
+    // MV_FRAME_OUT stOutFrame = {0};
+    // unsigned char* pData = NULL;
+    // MV_CC_DEVICE_INFO* pDeviceInfo;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Left Camera Initialization
+    ///////////////////////////////////////////////////////////////////////////
+
+    nRet = MV_CC_CreateHandle(&handleL, stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]);
+    if (MV_OK != nRet)
+        return 3;
+
+    // Left camera open device.
+    nRet = MV_CC_OpenDevice(handleL);
+    if (MV_OK != nRet)
+        return 4;
+
+    // Detect network optimal package size (only works for GigE cameras).
+    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]->nTLayerType == MV_GIGE_DEVICE)
+    {
+        int nPacketSize = MV_CC_GetOptimalPacketSize(handleL);
+        if (nPacketSize > 0)
+        {
+            nRet = MV_CC_SetIntValue(handleL, "GevSCPSPacketSize", nPacketSize);
+            //if (nRet != MV_OK)
+            //{
+            //    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+            //}
+        }
+        //else
+        //{
+        //    printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+        //}
+    }
+
+    // Get the symbol of the specified value of the enum type node.
+    nRet = MV_CC_GetEnumValue(handleL, "PixelFormat", &stEnumValue);
+    if (MV_OK != nRet)
+        return 5;
+
+    stEnumEntry.nValue = stEnumValue.nCurValue;
+    nRet = MV_CC_GetEnumEntrySymbolic(handleL, "PixelFormat", &stEnumEntry);
+    if (MV_OK != nRet)
+        return 6;
+    //else
+    //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+    ///////////////////////////////////////////////////////////////////////////
+
+    if (stDeviceList.nDeviceNum < 1)
+        return -1;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Right Camera Initialization
+    ///////////////////////////////////////////////////////////////////////////
+
+    nRet = MV_CC_CreateHandle(&handleR, stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]);
+    if (MV_OK != nRet)
+        return 3;
+
+    // Left camera open device.
+    nRet = MV_CC_OpenDevice(handleR);
+    if (MV_OK != nRet)
+        return 4;
+
+    // Detect network optimal package size (only works for GigE cameras).
+    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]->nTLayerType == MV_GIGE_DEVICE)
+    {
+        int nPacketSize = MV_CC_GetOptimalPacketSize(handleR);
+        if (nPacketSize > 0)
+        {
+            nRet = MV_CC_SetIntValue(handleR, "GevSCPSPacketSize", nPacketSize);
+            //if (nRet != MV_OK)
+            //{
+            //    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+            //}
+        }
+        //else
+        //{
+        //    printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+        //}
+    }
+
+    // Get the symbol of the specified value of the enum type node.
+    nRet = MV_CC_GetEnumValue(handleR, "PixelFormat", &stEnumValue);
+    if (MV_OK != nRet)
+        return 5;
+
+    stEnumEntry.nValue = stEnumValue.nCurValue;
+    nRet = MV_CC_GetEnumEntrySymbolic(handleR, "PixelFormat", &stEnumEntry);
+    if (MV_OK != nRet)
+        return 6;
+    //else
+    //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+    ///////////////////////////////////////////////////////////////////////////
+
+    return 0;
+}
+void MV_SDK_Finalization()
+{
+    ;
+}
+
 void MainWindow::setupIcons()
 {
     // Иконка главного окна

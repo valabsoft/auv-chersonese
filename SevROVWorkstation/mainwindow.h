@@ -122,6 +122,10 @@ private:
     void OnAxisLTrigger(short value);
     void OnAxisRTrigger(short value);
 
+    // Функции для инициализации модуля Hikrobot
+    int MV_SDK_Initialization();
+    void MV_SDK_Finalization();
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -139,6 +143,9 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    // Хендлы камер Hikrobot
+    void* handleL = NULL;
+    void* handleR = NULL;
 
 Q_SIGNALS:
     void updateCntValue(QString fps);
