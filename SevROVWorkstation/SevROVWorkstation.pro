@@ -89,3 +89,15 @@ unix
     LIBS += -L/usr/local/lib -lSDL2
     INCLUDEPATH += /usr/include/SDL2
 }
+
+# MVS Library
+win32 {
+    LIBS += -LC:/MVS/Development/Libraries/win64 -lMvCameraControl
+    INCLUDEPATH += C:/MVS/Development/Includes
+}
+unix
+{
+
+}
+
+QMAKE_CXXFLAGS_WARN_ON += -Wno-unknown-pragmas

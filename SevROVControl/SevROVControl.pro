@@ -63,5 +63,15 @@ unix {
     LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_features2d -lopencv_calib3d -lopencv_videoio -lopencv_imgproc
 }
 
+# MVS Library
+win32 {
+    LIBS += -LC:/MVS/Development/Libraries/win64 -lMvCameraControl
+    INCLUDEPATH += C:/MVS/Development/Includes
+}
+unix
+{
+
+}
+
 RESOURCES += \
     resource.qrc

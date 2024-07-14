@@ -8,9 +8,10 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
     cv::Mat Q, R1, R2, P1, P2;
 
     // Перевод изображений из цветного формата в монохромный
-    cv::Mat grayImageLeft, grayImageRight;
-    cv::cvtColor(imageL, grayImageLeft, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(imageR, grayImageRight, cv::COLOR_BGR2GRAY);
+    cv::Mat grayImageLeft = imageL; 
+    cv::Mat grayImageRight = imageR;
+    //cv::cvtColor(imageL, grayImageLeft, cv::COLOR_BGR2GRAY);
+    //cv::cvtColor(imageR, grayImageRight, cv::COLOR_BGR2GRAY);
 
     // Ректификация и устранение искажений
     cv::stereoRectify(calib_par.cameraM1, calib_par.distCoeffs1, calib_par.cameraM2, calib_par.distCoeffs2,
@@ -56,9 +57,11 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
     //std::vector<std::vector<double>> xyz;         // 3D координаты точки в пространстве
     //std::vector<std::vector<int>> rgb;            // цвет 3D точки
 
+
     std::vector<double> limit_outlierArea {-8.0e3, -8.0e3, 250, 8.0e3, 8.0e3, 15.20e3};
 
     int valid_points = 0;
+
 
     for(int v = 0; v < points23D.rows; v++)
     {
@@ -166,7 +169,7 @@ void write_coords_file(std::vector<std::vector<double>> points23D,std::string fi
     double x,y,z;
 
     if (xyz_fs.is_open()) {
-        for(int i = 0; i < points23D.size(); i++)
+        for(int i = 0; i < (int)points23D.size(); i++)
         {
 
             v = points23D[i][0];

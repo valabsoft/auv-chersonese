@@ -21,7 +21,10 @@
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
+#include "MvCameraControl.h"
 
 #include "pointcloud/three_dimensional_proc.h"
 
@@ -51,7 +54,7 @@ private:
     // Окно настроек
     SettingsWindow *_settingsWindow;
 
-    long _cnt; // Счетчик вызовов
+    // long _cnt; // Счетчик вызовов
 
     // Joystick related
     QTimer *_controlTimer;
@@ -60,22 +63,21 @@ private:
     // OpenCV related
     QTimer *_videoTimer;
 
-    // VA (22-05-2024) TODO: Оптимизировать кол-во переменных
-    cv::VideoCapture *_webCamO; // Моно-камера
     cv::VideoCapture *_webCamL; // Стерео-камера (левая)
     cv::VideoCapture *_webCamR; // Стерео-камера (правая)
 
-    cv::Mat _sourceMatO;
     cv::Mat _sourceMatL;
     cv::Mat _sourceMatR;
 
-    cv::Mat _destinationMatO;
     cv::Mat _destinationMatL;
     cv::Mat _destinationMatR;
 
-    QImage _imgCamO;
     QImage _imgCamL;
     QImage _imgCamR;
+    ///////////////////////////////////////////////////////////////////////////
+    // IP camera related
+    void* handleL = NULL;
+    void* handleR = NULL;
     ///////////////////////////////////////////////////////////////////////////
 
     void setupIcons();
@@ -118,6 +120,10 @@ private:
     void OnAxisRStickY(short value);
     void OnAxisLTrigger(short value);
     void OnAxisRTrigger(short value);
+
+    // Функции для инициализации модуля Hikrobot
+    int MV_SDK_Initialization();
+    int MV_SDK_Finalization();
 
 public:
     MainWindow(QWidget *parent = nullptr);

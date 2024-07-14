@@ -18,11 +18,11 @@ void ApplicationSettings::load()
     CAMERA_HEIGHT = settings.value("/Height", "480").toInt();
     CAMERA_FPS = settings.value("/FPS", "30").toInt();
 
-    CAMERA_MONO_ID = settings.value("/MonoID", "0").toInt();
     CAMERA_LEFT_ID = settings.value("/LeftID", "1").toInt();
     CAMERA_RIGHT_ID = settings.value("/RightID", "2").toInt();
 
     VIDEO_TIMER_INTERVAL = settings.value("/TimerInterval", "50").toInt();
+    CAMERA_TYPE = settings.value("/CameraTypeID", 0).toInt();
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

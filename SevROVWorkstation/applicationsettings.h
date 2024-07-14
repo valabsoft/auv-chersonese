@@ -7,11 +7,12 @@
 #include <QApplication>
 
 #include "datastructure.h"
+#include "enumclasses.h"
 
 class ApplicationSettings
 {
 private:
-    const std::string APP_VERSION = "1.2.1";
+    const std::string APP_VERSION = "1.3.1";
     QString _settingsFileName;
 public:
     ApplicationSettings();
@@ -33,15 +34,16 @@ public:
 
     int VIDEO_TIMER_INTERVAL = 50;
 
-    int CAMERA_MONO_ID = 0;
     int CAMERA_LEFT_ID = 1;
-    int CAMERA_RIGHT_ID = 2;
+    int CAMERA_RIGHT_ID = 1;
 
     int JOYSTICK_ID = 0;
     int JOYSTICK_TIMER_INTERVAL = 100;
 
     QString ROV_IP;
     int ROV_PORT;
+
+    int CAMERA_TYPE = CameraType::IP;
 };
 
 #endif // APPLICATIONSETTINGS_H

@@ -15,7 +15,7 @@ void calibrate_with_mono(std::vector<cv::String> imagesL,std::vector<cv::String>
 
     // Определение координат мировых 3д точек
     std::vector<cv::Point3f> objp;
-    for(int i{0}; i<checkerboard_r; i++)
+    for(int i{0}; i < checkerboard_r; i++)
     {
         for(int j{0}; j<checkerboard_c; j++)
             objp.push_back(cv::Point3f((float)j*square_size,(float)i*square_size,0.f));
@@ -30,7 +30,7 @@ void calibrate_with_mono(std::vector<cv::String> imagesL,std::vector<cv::String>
 
     bool successL, successR;
 
-    for(int i{0}; i<imagesL.size(); i++)
+    for(int i{0}; i < (int)imagesL.size(); i++)
     {
         frameL = cv::imread(imagesL[i]);
         cv::cvtColor(frameL,grayL,cv::COLOR_BGR2GRAY);
@@ -116,7 +116,7 @@ void calibrate_camera(std::vector<cv::String> images, std::string path, mono_out
     bool success;
 
     // Looping over all the images in the directory
-    for(int i{0}; i<images.size(); i++)
+    for(int i{0}; i < (int)images.size(); i++)
     {
         frame = cv::imread(images[i]);
         cv::cvtColor(frame,gray,cv::COLOR_BGR2GRAY);
@@ -168,7 +168,7 @@ void calibrate_stereo(std::vector<cv::String> imagesL, std::vector<cv::String> i
 
     std::vector<cv::Mat> c1_images, c2_images;
 
-    for(int i{0}; i<imagesL.size(); i++){
+    for(int i{0}; i < (int)imagesL.size(); i++){
         cv::Mat im_1 = cv::imread(imagesL[i], 1);
         c1_images.push_back(im_1);
 
