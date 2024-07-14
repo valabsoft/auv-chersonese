@@ -72,6 +72,7 @@ void SettingsWindow::loadSettings()
     ui->cbCameraLeftID->setCurrentIndex(settings.value("/LeftID", 1).toInt());
     ui->cbCameraRightID->setCurrentIndex(settings.value("/RightID", 2).toInt());
     ui->leVideoTimerInterval->setText(settings.value("/TimerInterval", 50).toString());
+    ui->cbCameraTypeID->setCurrentIndex(settings.value("/CameraTypeID", 0).toInt());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");
@@ -124,6 +125,7 @@ void SettingsWindow::saveSettings()
     settings.setValue("/LeftID", ui->cbCameraLeftID->currentIndex());
     settings.setValue("/RightID", ui->cbCameraRightID->currentIndex());
     settings.setValue("/TimerInterval", ui->leVideoTimerInterval->text());
+    settings.setValue("/CameraTypeID", ui->cbCameraTypeID->currentIndex());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

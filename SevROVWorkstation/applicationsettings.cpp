@@ -23,6 +23,7 @@ void ApplicationSettings::load()
     CAMERA_RIGHT_ID = settings.value("/RightID", "2").toInt();
 
     VIDEO_TIMER_INTERVAL = settings.value("/TimerInterval", "50").toInt();
+    CAMERA_TYPE = settings.value("/CameraTypeID", 0).toInt();
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

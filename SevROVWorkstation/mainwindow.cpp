@@ -606,366 +606,377 @@ void MainWindow::onVideoTimer()
     switch (_sevROV.cameraView)
     {
     case CameraView::MONO:
-        //_webCamO->read(_sourceMatO);
 
-        ///////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleL);
-        if (MV_OK != nRet)
+        // Захват изображения в зависимости от типа камеры
+        switch (_appSet.CAMERA_TYPE)
         {
-            qDebug() << "ERROR: Mono Camera - Start Grabbing fail!";
+        case CameraType::IP:
+            ///////////////////////////////////////////////////////////////////
+            // Start image acquisition.
+            nRet = MV_CC_StartGrabbing(handleL);
+            if (MV_OK != nRet)
+            {
+                qDebug() << "ERROR: Mono Camera - Start Grabbing fail!";
+                break;
+            }
+
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+            if (nRet == MV_OK)
+            {
+                qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                _sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+                cv::cvtColor(_sourceMatO, _sourceMatO, cv::COLOR_BayerRG2RGB);
+
+                nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
+
+                if(nRet != MV_OK)
+                    qDebug() << "ERROR: Mono Camera - Free Image Buffer fail!";
+            }
+            else
+                qDebug() << "ERROR: Mono Camera - Get Image fail!";
+            ///////////////////////////////////////////////////////////////////
+            break;
+        case CameraType::WEB:
+            _webCamO->read(_sourceMatO);
+            break;
+        default:
             break;
         }
-
-        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
-        if (nRet == MV_OK)
-        {
-            qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-            _sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
-            cv::cvtColor(_sourceMatO, _sourceMatO, cv::COLOR_BayerRG2RGB);
-
-            nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
-
-            if(nRet != MV_OK)
-                qDebug() << "ERROR: Mono Camera - Free Image Buffer fail!";
-        }
-        else
-            qDebug() << "ERROR: Mono Camera - Get Image fail!";
-        ///////////////////////////////////////////////////////////////////////
 
         if (_sourceMatO.empty())
             return;
 
         cv::resize(_sourceMatO, resizedMatO, cv::Size(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT));
-
         cv::cvtColor(resizedMatO, _destinationMatO, cv::COLOR_BGR2RGB);
 
-        ///////////////////////////////////////////////////////////////////////
-        // Отрисовка прицела
-        ///////////////////////////////////////////////////////////////////////
-        //cv::rectangle(_destinationMatO,
-        //              cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
-        //              cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
-        //              CV_RGB(255, 255, 255), 1, 0);
+#pragma region Отрисовка графических объектов
+        {
+            ///////////////////////////////////////////////////////////////////
+            // Отрисовка прицела
+            ///////////////////////////////////////////////////////////////////
+            //cv::rectangle(_destinationMatO,
+            //              cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
+            //              cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
+            //              CV_RGB(255, 255, 255), 1, 0);
 
-        _destinationMatO.copyTo(overlayImage);
+            _destinationMatO.copyTo(overlayImage);
 
-        // Внешний контур
-        roundedRectangle(_destinationMatO,
-                         cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
-                         cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
-                         CV_RGB(0, 255, 255),
+            // Внешний контур
+            roundedRectangle(_destinationMatO,
+                             cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
+                             cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
+                             CV_RGB(0, 255, 255),
+                             2,
+                             cv::LINE_8,
+                             10);
+
+            // Рисочки внешнего контура
+            cv::line(_destinationMatO,
+                     cv::Point(X0, Y0 - SIGHT_SIZE),
+                     cv::Point(X0, Y0 - SIGHT_SIZE + SIGHT_TICK),
+                     CV_RGB(0, 255, 255),
+                     1,
+                     cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(X0, Y0 + SIGHT_SIZE),
+                     cv::Point(X0, Y0 + SIGHT_SIZE - SIGHT_TICK),
+                     CV_RGB(0, 255, 255),
+                     1,
+                     cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(X0 - SIGHT_SIZE, Y0 ),
+                     cv::Point(X0 - SIGHT_SIZE + SIGHT_TICK, Y0),
+                     CV_RGB(0, 255, 255),
+                     1,
+                     cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(X0 + SIGHT_SIZE, Y0 ),
+                     cv::Point(X0 + SIGHT_SIZE - SIGHT_TICK, Y0),
+                     CV_RGB(0, 255, 255),
+                     1,
+                     cv::LINE_8);
+
+            // Рисочки внутреннего прицела
+            cv::line(_destinationMatO,
+                     cv::Point(X0 - SIGHT_DELTA, Y0),
+                     cv::Point(X0 - SIGHT_DELTA - SIGHT_CROSS, Y0),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(X0 + SIGHT_DELTA, Y0),
+                     cv::Point(X0 + SIGHT_DELTA + SIGHT_CROSS, Y0),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
+
+            cv::line(_destinationMatO,
+                     cv::Point(X0, Y0 - SIGHT_DELTA),
+                     cv::Point(X0, Y0 - SIGHT_DELTA - SIGHT_CROSS),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(X0, Y0 + SIGHT_DELTA),
+                     cv::Point(X0, Y0 + SIGHT_DELTA + SIGHT_CROSS),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
+
+            ///////////////////////////////////////////////////////////////////////
+            // Риски вертикальные (левые)
+            ///////////////////////////////////////////////////////////////////////
+            for (int i = 1; i < GRID_V_MAX; i++)
+            {
+                cv::line(_destinationMatO,
+                         cv::Point(XV0, YV0 + GRID_V_DELTA * 10 * (i - 1)),
+                         cv::Point(XV0 + GRID_BIG_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1)),
+                         CV_RGB(255, 255, 255),
                          2,
-                         cv::LINE_8,
-                         10);
+                         cv::LINE_8);
 
-        // Рисочки внешнего контура
-        cv::line(_destinationMatO,
-                 cv::Point(X0, Y0 - SIGHT_SIZE),
-                 cv::Point(X0, Y0 - SIGHT_SIZE + SIGHT_TICK),
-                 CV_RGB(0, 255, 255),
-                 1,
-                 cv::LINE_8);
-        cv::line(_destinationMatO,
-                 cv::Point(X0, Y0 + SIGHT_SIZE),
-                 cv::Point(X0, Y0 + SIGHT_SIZE - SIGHT_TICK),
-                 CV_RGB(0, 255, 255),
-                 1,
-                 cv::LINE_8);
-        cv::line(_destinationMatO,
-                 cv::Point(X0 - SIGHT_SIZE, Y0 ),
-                 cv::Point(X0 - SIGHT_SIZE + SIGHT_TICK, Y0),
-                 CV_RGB(0, 255, 255),
-                 1,
-                 cv::LINE_8);
-        cv::line(_destinationMatO,
-                 cv::Point(X0 + SIGHT_SIZE, Y0 ),
-                 cv::Point(X0 + SIGHT_SIZE - SIGHT_TICK, Y0),
-                 CV_RGB(0, 255, 255),
-                 1,
-                 cv::LINE_8);
-
-        // Рисочки внутреннего прицела
-        cv::line(_destinationMatO,
-                 cv::Point(X0 - SIGHT_DELTA, Y0),
-                 cv::Point(X0 - SIGHT_DELTA - SIGHT_CROSS, Y0),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
-        cv::line(_destinationMatO,
-                 cv::Point(X0 + SIGHT_DELTA, Y0),
-                 cv::Point(X0 + SIGHT_DELTA + SIGHT_CROSS, Y0),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
-
-        cv::line(_destinationMatO,
-                 cv::Point(X0, Y0 - SIGHT_DELTA),
-                 cv::Point(X0, Y0 - SIGHT_DELTA - SIGHT_CROSS),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
-        cv::line(_destinationMatO,
-                 cv::Point(X0, Y0 + SIGHT_DELTA),
-                 cv::Point(X0, Y0 + SIGHT_DELTA + SIGHT_CROSS),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
-
-        ///////////////////////////////////////////////////////////////////////
-        // Риски вертикальные (левые)
-        ///////////////////////////////////////////////////////////////////////
-        for (int i = 1; i < GRID_V_MAX; i++)
-        {
+                for (int j = 1; j < 10; j++)
+                {
+                    cv::line(_destinationMatO,
+                             cv::Point(XV0 + GRID_SMALL_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
+                             cv::Point(XV0 + 2 * GRID_SMALL_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
+                             CV_RGB(255, 255, 255),
+                             1,
+                             cv::LINE_8);
+                }
+            }
+            // Завершающая
             cv::line(_destinationMatO,
-                     cv::Point(XV0, YV0 + GRID_V_DELTA * 10 * (i - 1)),
-                     cv::Point(XV0 + GRID_BIG_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1)),
+                     cv::Point(XV0, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
+                     cv::Point(XV0 + GRID_BIG_SIZE, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
                      CV_RGB(255, 255, 255),
                      2,
                      cv::LINE_8);
 
-            for (int j = 1; j < 10; j++)
+
+            ///////////////////////////////////////////////////////////////////////
+            // Риски вертикальные (правые)
+            ///////////////////////////////////////////////////////////////////////
+            for (int i = 1; i < GRID_V_MAX; i++)
             {
                 cv::line(_destinationMatO,
-                         cv::Point(XV0 + GRID_SMALL_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
-                         cv::Point(XV0 + 2 * GRID_SMALL_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
+                         cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (i - 1)),
+                         cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (i - 1)),
                          CV_RGB(255, 255, 255),
-                         1,
+                         2,
                          cv::LINE_8);
+
+                for (int j = 1; j < 10; j++)
+                {
+                    cv::line(_destinationMatO,
+                             cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
+                             cv::Point(X0 + (X0 - XV0) + GRID_SMALL_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
+                             CV_RGB(255, 255, 255),
+                             1,
+                             cv::LINE_8);
+                }
             }
-        }
-        // Завершающая
-        cv::line(_destinationMatO,
-                 cv::Point(XV0, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
-                 cv::Point(XV0 + GRID_BIG_SIZE, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
-                 CV_RGB(255, 255, 255),
-                 2,
-                 cv::LINE_8);
-
-
-        ///////////////////////////////////////////////////////////////////////
-        // Риски вертикальные (правые)
-        ///////////////////////////////////////////////////////////////////////
-        for (int i = 1; i < GRID_V_MAX; i++)
-        {
+            // Завершающая
             cv::line(_destinationMatO,
-                     cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (i - 1)),
-                     cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (i - 1)),
+                     cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
+                     cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
                      CV_RGB(255, 255, 255),
                      2,
                      cv::LINE_8);
 
-            for (int j = 1; j < 10; j++)
+
+            ///////////////////////////////////////////////////////////////////////
+            // Риски горизонтальные
+            ///////////////////////////////////////////////////////////////////////
+            for (int i = 1; i < GRID_H_MAX; i++)
             {
                 cv::line(_destinationMatO,
-                         cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
-                         cv::Point(X0 + (X0 - XV0) + GRID_SMALL_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
+                         cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1), YH0),
+                         cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1), YH0 + GRID_BIG_SIZE),
                          CV_RGB(255, 255, 255),
-                         1,
+                         2,
                          cv::LINE_8);
+
+                for (int j = 1; j < 10; j++)
+                {
+                    cv::line(_destinationMatO,
+                             cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1) + j * GRID_H_DELTA, YH0 + GRID_SMALL_SIZE),
+                             cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1) + j * GRID_H_DELTA , YH0 + 2 * GRID_SMALL_SIZE),
+                             CV_RGB(255, 255, 255),
+                             1,
+                             cv::LINE_8);
+                }
             }
-        }
-        // Завершающая
-        cv::line(_destinationMatO,
-                 cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
-                 cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
-                 CV_RGB(255, 255, 255),
-                 2,
-                 cv::LINE_8);
-
-
-        ///////////////////////////////////////////////////////////////////////
-        // Риски горизонтальные
-        ///////////////////////////////////////////////////////////////////////
-        for (int i = 1; i < GRID_H_MAX; i++)
-        {
+            // Завершающая
             cv::line(_destinationMatO,
-                     cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1), YH0),
-                     cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1), YH0 + GRID_BIG_SIZE),
+                     cv::Point(XH0 + GRID_H_DELTA * 10 * (GRID_H_MAX - 1), YH0),
+                     cv::Point(XH0 + GRID_H_DELTA * 10 * (GRID_H_MAX - 1), YH0 + GRID_BIG_SIZE),
                      CV_RGB(255, 255, 255),
                      2,
                      cv::LINE_8);
+            ///////////////////////////////////////////////////////////////////////
+            // Табличка
+            cv::rectangle(_destinationMatO,
+                          cv::Point(XV0, _appSet.CAMERA_HEIGHT - 50),
+                          cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, _appSet.CAMERA_HEIGHT - 100),
+                          CV_RGB(255, 255, 255), 2, cv::LINE_8);
+            cv::rectangle(_destinationMatO,
+                          cv::Point(XV0, _appSet.CAMERA_HEIGHT - 50),
+                          cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, _appSet.CAMERA_HEIGHT - 100),
+                          CV_RGB(0, 0, 0), -1);
 
-            for (int j = 1; j < 10; j++)
-            {
-                cv::line(_destinationMatO,
-                         cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1) + j * GRID_H_DELTA, YH0 + GRID_SMALL_SIZE),
-                         cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1) + j * GRID_H_DELTA , YH0 + 2 * GRID_SMALL_SIZE),
-                         CV_RGB(255, 255, 255),
-                         1,
-                         cv::LINE_8);
-            }
-        }
-        // Завершающая
-        cv::line(_destinationMatO,
-                 cv::Point(XH0 + GRID_H_DELTA * 10 * (GRID_H_MAX - 1), YH0),
-                 cv::Point(XH0 + GRID_H_DELTA * 10 * (GRID_H_MAX - 1), YH0 + GRID_BIG_SIZE),
-                 CV_RGB(255, 255, 255),
-                 2,
-                 cv::LINE_8);
-        ///////////////////////////////////////////////////////////////////////
-        // Табличка
-        cv::rectangle(_destinationMatO,
-                      cv::Point(XV0, _appSet.CAMERA_HEIGHT - 50),
-                      cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, _appSet.CAMERA_HEIGHT - 100),
-                      CV_RGB(255, 255, 255), 2, cv::LINE_8);
-        cv::rectangle(_destinationMatO,
-                      cv::Point(XV0, _appSet.CAMERA_HEIGHT - 50),
-                      cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, _appSet.CAMERA_HEIGHT - 100),
-                      CV_RGB(0, 0, 0), -1);
+            ///////////////////////////////////////////////////////////////////////
+            // Диагностика
 
-        ///////////////////////////////////////////////////////////////////////
-        // Диагностика
+            cv::putText(_destinationMatO,
+                        "DIAGNOSTIC: " +
+                            QTime::currentTime().toString("hh:mm:ss").toStdString(),
+                        cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
+                        cv::FONT_HERSHEY_SIMPLEX,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        2);
 
-        cv::putText(_destinationMatO,
-                    "DIAGNOSTIC: " +
-                        QTime::currentTime().toString("hh:mm:ss").toStdString(),
-                    cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
-                    cv::FONT_HERSHEY_SIMPLEX,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    2);
+            ///////////////////////////////////////////////////////////////////////
+            // Левая информацияонная панель (CONTROL)
+            cv::rectangle(_destinationMatO,
+                          cv::Point(JSX0, JSY0),
+                          cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
+                          CV_RGB(255, 255, 255), 2, cv::LINE_8);
+            cv::rectangle(_destinationMatO,
+                          cv::Point(JSX0, JSY0),
+                          cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
+                          CV_RGB(0, 0, 0), -1);
 
-        ///////////////////////////////////////////////////////////////////////
-        // Левая информацияонная панель (CONTROL)
-        cv::rectangle(_destinationMatO,
-                      cv::Point(JSX0, JSY0),
-                      cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
-                      CV_RGB(255, 255, 255), 2, cv::LINE_8);
-        cv::rectangle(_destinationMatO,
-                      cv::Point(JSX0, JSY0),
-                      cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
-                      CV_RGB(0, 0, 0), -1);
+            cv::line(_destinationMatO,
+                     cv::Point(JSX0 + 5, JSY0 + 10),
+                     cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 10),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
 
-        cv::line(_destinationMatO,
-                 cv::Point(JSX0 + 5, JSY0 + 10),
-                 cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 10),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(JSX0 + 5, JSY0 + 27),
+                     cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 27),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
 
-        cv::line(_destinationMatO,
-                 cv::Point(JSX0 + 5, JSY0 + 27),
-                 cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 27),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
+            // Текстовка
+            cv::putText(_destinationMatO,
+                        "CONTROL",
+                        cv::Point(JSX0 + 10, JSY0 + 24),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
 
-        // Текстовка
-        cv::putText(_destinationMatO,
-                    "CONTROL",
-                    cv::Point(JSX0 + 10, JSY0 + 24),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
+            // HorizontalVectorX
+            cv::putText(_destinationMatO,
+                        "HRZV.X: " + QString::number(_dataControl.HorizontalVectorX, 'f', 2).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*1),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // HorizontalVectorY
+            cv::putText(_destinationMatO,
+                        "HRZV.Y: " + QString::number(_dataControl.HorizontalVectorY, 'f', 2).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*2),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // VericalThrust
+            cv::putText(_destinationMatO,
+                        "VERT.TH: " + QString::number(_dataControl.VericalThrust, 'f', 2).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*3),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // AngularVelocityZ
+            cv::putText(_destinationMatO,
+                        "ANGV.Z: " + QString::number(_dataControl.AngularVelocityZ, 'f', 2).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*4),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // PowerTarget
+            cv::putText(_destinationMatO,
+                        "PWR.TRG: " + QString::number(_dataControl.PowerTarget, 'f', 2).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*5),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // ManipulatorState
+            cv::putText(_destinationMatO,
+                        "MNP.ST: " + QString::number(_dataControl.ManipulatorState).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*6),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // ManipulatorRotate
+            cv::putText(_destinationMatO,
+                        "MNP.ROT: " + QString::number(_dataControl.ManipulatorRotate, 'f', 2).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // CameraRotate
+            cv::putText(_destinationMatO,
+                        "CAM.ROT: " + QString::number(_dataControl.CameraRotate).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*8),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // ResetInitialization
+            cv::putText(_destinationMatO,
+                        "RESET.INI: " + QString::number(_dataControl.ResetInitialization).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*9),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // LightsState
+            cv::putText(_destinationMatO,
+                        "LIGHT: " + QString::number(_dataControl.LightsState).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*10),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // RollInc
+            cv::putText(_destinationMatO,
+                        "ROLL.INC: " + QString::number(_dataControl.RollInc).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*11),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // PitchInc
+            cv::putText(_destinationMatO,
+                        "PITCH.INC: " + QString::number(_dataControl.PitchInc).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*12),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            // ResetPosition
+            cv::putText(_destinationMatO,
+                        "RESET.POS: " + QString::number(_dataControl.ResetPosition).toStdString(),
+                        cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
 
-        // HorizontalVectorX
-        cv::putText(_destinationMatO,
-                    "HRZV.X: " + QString::number(_dataControl.HorizontalVectorX, 'f', 2).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*1),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // HorizontalVectorY
-        cv::putText(_destinationMatO,
-                    "HRZV.Y: " + QString::number(_dataControl.HorizontalVectorY, 'f', 2).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*2),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // VericalThrust
-        cv::putText(_destinationMatO,
-                    "VERT.TH: " + QString::number(_dataControl.VericalThrust, 'f', 2).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*3),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // AngularVelocityZ
-        cv::putText(_destinationMatO,
-                    "ANGV.Z: " + QString::number(_dataControl.AngularVelocityZ, 'f', 2).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*4),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // PowerTarget
-        cv::putText(_destinationMatO,
-                    "PWR.TRG: " + QString::number(_dataControl.PowerTarget, 'f', 2).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*5),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // ManipulatorState
-        cv::putText(_destinationMatO,
-                    "MNP.ST: " + QString::number(_dataControl.ManipulatorState).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*6),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // ManipulatorRotate
-        cv::putText(_destinationMatO,
-                    "MNP.ROT: " + QString::number(_dataControl.ManipulatorRotate, 'f', 2).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // CameraRotate
-        cv::putText(_destinationMatO,
-                    "CAM.ROT: " + QString::number(_dataControl.CameraRotate).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*8),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // ResetInitialization
-        cv::putText(_destinationMatO,
-                    "RESET.INI: " + QString::number(_dataControl.ResetInitialization).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*9),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // LightsState
-        cv::putText(_destinationMatO,
-                    "LIGHT: " + QString::number(_dataControl.LightsState).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*10),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // RollInc
-        cv::putText(_destinationMatO,
-                    "ROLL.INC: " + QString::number(_dataControl.RollInc).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*11),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // PitchInc
-        cv::putText(_destinationMatO,
-                    "PITCH.INC: " + QString::number(_dataControl.PitchInc).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*12),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        // ResetPosition
-        cv::putText(_destinationMatO,
-                    "RESET.POS: " + QString::number(_dataControl.ResetPosition).toStdString(),
-                    cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-
-        /*
+            /*
         cv::putText(_destinationMatO,
                     "JOYSTICK INFO",
                     cv::Point(JSX0 + 10, JSY0 + 24),
@@ -1069,142 +1080,152 @@ void MainWindow::onVideoTimer()
 
         */
 
-        ///////////////////////////////////////////////////////////////////////
-        // Телеметрия
+            ////////////////////////////////////////////////////////////////////
+            // Телеметрия
 
-        TMX0 = X0 + (X0 - XV0) - 30;
-        cv::rectangle(_destinationMatO,
-                      cv::Point(TMX0, TMY0),
-                      cv::Point(TMX0 + TMWIDTH, TMY0 + TMTEXTDELTA + 12*13 + 10),
-                      CV_RGB(255, 255, 255), 2, cv::LINE_8);
-        cv::rectangle(_destinationMatO,
-                      cv::Point(TMX0, TMY0),
-                      cv::Point(TMX0 + TMWIDTH, TMY0 + TMTEXTDELTA + 12*13 + 10),
-                      CV_RGB(0, 0, 0), -1);
+            TMX0 = X0 + (X0 - XV0) - 30;
+            cv::rectangle(_destinationMatO,
+                          cv::Point(TMX0, TMY0),
+                          cv::Point(TMX0 + TMWIDTH, TMY0 + TMTEXTDELTA + 12*13 + 10),
+                          CV_RGB(255, 255, 255), 2, cv::LINE_8);
+            cv::rectangle(_destinationMatO,
+                          cv::Point(TMX0, TMY0),
+                          cv::Point(TMX0 + TMWIDTH, TMY0 + TMTEXTDELTA + 12*13 + 10),
+                          CV_RGB(0, 0, 0), -1);
 
-        cv::line(_destinationMatO,
-                 cv::Point(TMX0 + 5, TMY0 + 10),
-                 cv::Point(TMX0 + TMWIDTH - 5, TMY0 + 10),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
-        cv::line(_destinationMatO,
-                 cv::Point(TMX0 + 5, TMY0 + 27),
-                 cv::Point(TMX0 + TMWIDTH - 5, TMY0 + 27),
-                 CV_RGB(255, 255, 255),
-                 1,
-                 cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(TMX0 + 5, TMY0 + 10),
+                     cv::Point(TMX0 + TMWIDTH - 5, TMY0 + 10),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
+            cv::line(_destinationMatO,
+                     cv::Point(TMX0 + 5, TMY0 + 27),
+                     cv::Point(TMX0 + TMWIDTH - 5, TMY0 + 27),
+                     CV_RGB(255, 255, 255),
+                     1,
+                     cv::LINE_8);
 
-        cv::putText(_destinationMatO,
-                    "TELEMETRY",
-                    cv::Point(TMX0 + 10, TMY0 + 24),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
+            cv::putText(_destinationMatO,
+                        "TELEMETRY",
+                        cv::Point(TMX0 + 10, TMY0 + 24),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
 
-        cv::putText(_destinationMatO,
-                    "Roll: " + QString::number(_dataTelemetry.Roll, 'f', 2).toStdString(),
-                    cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*1),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        cv::putText(_destinationMatO,
-                    "Pitch: " + QString::number(_dataTelemetry.Pitch, 'f', 2).toStdString(),
-                    cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*2),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        cv::putText(_destinationMatO,
-                    "Yaw: " + QString::number(_dataTelemetry.Yaw, 'f', 2).toStdString(),
-                    cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*3),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        cv::putText(_destinationMatO,
-                    "Heading: " + QString::number(_dataTelemetry.Heading, 'f', 2).toStdString(),
-                    cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*4),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
-        cv::putText(_destinationMatO,
-                    "Depth: " + QString::number(_dataTelemetry.Depth, 'f', 2).toStdString(),
-                    cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*5),
-                    cv::FONT_HERSHEY_PLAIN,
-                    1,
-                    CV_RGB(255, 255, 255),
-                    1);
+            cv::putText(_destinationMatO,
+                        "Roll: " + QString::number(_dataTelemetry.Roll, 'f', 2).toStdString(),
+                        cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*1),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            cv::putText(_destinationMatO,
+                        "Pitch: " + QString::number(_dataTelemetry.Pitch, 'f', 2).toStdString(),
+                        cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*2),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            cv::putText(_destinationMatO,
+                        "Yaw: " + QString::number(_dataTelemetry.Yaw, 'f', 2).toStdString(),
+                        cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*3),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            cv::putText(_destinationMatO,
+                        "Heading: " + QString::number(_dataTelemetry.Heading, 'f', 2).toStdString(),
+                        cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*4),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
+            cv::putText(_destinationMatO,
+                        "Depth: " + QString::number(_dataTelemetry.Depth, 'f', 2).toStdString(),
+                        cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*5),
+                        cv::FONT_HERSHEY_PLAIN,
+                        1,
+                        CV_RGB(255, 255, 255),
+                        1);
 
-        ///////////////////////////////////////////////////////////////////////
-        // Склейка
-        cv::addWeighted(overlayImage, alpha, _destinationMatO, 1 - alpha, 0, transparencyiImage);
-        ///////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////
+            // Склейка
+            cv::addWeighted(overlayImage, alpha, _destinationMatO, 1 - alpha, 0, transparencyiImage);
+            ///////////////////////////////////////////////////////////////////////
 
-        _imgCamO = QImage((uchar*) transparencyiImage.data,
-                          transparencyiImage.cols,
-                          transparencyiImage.rows,
-                          transparencyiImage.step,
-                          QImage::Format_RGB888);
-
-
-        //_imgCamO = QImage((uchar*) _destinationMatO.data,
-        //                  _destinationMatO.cols,
-        //                  _destinationMatO.rows,
-        //                  _destinationMatO.step,
-        //                  QImage::Format_RGB888);
-
-        ui->lbCamera->setPixmap(QPixmap::fromImage(_imgCamO));
+            _imgCamO = QImage((uchar*) transparencyiImage.data,
+                              transparencyiImage.cols,
+                              transparencyiImage.rows,
+                              transparencyiImage.step,
+                              QImage::Format_RGB888);
 
 
-        //////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleL);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Mono Camera - Stop Grabbing fail!";
-            break;
+            //_imgCamO = QImage((uchar*) _destinationMatO.data,
+            //                  _destinationMatO.cols,
+            //                  _destinationMatO.rows,
+            //                  _destinationMatO.step,
+            //                  QImage::Format_RGB888);
+
+            ui->lbCamera->setPixmap(QPixmap::fromImage(_imgCamO));
         }
-        //////////////////////////////////////////////////////////////////////
+#pragma endregion
 
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
+        {
+            ////////////////////////////////////////////////////////////////////
+            nRet = MV_CC_StopGrabbing(handleL);
+            if (MV_OK != nRet)
+            {
+                qDebug() << "ERROR: Mono Camera - Stop Grabbing fail!";
+                break;
+            }
+            ////////////////////////////////////////////////////////////////////
+        }
         break;
     case CameraView::STEREO:
-        ///////////////////////////////////////////////////////////////////////
-        // Left Camera
-        //////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleL);
-        if (MV_OK != nRet)
+        switch (_appSet.CAMERA_TYPE)
         {
-            qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+        case CameraType::IP:
+            ////////////////////////////////////////////////////////////////////
+            // Left Camera
+            ////////////////////////////////////////////////////////////////////
+            // Start image acquisition.
+            nRet = MV_CC_StartGrabbing(handleL);
+            if (MV_OK != nRet)
+            {
+                qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+                break;
+            }
+
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+            if (nRet == MV_OK)
+            {
+                qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+                cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
+
+                nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
+
+                if(nRet != MV_OK)
+                    qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
+            }
+            else
+                qDebug() << "ERROR: Left Camera - Get Image fail!";
+            ////////////////////////////////////////////////////////////////////
+            break;
+        case CameraType::WEB:
+            _webCamL->read(_sourceMatL);
+            break;
+        default:
             break;
         }
-
-        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
-        if (nRet == MV_OK)
-        {
-            qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-            _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
-            cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
-
-            nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
-
-            if(nRet != MV_OK)
-                qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
-        }
-        else
-            qDebug() << "ERROR: Left Camera - Get Image fail!";
-        //////////////////////////////////////////////////////////////////////
-
-        //_webCamL->read(_sourceMatL);
 
         if (_sourceMatL.empty())
             return;
 
         cv::resize(_sourceMatL, resizedMatL, cv::Size(_appSet.CAMERA_WIDTH / 2, _appSet.CAMERA_HEIGHT / 2));
-
         cv::cvtColor(resizedMatL, _destinationMatL, cv::COLOR_BGR2RGB);
 
         _imgCamL = QImage((uchar*) _destinationMatL.data,
@@ -1215,49 +1236,59 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraL->setPixmap(QPixmap::fromImage(_imgCamL));
 
-        //////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleL);
-        if (MV_OK != nRet)
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
+            ////////////////////////////////////////////////////////////////////
+            nRet = MV_CC_StopGrabbing(handleL);
+            if (MV_OK != nRet)
+            {
+                qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
+                break;
+            }
+            ////////////////////////////////////////////////////////////////////
+        }
+
+        switch (_appSet.CAMERA_TYPE)
+        {
+        case CameraType::IP:
+            ////////////////////////////////////////////////////////////////////
+            // Right Camera
+            ////////////////////////////////////////////////////////////////////
+            // Start image acquisition.
+            nRet = MV_CC_StartGrabbing(handleR);
+            if (MV_OK != nRet)
+            {
+                qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
+                break;
+            }
+
+            nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
+            if (nRet == MV_OK)
+            {
+                qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+                cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
+
+                nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
+
+                if(nRet != MV_OK)
+                    qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
+            }
+            else
+                qDebug() << "ERROR: Right Camera - Get Image fail!";
+            ////////////////////////////////////////////////////////////////////
+            break;
+        case CameraType::WEB:
+            _webCamR->read(_sourceMatR);
+            break;
+        default:
             break;
         }
-        //////////////////////////////////////////////////////////////////////
-
-        ///////////////////////////////////////////////////////////////////////
-        // Right Camera
-        //////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleR);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-            break;
-        }
-
-        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
-        if (nRet == MV_OK)
-        {
-            qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-            _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
-            cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
-
-            nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
-
-            if(nRet != MV_OK)
-                qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
-        }
-        else
-            qDebug() << "ERROR: Right Camera - Get Image fail!";
-        //////////////////////////////////////////////////////////////////////
-
-        //_webCamR->read(_sourceMatR);
 
         if (_sourceMatR.empty())
             return;
 
         cv::resize(_sourceMatR, resizedMatR, cv::Size(_appSet.CAMERA_WIDTH / 2, _appSet.CAMERA_HEIGHT / 2));
-
         cv::cvtColor(resizedMatR, _destinationMatR, cv::COLOR_BGR2RGB);
 
         _imgCamR = QImage((uchar*) _destinationMatR.data,
@@ -1268,15 +1299,17 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
 
-        //////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleR);
-        if (MV_OK != nRet)
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
-            break;
+            ////////////////////////////////////////////////////////////////////
+            nRet = MV_CC_StopGrabbing(handleR);
+            if (MV_OK != nRet)
+            {
+                qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
+                break;
+            }
+            ////////////////////////////////////////////////////////////////////
         }
-        //////////////////////////////////////////////////////////////////////
-
         break;
     default:
         break;
@@ -1748,63 +1781,70 @@ void MainWindow::onScreenshotButtonClicked()
     cv::Mat imageL;
     cv::Mat imageR;
 
-    //_webCamL->read(imageL);
-    //_webCamR->read(imageR);
-
     int nRet = MV_OK;
-
     MV_FRAME_OUT stOutFrame = {0};
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Left Camera
-    ///////////////////////////////////////////////////////////////////////////
-    // Start image acquisition.
-    nRet = MV_CC_StartGrabbing(handleL);
-    if (MV_OK != nRet)
+    switch (_appSet.CAMERA_TYPE)
     {
-        qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+    case CameraType::IP:
+        ///////////////////////////////////////////////////////////////////////
+        // Left Camera
+        ///////////////////////////////////////////////////////////////////////
+        // Start image acquisition.
+        nRet = MV_CC_StartGrabbing(handleL);
+        if (MV_OK != nRet)
+        {
+            qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+        }
+
+        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+        if (nRet == MV_OK)
+        {
+            qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+            cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
+
+            nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
+
+            if(nRet != MV_OK)
+                qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
+        }
+        else
+            qDebug() << "ERROR: Left Camera - Get Image fail!";
+
+        ///////////////////////////////////////////////////////////////////////
+        // Right Camera
+        ///////////////////////////////////////////////////////////////////////
+        // Start image acquisition.
+        nRet = MV_CC_StartGrabbing(handleR);
+        if (MV_OK != nRet)
+        {
+            qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
+        }
+
+        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
+        if (nRet == MV_OK)
+        {
+            qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+            cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
+
+            nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
+
+            if(nRet != MV_OK)
+                qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
+        }
+        else
+            qDebug() << "ERROR: Right Camera - Get Image fail!";
+        ///////////////////////////////////////////////////////////////////////
+        break;
+    case CameraType::WEB:
+        _webCamL->read(imageL);
+        _webCamR->read(imageR);
+        break;
+    default:
+        break;
     }
-
-    nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
-    if (nRet == MV_OK)
-    {
-        qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-        imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
-        cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
-
-        nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
-
-        if(nRet != MV_OK)
-            qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
-    }
-    else
-        qDebug() << "ERROR: Left Camera - Get Image fail!";
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Right Camera
-    ///////////////////////////////////////////////////////////////////////////
-    // Start image acquisition.
-    nRet = MV_CC_StartGrabbing(handleR);
-    if (MV_OK != nRet)
-    {
-        qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-    }
-
-    nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
-    if (nRet == MV_OK)
-    {
-        qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-        imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
-        cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
-
-        nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
-
-        if(nRet != MV_OK)
-            qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
-    }
-    else
-        qDebug() << "ERROR: Right Camera - Get Image fail!";
-    //////////////////////////////////////////////////////////////////////
 
     std::string file_calibration_parameters =
         (QCoreApplication::applicationDirPath() + "/camera_calibration_parameters.yml").toStdString();
@@ -1837,20 +1877,25 @@ void MainWindow::onScreenshotButtonClicked()
     _toolWindow->move(x, y);
     _toolWindow->exec();
 
-    ///////////////////////////////////////////////////////////////////////////
-    nRet = MV_CC_StopGrabbing(handleL);
-    if (MV_OK != nRet)
+    if (_appSet.CAMERA_TYPE == CameraType::IP)
     {
-        qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
-    }
-    ///////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////
+        nRet = MV_CC_StopGrabbing(handleL);
+        if (MV_OK != nRet)
+        {
+            qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
+        }
+        ///////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////
-    nRet = MV_CC_StopGrabbing(handleR);
-    if (MV_OK != nRet)
-    {
-        qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
+        ///////////////////////////////////////////////////////////////////////
+        nRet = MV_CC_StopGrabbing(handleR);
+        if (MV_OK != nRet)
+        {
+            qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
+        }
+        ///////////////////////////////////////////////////////////////////////
     }
+
     ///////////////////////////////////////////////////////////////////////////
     // Очищаем ресурсы
     delete _toolWindow;
