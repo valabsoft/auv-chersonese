@@ -117,16 +117,11 @@ MainWindow::~MainWindow()
         delete _controlTimer;
 
     // Веб-камеры
-
-    if (_webCamO->isOpened())
-        _webCamO->release();
     if (_webCamL->isOpened())
         _webCamL->release();
+
     if (_webCamR->isOpened())
         _webCamR->release();
-
-    if (_webCamO)
-        delete _webCamO;
 
     if (_webCamL)
         delete _webCamL;
@@ -466,12 +461,10 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         //    break;
         //}
 
-        _webCamO = new cv::VideoCapture(_appSet.CAMERA_MONO_ID);
         _webCamL = new cv::VideoCapture(_appSet.CAMERA_LEFT_ID);
         _webCamR = new cv::VideoCapture(_appSet.CAMERA_RIGHT_ID);
 
-        // TODO VA (23-05-2024): Оно работает вообще?
-        _webCamO->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+        // TODO VA (23-05-2024): Проверить что FPS выставляется
         _webCamL->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
         _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
 
@@ -482,9 +475,7 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         break;
     case CameraConnection::OFF:
 
-        // Освобождаем ресурсы
-        if (_webCamO->isOpened())
-            _webCamO->release();
+        // Освобождаем ресурсы        
         if (_webCamL->isOpened())
             _webCamL->release();
         if (_webCamR->isOpened())
@@ -624,8 +615,8 @@ void MainWindow::onVideoTimer()
             if (nRet == MV_OK)
             {
                 qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-                _sourceMatO = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
-                cv::cvtColor(_sourceMatO, _sourceMatO, cv::COLOR_BayerRG2RGB);
+                _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+                cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
                 nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
 
@@ -637,32 +628,32 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////
             break;
         case CameraType::WEB:
-            _webCamO->read(_sourceMatO);
+            _webCamL->read(_sourceMatL);
             break;
         default:
             break;
         }
 
-        if (_sourceMatO.empty())
+        if (_sourceMatL.empty())
             return;
 
-        cv::resize(_sourceMatO, resizedMatO, cv::Size(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT));
-        cv::cvtColor(resizedMatO, _destinationMatO, cv::COLOR_BGR2RGB);
+        cv::resize(_sourceMatL, resizedMatL, cv::Size(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT));
+        cv::cvtColor(resizedMatL, _destinationMatL, cv::COLOR_BGR2RGB);
 
-#pragma region Отрисовка графических объектов
+#pragma region Draw Graphical Objects
         {
             ///////////////////////////////////////////////////////////////////
             // Отрисовка прицела
             ///////////////////////////////////////////////////////////////////
-            //cv::rectangle(_destinationMatO,
+            //cv::rectangle(_destinationMatL,
             //              cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
             //              cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
             //              CV_RGB(255, 255, 255), 1, 0);
 
-            _destinationMatO.copyTo(overlayImage);
+            _destinationMatL.copyTo(overlayImage);
 
             // Внешний контур
-            roundedRectangle(_destinationMatO,
+            roundedRectangle(_destinationMatL,
                              cv::Point(X0 - SIGHT_SIZE, Y0 - SIGHT_SIZE),
                              cv::Point(X0 + SIGHT_SIZE, Y0 + SIGHT_SIZE),
                              CV_RGB(0, 255, 255),
@@ -671,25 +662,25 @@ void MainWindow::onVideoTimer()
                              10);
 
             // Рисочки внешнего контура
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0, Y0 - SIGHT_SIZE),
                      cv::Point(X0, Y0 - SIGHT_SIZE + SIGHT_TICK),
                      CV_RGB(0, 255, 255),
                      1,
                      cv::LINE_8);
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0, Y0 + SIGHT_SIZE),
                      cv::Point(X0, Y0 + SIGHT_SIZE - SIGHT_TICK),
                      CV_RGB(0, 255, 255),
                      1,
                      cv::LINE_8);
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0 - SIGHT_SIZE, Y0 ),
                      cv::Point(X0 - SIGHT_SIZE + SIGHT_TICK, Y0),
                      CV_RGB(0, 255, 255),
                      1,
                      cv::LINE_8);
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0 + SIGHT_SIZE, Y0 ),
                      cv::Point(X0 + SIGHT_SIZE - SIGHT_TICK, Y0),
                      CV_RGB(0, 255, 255),
@@ -697,26 +688,26 @@ void MainWindow::onVideoTimer()
                      cv::LINE_8);
 
             // Рисочки внутреннего прицела
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0 - SIGHT_DELTA, Y0),
                      cv::Point(X0 - SIGHT_DELTA - SIGHT_CROSS, Y0),
                      CV_RGB(255, 255, 255),
                      1,
                      cv::LINE_8);
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0 + SIGHT_DELTA, Y0),
                      cv::Point(X0 + SIGHT_DELTA + SIGHT_CROSS, Y0),
                      CV_RGB(255, 255, 255),
                      1,
                      cv::LINE_8);
 
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0, Y0 - SIGHT_DELTA),
                      cv::Point(X0, Y0 - SIGHT_DELTA - SIGHT_CROSS),
                      CV_RGB(255, 255, 255),
                      1,
                      cv::LINE_8);
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0, Y0 + SIGHT_DELTA),
                      cv::Point(X0, Y0 + SIGHT_DELTA + SIGHT_CROSS),
                      CV_RGB(255, 255, 255),
@@ -728,7 +719,7 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////////
             for (int i = 1; i < GRID_V_MAX; i++)
             {
-                cv::line(_destinationMatO,
+                cv::line(_destinationMatL,
                          cv::Point(XV0, YV0 + GRID_V_DELTA * 10 * (i - 1)),
                          cv::Point(XV0 + GRID_BIG_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1)),
                          CV_RGB(255, 255, 255),
@@ -737,7 +728,7 @@ void MainWindow::onVideoTimer()
 
                 for (int j = 1; j < 10; j++)
                 {
-                    cv::line(_destinationMatO,
+                    cv::line(_destinationMatL,
                              cv::Point(XV0 + GRID_SMALL_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
                              cv::Point(XV0 + 2 * GRID_SMALL_SIZE, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
                              CV_RGB(255, 255, 255),
@@ -746,7 +737,7 @@ void MainWindow::onVideoTimer()
                 }
             }
             // Завершающая
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(XV0, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
                      cv::Point(XV0 + GRID_BIG_SIZE, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
                      CV_RGB(255, 255, 255),
@@ -759,7 +750,7 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////////
             for (int i = 1; i < GRID_V_MAX; i++)
             {
-                cv::line(_destinationMatO,
+                cv::line(_destinationMatL,
                          cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (i - 1)),
                          cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (i - 1)),
                          CV_RGB(255, 255, 255),
@@ -768,7 +759,7 @@ void MainWindow::onVideoTimer()
 
                 for (int j = 1; j < 10; j++)
                 {
-                    cv::line(_destinationMatO,
+                    cv::line(_destinationMatL,
                              cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
                              cv::Point(X0 + (X0 - XV0) + GRID_SMALL_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (i - 1) + j * GRID_V_DELTA),
                              CV_RGB(255, 255, 255),
@@ -777,7 +768,7 @@ void MainWindow::onVideoTimer()
                 }
             }
             // Завершающая
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(X0 + (X0 - XV0) - 30, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
                      cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, YV0 + GRID_V_DELTA * 10 * (GRID_V_MAX - 1)),
                      CV_RGB(255, 255, 255),
@@ -790,7 +781,7 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////////
             for (int i = 1; i < GRID_H_MAX; i++)
             {
-                cv::line(_destinationMatO,
+                cv::line(_destinationMatL,
                          cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1), YH0),
                          cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1), YH0 + GRID_BIG_SIZE),
                          CV_RGB(255, 255, 255),
@@ -799,7 +790,7 @@ void MainWindow::onVideoTimer()
 
                 for (int j = 1; j < 10; j++)
                 {
-                    cv::line(_destinationMatO,
+                    cv::line(_destinationMatL,
                              cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1) + j * GRID_H_DELTA, YH0 + GRID_SMALL_SIZE),
                              cv::Point(XH0 + GRID_H_DELTA * 10 * (i - 1) + j * GRID_H_DELTA , YH0 + 2 * GRID_SMALL_SIZE),
                              CV_RGB(255, 255, 255),
@@ -808,7 +799,7 @@ void MainWindow::onVideoTimer()
                 }
             }
             // Завершающая
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(XH0 + GRID_H_DELTA * 10 * (GRID_H_MAX - 1), YH0),
                      cv::Point(XH0 + GRID_H_DELTA * 10 * (GRID_H_MAX - 1), YH0 + GRID_BIG_SIZE),
                      CV_RGB(255, 255, 255),
@@ -816,11 +807,11 @@ void MainWindow::onVideoTimer()
                      cv::LINE_8);
             ///////////////////////////////////////////////////////////////////////
             // Табличка
-            cv::rectangle(_destinationMatO,
+            cv::rectangle(_destinationMatL,
                           cv::Point(XV0, _appSet.CAMERA_HEIGHT - 50),
                           cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, _appSet.CAMERA_HEIGHT - 100),
                           CV_RGB(255, 255, 255), 2, cv::LINE_8);
-            cv::rectangle(_destinationMatO,
+            cv::rectangle(_destinationMatL,
                           cv::Point(XV0, _appSet.CAMERA_HEIGHT - 50),
                           cv::Point(X0 + (X0 - XV0) + GRID_BIG_SIZE - 30, _appSet.CAMERA_HEIGHT - 100),
                           CV_RGB(0, 0, 0), -1);
@@ -828,7 +819,7 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////////
             // Диагностика
 
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "DIAGNOSTIC: " +
                             QTime::currentTime().toString("hh:mm:ss").toStdString(),
                         cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
@@ -839,23 +830,23 @@ void MainWindow::onVideoTimer()
 
             ///////////////////////////////////////////////////////////////////////
             // Левая информацияонная панель (CONTROL)
-            cv::rectangle(_destinationMatO,
+            cv::rectangle(_destinationMatL,
                           cv::Point(JSX0, JSY0),
                           cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
                           CV_RGB(255, 255, 255), 2, cv::LINE_8);
-            cv::rectangle(_destinationMatO,
+            cv::rectangle(_destinationMatL,
                           cv::Point(JSX0, JSY0),
                           cv::Point(JSX0 + JSWIDTH, JSY0 + JSTEXTDELTA + 12*13 + 10),
                           CV_RGB(0, 0, 0), -1);
 
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(JSX0 + 5, JSY0 + 10),
                      cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 10),
                      CV_RGB(255, 255, 255),
                      1,
                      cv::LINE_8);
 
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(JSX0 + 5, JSY0 + 27),
                      cv::Point(JSX0 + JSWIDTH - 5, JSY0 + 27),
                      CV_RGB(255, 255, 255),
@@ -863,7 +854,7 @@ void MainWindow::onVideoTimer()
                      cv::LINE_8);
 
             // Текстовка
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "CONTROL",
                         cv::Point(JSX0 + 10, JSY0 + 24),
                         cv::FONT_HERSHEY_PLAIN,
@@ -872,7 +863,7 @@ void MainWindow::onVideoTimer()
                         1);
 
             // HorizontalVectorX
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "HRZV.X: " + QString::number(_dataControl.HorizontalVectorX, 'f', 2).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*1),
                         cv::FONT_HERSHEY_PLAIN,
@@ -880,7 +871,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // HorizontalVectorY
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "HRZV.Y: " + QString::number(_dataControl.HorizontalVectorY, 'f', 2).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*2),
                         cv::FONT_HERSHEY_PLAIN,
@@ -888,7 +879,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // VericalThrust
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "VERT.TH: " + QString::number(_dataControl.VericalThrust, 'f', 2).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*3),
                         cv::FONT_HERSHEY_PLAIN,
@@ -896,7 +887,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // AngularVelocityZ
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "ANGV.Z: " + QString::number(_dataControl.AngularVelocityZ, 'f', 2).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*4),
                         cv::FONT_HERSHEY_PLAIN,
@@ -904,7 +895,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // PowerTarget
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "PWR.TRG: " + QString::number(_dataControl.PowerTarget, 'f', 2).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*5),
                         cv::FONT_HERSHEY_PLAIN,
@@ -912,7 +903,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // ManipulatorState
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "MNP.ST: " + QString::number(_dataControl.ManipulatorState).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*6),
                         cv::FONT_HERSHEY_PLAIN,
@@ -920,7 +911,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // ManipulatorRotate
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "MNP.ROT: " + QString::number(_dataControl.ManipulatorRotate, 'f', 2).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
                         cv::FONT_HERSHEY_PLAIN,
@@ -928,7 +919,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // CameraRotate
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "CAM.ROT: " + QString::number(_dataControl.CameraRotate).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*8),
                         cv::FONT_HERSHEY_PLAIN,
@@ -936,7 +927,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // ResetInitialization
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "RESET.INI: " + QString::number(_dataControl.ResetInitialization).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*9),
                         cv::FONT_HERSHEY_PLAIN,
@@ -944,7 +935,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // LightsState
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "LIGHT: " + QString::number(_dataControl.LightsState).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*10),
                         cv::FONT_HERSHEY_PLAIN,
@@ -952,7 +943,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // RollInc
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "ROLL.INC: " + QString::number(_dataControl.RollInc).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*11),
                         cv::FONT_HERSHEY_PLAIN,
@@ -960,7 +951,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // PitchInc
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "PITCH.INC: " + QString::number(_dataControl.PitchInc).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*12),
                         cv::FONT_HERSHEY_PLAIN,
@@ -968,7 +959,7 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
             // ResetPosition
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "RESET.POS: " + QString::number(_dataControl.ResetPosition).toStdString(),
                         cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
                         cv::FONT_HERSHEY_PLAIN,
@@ -977,7 +968,7 @@ void MainWindow::onVideoTimer()
                         1);
 
             /*
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "JOYSTICK INFO",
                     cv::Point(JSX0 + 10, JSY0 + 24),
                     cv::FONT_HERSHEY_PLAIN,
@@ -985,42 +976,42 @@ void MainWindow::onVideoTimer()
                     CV_RGB(255, 255, 255),
                     1);
 
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "LStickX: " + QString::number(_xbox.LStickX).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*1),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "LStickY: " + QString::number(_xbox.LStickY).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*2),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "RStickX: " + QString::number(_xbox.RStickX).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*3),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "RStickY: " + QString::number(_xbox.RStickY).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*4),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "LTrigger: " + QString::number(_xbox.LTrigger).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*5),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "RTrigger: " + QString::number(_xbox.RTrigger).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*6),
                     cv::FONT_HERSHEY_PLAIN,
@@ -1028,49 +1019,49 @@ void MainWindow::onVideoTimer()
                     CV_RGB(255, 255, 255),
                     1);
 
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "A: " + QString::number(_xbox.A).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*7),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "B: " + QString::number(_xbox.B).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*8),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "X: " + QString::number(_xbox.X).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*9),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "Y: " + QString::number(_xbox.Y).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*10),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "LBumper: " + QString::number(_xbox.LBumper).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*11),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "RBumper: " + QString::number(_xbox.RBumper).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*12),
                     cv::FONT_HERSHEY_PLAIN,
                     1,
                     CV_RGB(255, 255, 255),
                     1);
-        cv::putText(_destinationMatO,
+        cv::putText(_destinationMatL,
                     "D-Pad: " + QString::number(_xbox.DPad).toStdString(),
                     cv::Point(JSX0 + 10, JSY0 + JSTEXTDELTA + 12*13),
                     cv::FONT_HERSHEY_PLAIN,
@@ -1084,29 +1075,29 @@ void MainWindow::onVideoTimer()
             // Телеметрия
 
             TMX0 = X0 + (X0 - XV0) - 30;
-            cv::rectangle(_destinationMatO,
+            cv::rectangle(_destinationMatL,
                           cv::Point(TMX0, TMY0),
                           cv::Point(TMX0 + TMWIDTH, TMY0 + TMTEXTDELTA + 12*13 + 10),
                           CV_RGB(255, 255, 255), 2, cv::LINE_8);
-            cv::rectangle(_destinationMatO,
+            cv::rectangle(_destinationMatL,
                           cv::Point(TMX0, TMY0),
                           cv::Point(TMX0 + TMWIDTH, TMY0 + TMTEXTDELTA + 12*13 + 10),
                           CV_RGB(0, 0, 0), -1);
 
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(TMX0 + 5, TMY0 + 10),
                      cv::Point(TMX0 + TMWIDTH - 5, TMY0 + 10),
                      CV_RGB(255, 255, 255),
                      1,
                      cv::LINE_8);
-            cv::line(_destinationMatO,
+            cv::line(_destinationMatL,
                      cv::Point(TMX0 + 5, TMY0 + 27),
                      cv::Point(TMX0 + TMWIDTH - 5, TMY0 + 27),
                      CV_RGB(255, 255, 255),
                      1,
                      cv::LINE_8);
 
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "TELEMETRY",
                         cv::Point(TMX0 + 10, TMY0 + 24),
                         cv::FONT_HERSHEY_PLAIN,
@@ -1114,35 +1105,35 @@ void MainWindow::onVideoTimer()
                         CV_RGB(255, 255, 255),
                         1);
 
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "Roll: " + QString::number(_dataTelemetry.Roll, 'f', 2).toStdString(),
                         cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*1),
                         cv::FONT_HERSHEY_PLAIN,
                         1,
                         CV_RGB(255, 255, 255),
                         1);
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "Pitch: " + QString::number(_dataTelemetry.Pitch, 'f', 2).toStdString(),
                         cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*2),
                         cv::FONT_HERSHEY_PLAIN,
                         1,
                         CV_RGB(255, 255, 255),
                         1);
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "Yaw: " + QString::number(_dataTelemetry.Yaw, 'f', 2).toStdString(),
                         cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*3),
                         cv::FONT_HERSHEY_PLAIN,
                         1,
                         CV_RGB(255, 255, 255),
                         1);
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "Heading: " + QString::number(_dataTelemetry.Heading, 'f', 2).toStdString(),
                         cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*4),
                         cv::FONT_HERSHEY_PLAIN,
                         1,
                         CV_RGB(255, 255, 255),
                         1);
-            cv::putText(_destinationMatO,
+            cv::putText(_destinationMatL,
                         "Depth: " + QString::number(_dataTelemetry.Depth, 'f', 2).toStdString(),
                         cv::Point(TMX0 + 10, TMY0 + TMTEXTDELTA + 12*5),
                         cv::FONT_HERSHEY_PLAIN,
@@ -1152,45 +1143,45 @@ void MainWindow::onVideoTimer()
 
             ///////////////////////////////////////////////////////////////////////
             // Склейка
-            cv::addWeighted(overlayImage, alpha, _destinationMatO, 1 - alpha, 0, transparencyiImage);
+            cv::addWeighted(overlayImage, alpha, _destinationMatL, 1 - alpha, 0, transparencyiImage);
             ///////////////////////////////////////////////////////////////////////
 
-            _imgCamO = QImage((uchar*) transparencyiImage.data,
+            _imgCamL = QImage((uchar*) transparencyiImage.data,
                               transparencyiImage.cols,
                               transparencyiImage.rows,
                               transparencyiImage.step,
                               QImage::Format_RGB888);
 
 
-            //_imgCamO = QImage((uchar*) _destinationMatO.data,
-            //                  _destinationMatO.cols,
-            //                  _destinationMatO.rows,
-            //                  _destinationMatO.step,
+            //_imgCamO = QImage((uchar*) _destinationMatL.data,
+            //                  _destinationMatL.cols,
+            //                  _destinationMatL.rows,
+            //                  _destinationMatL.step,
             //                  QImage::Format_RGB888);
 
-            ui->lbCamera->setPixmap(QPixmap::fromImage(_imgCamO));
+            ui->lbCamera->setPixmap(QPixmap::fromImage(_imgCamL));
         }
 #pragma endregion
 
         if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             nRet = MV_CC_StopGrabbing(handleL);
             if (MV_OK != nRet)
             {
                 qDebug() << "ERROR: Mono Camera - Stop Grabbing fail!";
                 break;
             }
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
         }
         break;
     case CameraView::STEREO:
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             // Left Camera
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             // Start image acquisition.
             nRet = MV_CC_StartGrabbing(handleL);
             if (MV_OK != nRet)
@@ -1213,7 +1204,7 @@ void MainWindow::onVideoTimer()
             }
             else
                 qDebug() << "ERROR: Left Camera - Get Image fail!";
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             break;
         case CameraType::WEB:
             _webCamL->read(_sourceMatL);
@@ -1238,22 +1229,22 @@ void MainWindow::onVideoTimer()
 
         if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             nRet = MV_CC_StopGrabbing(handleL);
             if (MV_OK != nRet)
             {
                 qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
                 break;
             }
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
         }
 
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             // Right Camera
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             // Start image acquisition.
             nRet = MV_CC_StartGrabbing(handleR);
             if (MV_OK != nRet)
@@ -1276,7 +1267,7 @@ void MainWindow::onVideoTimer()
             }
             else
                 qDebug() << "ERROR: Right Camera - Get Image fail!";
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             break;
         case CameraType::WEB:
             _webCamR->read(_sourceMatR);
@@ -1301,14 +1292,14 @@ void MainWindow::onVideoTimer()
 
         if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
             nRet = MV_CC_StopGrabbing(handleR);
             if (MV_OK != nRet)
             {
                 qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
                 break;
             }
-            ////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////
         }
         break;
     default:

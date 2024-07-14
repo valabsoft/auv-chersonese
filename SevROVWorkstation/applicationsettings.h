@@ -7,7 +7,7 @@
 #include <QApplication>
 
 #include "datastructure.h"
-#include "enumclasses.h""
+#include "enumclasses.h"
 
 class ApplicationSettings
 {
@@ -34,7 +34,6 @@ public:
 
     int VIDEO_TIMER_INTERVAL = 50;
 
-    int CAMERA_MONO_ID = 0;
     int CAMERA_LEFT_ID = 1;
     int CAMERA_RIGHT_ID = 1;
 

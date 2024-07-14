@@ -63,22 +63,21 @@ private:
     // OpenCV related
     QTimer *_videoTimer;
 
-    // VA (22-05-2024) TODO: Оптимизировать кол-во переменных
-    cv::VideoCapture *_webCamO; // Моно-камера
     cv::VideoCapture *_webCamL; // Стерео-камера (левая)
     cv::VideoCapture *_webCamR; // Стерео-камера (правая)
 
-    cv::Mat _sourceMatO;
     cv::Mat _sourceMatL;
     cv::Mat _sourceMatR;
 
-    cv::Mat _destinationMatO;
     cv::Mat _destinationMatL;
     cv::Mat _destinationMatR;
 
-    QImage _imgCamO;
     QImage _imgCamL;
     QImage _imgCamR;
+    ///////////////////////////////////////////////////////////////////////////
+    // IP camera related
+    void* handleL = NULL;
+    void* handleR = NULL;
     ///////////////////////////////////////////////////////////////////////////
 
     void setupIcons();
@@ -143,9 +142,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    // Хендлы камер Hikrobot
-    void* handleL = NULL;
-    void* handleR = NULL;
 
 Q_SIGNALS:
     void updateCntValue(QString fps);

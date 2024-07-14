@@ -169,7 +169,7 @@ void write_coords_file(std::vector<std::vector<double>> points23D,std::string fi
     double x,y,z;
 
     if (xyz_fs.is_open()) {
-        for(int i = 0; i < points23D.size(); i++)
+        for(int i = 0; i < (int)points23D.size(); i++)
         {
 
             v = points23D[i][0];
