@@ -208,17 +208,17 @@ int MainWindow::MV_SDK_Initialization()
     // Right Camera Initialization
     ///////////////////////////////////////////////////////////////////////////
 
-    nRet = MV_CC_CreateHandle(&handleR, stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]);
+    nRet = MV_CC_CreateHandle(&handleR, stDeviceList.pDeviceInfo[_appSet.CAMERA_RIGHT_ID]);
     if (MV_OK != nRet)
         return 21;
 
-    // Left camera open device.
+    // Right camera open device.
     nRet = MV_CC_OpenDevice(handleR);
     if (MV_OK != nRet)
         return 22;
 
     // Detect network optimal package size (only works for GigE cameras).
-    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]->nTLayerType == MV_GIGE_DEVICE)
+    if (stDeviceList.pDeviceInfo[_appSet.CAMERA_RIGHT_ID]->nTLayerType == MV_GIGE_DEVICE)
     {
         int nPacketSize = MV_CC_GetOptimalPacketSize(handleR);
         if (nPacketSize > 0)
