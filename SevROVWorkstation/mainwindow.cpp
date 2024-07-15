@@ -94,10 +94,15 @@ MainWindow::MainWindow(QWidget *parent)
     _rovConnector.setMode(SevROVConnector::Mode::CONTROL_WRITE |
                          SevROVConnector::Mode::TELEMETRY_READ);
 
-
     connect(&_rovConnector, SIGNAL(OnConnected()), this, SLOT(onSocketConnect()));
     connect(&_rovConnector, SIGNAL(OnDisconnected()), this, SLOT(onSocketDisconnect()));
     connect(&_rovConnector, SIGNAL(OnProcessTelemetryDatagram()), this, SLOT(onSocketProcessTelemetryDatagram()));
+
+    _dataTelemetry.Roll = 0.0;
+    _dataTelemetry.Pitch = 0.0;
+    _dataTelemetry.Yaw = 0.0;
+    _dataTelemetry.Heading = 0.0;
+    _dataTelemetry.Depth = 0.0;
 }
 
 MainWindow::~MainWindow()
@@ -200,6 +205,10 @@ int MainWindow::MV_SDK_Initialization()
     //else
     //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
     ///////////////////////////////////////////////////////////////////////////
+    // Start image acquisition
+    nRet = MV_CC_StartGrabbing(handleL);
+    if (MV_OK != nRet)
+        return 15;
 
     if (stDeviceList.nDeviceNum < 1)
         return -1;
@@ -246,7 +255,11 @@ int MainWindow::MV_SDK_Initialization()
         return 24;
     //else
     //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
-    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////    
+    // Start image acquisition
+    nRet = MV_CC_StartGrabbing(handleR);
+    if (MV_OK != nRet)
+        return 25;
 
     return 0;
 }
@@ -258,6 +271,10 @@ int MainWindow::MV_SDK_Finalization()
     // Close device -- Left
     if (handleL != NULL)
     {
+        nRet = MV_CC_StopGrabbing(handleL);
+        if (MV_OK != nRet)
+            return 10;
+
         nRet = MV_CC_CloseDevice(handleL);
         if (MV_OK != nRet)
             return 11;
@@ -279,6 +296,10 @@ int MainWindow::MV_SDK_Finalization()
     // Close device -- Right
     if (handleR != NULL)
     {
+        nRet = MV_CC_StopGrabbing(handleR);
+        if (MV_OK != nRet)
+            return 20;
+
         nRet = MV_CC_CloseDevice(handleR);
         if (MV_OK != nRet)
             return 21;
@@ -602,15 +623,6 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            ///////////////////////////////////////////////////////////////////
-            // Start image acquisition.
-            nRet = MV_CC_StartGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Mono Camera - Start Grabbing fail!";
-                break;
-            }
-
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
@@ -1163,17 +1175,6 @@ void MainWindow::onVideoTimer()
         }
 #pragma endregion
 
-        if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
-            ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_StopGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Mono Camera - Stop Grabbing fail!";
-                break;
-            }
-            ///////////////////////////////////////////////////////////////////
-        }
         break;
     case CameraView::STEREO:
         switch (_appSet.CAMERA_TYPE)
@@ -1182,14 +1183,6 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////
             // Left Camera
             ///////////////////////////////////////////////////////////////////
-            // Start image acquisition.
-            nRet = MV_CC_StartGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-                break;
-            }
-
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
@@ -1225,34 +1218,11 @@ void MainWindow::onVideoTimer()
                           _destinationMatL.step,
                           QImage::Format_RGB888);
 
-        ui->lbCameraL->setPixmap(QPixmap::fromImage(_imgCamL));
-
-        if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
-            ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_StopGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
-                break;
-            }
-            ///////////////////////////////////////////////////////////////////
-        }
+        ui->lbCameraL->setPixmap(QPixmap::fromImage(_imgCamL));        
 
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            ///////////////////////////////////////////////////////////////////
-            // Right Camera
-            ///////////////////////////////////////////////////////////////////
-            // Start image acquisition.
-            nRet = MV_CC_StartGrabbing(handleR);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-                break;
-            }
-
             nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
@@ -1290,17 +1260,6 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
 
-        if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
-            ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_StopGrabbing(handleR);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
-                break;
-            }
-            ///////////////////////////////////////////////////////////////////
-        }
         break;
     default:
         break;
@@ -1661,6 +1620,9 @@ void MainWindow::onStartStopButtonClicked()
         case 14:
             qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
             break;
+        case 15:
+            qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+            break;
 
         case 21:
             qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
@@ -1673,6 +1635,9 @@ void MainWindow::onStartStopButtonClicked()
             break;
         case 24:
             qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
+            break;
+        case 25:
+            qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
             break;
         default:
             break;
@@ -1695,6 +1660,9 @@ void MainWindow::onStartStopButtonClicked()
         int retCode = MV_SDK_Finalization();
         switch (retCode)
         {
+        case 10:
+            qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
+            break;
         case 11:
             qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
             break;
@@ -1702,6 +1670,9 @@ void MainWindow::onStartStopButtonClicked()
             qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
             break;
 
+        case 20:
+            qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
+            break;
         case 21:
             qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
             break;
@@ -1779,16 +1750,6 @@ void MainWindow::onScreenshotButtonClicked()
     switch (_appSet.CAMERA_TYPE)
     {
     case CameraType::IP:
-        ///////////////////////////////////////////////////////////////////////
-        // Left Camera
-        ///////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleL);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-        }
-
         nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
         if (nRet == MV_OK)
         {
@@ -1807,13 +1768,6 @@ void MainWindow::onScreenshotButtonClicked()
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
         ///////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleR);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-        }
-
         nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
         if (nRet == MV_OK)
         {
@@ -1868,25 +1822,6 @@ void MainWindow::onScreenshotButtonClicked()
 
     _toolWindow->move(x, y);
     _toolWindow->exec();
-
-    if (_appSet.CAMERA_TYPE == CameraType::IP)
-    {
-        ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleL);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
-        }
-        ///////////////////////////////////////////////////////////////////////
-
-        ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleR);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
-        }
-        ///////////////////////////////////////////////////////////////////////
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Очищаем ресурсы
