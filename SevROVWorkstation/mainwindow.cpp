@@ -90,6 +90,12 @@ MainWindow::MainWindow(QWidget *parent)
     _xbox.LTrigger = -32768;
     _xbox.RTrigger = -32768;
 
+    _dataTelemetry.Roll = 0.0;
+    _dataTelemetry.Pitch = 0.0;
+    _dataTelemetry.Yaw = 0.0;
+    _dataTelemetry.Heading = 0.0;
+    _dataTelemetry.Depth = 0.0;
+
     // Создаем коннектор с AUV. Клиент должен уметь писать управление и читать телеметрию
     _rovConnector.setMode(SevROVConnector::Mode::CONTROL_WRITE |
                          SevROVConnector::Mode::TELEMETRY_READ);
@@ -97,12 +103,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&_rovConnector, SIGNAL(OnConnected()), this, SLOT(onSocketConnect()));
     connect(&_rovConnector, SIGNAL(OnDisconnected()), this, SLOT(onSocketDisconnect()));
     connect(&_rovConnector, SIGNAL(OnProcessTelemetryDatagram()), this, SLOT(onSocketProcessTelemetryDatagram()));
-
-    _dataTelemetry.Roll = 0.0;
-    _dataTelemetry.Pitch = 0.0;
-    _dataTelemetry.Yaw = 0.0;
-    _dataTelemetry.Heading = 0.0;
-    _dataTelemetry.Depth = 0.0;
 }
 
 MainWindow::~MainWindow()
@@ -468,26 +468,65 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
     {
     case CameraConnection::ON:
 
-        // Выделяем ресурсы
-        //switch (_sevROV.cameraView)
-        //{
-        //case CameraView::MONO:
-        //    _webCam = new cv::VideoCapture(camID);
-        //    break;
-        //case CameraView::STEREO:
-        //    _webCamL = new cv::VideoCapture(camIDL);
-        //    _webCamR = new cv::VideoCapture(camIDR);
-        //    break;
-        //default:
-        //    break;
-        //}
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
+        {
+            int retCode = MV_SDK_Initialization();
+            switch (retCode)
+            {
+            case -1:
+                qDebug() <<  "ERROR: The only one camera found!";
+                break;
 
-        _webCamL = new cv::VideoCapture(_appSet.CAMERA_LEFT_ID);
-        _webCamR = new cv::VideoCapture(_appSet.CAMERA_RIGHT_ID);
+            case 1:
+                qDebug() <<  "ERROR: Initialize SDK fail!";
+                break;
+            case 2:
+                qDebug() <<  "ERROR: Enum Devices fail!";
+                break;
 
-        // TODO VA (23-05-2024): Проверить что FPS выставляется
-        _webCamL->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
-        _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+            case 11:
+                qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
+                break;
+            case 12:
+                qDebug() <<  "ERROR: Left Camera - Open Device fail!";
+                break;
+            case 13:
+                qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
+                break;
+            case 14:
+                qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
+                break;
+            case 15:
+                qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+                break;
+
+            case 21:
+                qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
+                break;
+            case 22:
+                qDebug() <<  "ERROR: Right Camera - Open Device fail!";
+                break;
+            case 23:
+                qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
+                break;
+            case 24:
+                qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
+                break;
+            case 25:
+                qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
+                break;
+            default:
+                break;
+            }
+        }
+        else if (_appSet.CAMERA_TYPE == CameraType::WEB)
+        {
+            _webCamL = new cv::VideoCapture(_appSet.CAMERA_LEFT_ID);
+            _webCamR = new cv::VideoCapture(_appSet.CAMERA_RIGHT_ID);
+            // TODO VA (23-05-2024): Проверить что FPS выставляется
+            _webCamL->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+            _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+        }
 
         // Запускаем таймер
         if (!_videoTimer->isActive())
@@ -496,11 +535,42 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         break;
     case CameraConnection::OFF:
 
-        // Освобождаем ресурсы        
-        if (_webCamL->isOpened())
-            _webCamL->release();
-        if (_webCamR->isOpened())
-            _webCamR->release();
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
+        {
+            int retCode = MV_SDK_Finalization();
+            switch (retCode)
+            {
+            case 10:
+                qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
+                break;
+            case 11:
+                qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
+                break;
+            case 12:
+                qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
+                break;
+
+            case 20:
+                qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
+                break;
+            case 21:
+                qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
+                break;
+            case 22:
+                qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
+                break;
+            default:
+                break;
+            }
+        }
+        else if (_appSet.CAMERA_TYPE == CameraType::WEB)
+        {
+            // Освобождаем ресурсы
+            if (_webCamL->isOpened())
+                _webCamL->release();
+            if (_webCamR->isOpened())
+                _webCamR->release();
+        }
 
         // Остановка таймера
         if (!_videoTimer->isActive())
@@ -1593,55 +1663,6 @@ void MainWindow::onStartStopButtonClicked()
         _jsController->start(); // Запуск процесса в поток
 
         _controlTimer->start(_appSet.JOYSTICK_TIMER_INTERVAL);
-
-        int retCode = MV_SDK_Initialization();
-        switch (retCode)
-        {
-        case -1:
-            qDebug() <<  "ERROR: The only one camera found!";
-            break;
-
-        case 1:
-            qDebug() <<  "ERROR: Initialize SDK fail!";
-            break;
-        case 2:
-            qDebug() <<  "ERROR: Enum Devices fail!";
-            break;
-
-        case 11:
-            qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
-            break;
-        case 12:
-            qDebug() <<  "ERROR: Left Camera - Open Device fail!";
-            break;
-        case 13:
-            qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
-            break;
-        case 14:
-            qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
-            break;
-        case 15:
-            qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-            break;
-
-        case 21:
-            qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
-            break;
-        case 22:
-            qDebug() <<  "ERROR: Right Camera - Open Device fail!";
-            break;
-        case 23:
-            qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
-            break;
-        case 24:
-            qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
-            break;
-        case 25:
-            qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-            break;
-        default:
-            break;
-        }
     }
     else // Connection OFF
     {
@@ -1656,32 +1677,6 @@ void MainWindow::onStartStopButtonClicked()
         _jsController->quit();
 
         _controlTimer->stop();
-
-        int retCode = MV_SDK_Finalization();
-        switch (retCode)
-        {
-        case 10:
-            qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
-            break;
-        case 11:
-            qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
-            break;
-        case 12:
-            qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
-            break;
-
-        case 20:
-            qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
-            break;
-        case 21:
-            qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
-            break;
-        case 22:
-            qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
-            break;
-        default:
-            break;
-        }
     }
 
     // Будем использовать connectToHost и disconnectFromHost
@@ -1737,7 +1732,6 @@ void MainWindow::onViewButtonClicked()
 
 void MainWindow::onScreenshotButtonClicked()
 {
-    setupCameraConnection(CameraConnection::OFF);
     // Создаем инструмент Линейка
     _toolWindow = new ToolWindow(this);
 
@@ -1827,7 +1821,6 @@ void MainWindow::onScreenshotButtonClicked()
     // Очищаем ресурсы
     delete _toolWindow;
     ///////////////////////////////////////////////////////////////////////////
-    setupCameraConnection(CameraConnection::ON);
 }
 
 void MainWindow::onSettingsButtonClicked()
