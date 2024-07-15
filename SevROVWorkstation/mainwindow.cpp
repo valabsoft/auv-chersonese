@@ -614,7 +614,7 @@ void MainWindow::onVideoTimer()
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
-                qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                // qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
@@ -1193,7 +1193,7 @@ void MainWindow::onVideoTimer()
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
-                qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
@@ -1256,7 +1256,7 @@ void MainWindow::onVideoTimer()
             nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
-                qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
 
@@ -1766,6 +1766,7 @@ void MainWindow::onViewButtonClicked()
 
 void MainWindow::onScreenshotButtonClicked()
 {
+    setupCameraConnection(CameraConnection::OFF);
     // Создаем инструмент Линейка
     _toolWindow = new ToolWindow(this);
 
@@ -1791,7 +1792,7 @@ void MainWindow::onScreenshotButtonClicked()
         nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
         if (nRet == MV_OK)
         {
-            qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
 
@@ -1816,7 +1817,7 @@ void MainWindow::onScreenshotButtonClicked()
         nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
         if (nRet == MV_OK)
         {
-            qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
 
@@ -1891,6 +1892,7 @@ void MainWindow::onScreenshotButtonClicked()
     // Очищаем ресурсы
     delete _toolWindow;
     ///////////////////////////////////////////////////////////////////////////
+    setupCameraConnection(CameraConnection::ON);
 }
 
 void MainWindow::onSettingsButtonClicked()
