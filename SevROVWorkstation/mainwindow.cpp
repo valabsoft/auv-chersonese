@@ -90,10 +90,15 @@ MainWindow::MainWindow(QWidget *parent)
     _xbox.LTrigger = -32768;
     _xbox.RTrigger = -32768;
 
+    _dataTelemetry.Roll = 0.0;
+    _dataTelemetry.Pitch = 0.0;
+    _dataTelemetry.Yaw = 0.0;
+    _dataTelemetry.Heading = 0.0;
+    _dataTelemetry.Depth = 0.0;
+
     // Создаем коннектор с AUV. Клиент должен уметь писать управление и читать телеметрию
     _rovConnector.setMode(SevROVConnector::Mode::CONTROL_WRITE |
                          SevROVConnector::Mode::TELEMETRY_READ);
-
 
     connect(&_rovConnector, SIGNAL(OnConnected()), this, SLOT(onSocketConnect()));
     connect(&_rovConnector, SIGNAL(OnDisconnected()), this, SLOT(onSocketDisconnect()));
@@ -200,6 +205,10 @@ int MainWindow::MV_SDK_Initialization()
     //else
     //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
     ///////////////////////////////////////////////////////////////////////////
+    // Start image acquisition
+    nRet = MV_CC_StartGrabbing(handleL);
+    if (MV_OK != nRet)
+        return 15;
 
     if (stDeviceList.nDeviceNum < 1)
         return -1;
@@ -246,7 +255,11 @@ int MainWindow::MV_SDK_Initialization()
         return 24;
     //else
     //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
-    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////    
+    // Start image acquisition
+    nRet = MV_CC_StartGrabbing(handleR);
+    if (MV_OK != nRet)
+        return 25;
 
     return 0;
 }
@@ -258,6 +271,10 @@ int MainWindow::MV_SDK_Finalization()
     // Close device -- Left
     if (handleL != NULL)
     {
+        nRet = MV_CC_StopGrabbing(handleL);
+        if (MV_OK != nRet)
+            return 10;
+
         nRet = MV_CC_CloseDevice(handleL);
         if (MV_OK != nRet)
             return 11;
@@ -279,6 +296,10 @@ int MainWindow::MV_SDK_Finalization()
     // Close device -- Right
     if (handleR != NULL)
     {
+        nRet = MV_CC_StopGrabbing(handleR);
+        if (MV_OK != nRet)
+            return 20;
+
         nRet = MV_CC_CloseDevice(handleR);
         if (MV_OK != nRet)
             return 21;
@@ -447,26 +468,65 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
     {
     case CameraConnection::ON:
 
-        // Выделяем ресурсы
-        //switch (_sevROV.cameraView)
-        //{
-        //case CameraView::MONO:
-        //    _webCam = new cv::VideoCapture(camID);
-        //    break;
-        //case CameraView::STEREO:
-        //    _webCamL = new cv::VideoCapture(camIDL);
-        //    _webCamR = new cv::VideoCapture(camIDR);
-        //    break;
-        //default:
-        //    break;
-        //}
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
+        {
+            int retCode = MV_SDK_Initialization();
+            switch (retCode)
+            {
+            case -1:
+                qDebug() <<  "ERROR: The only one camera found!";
+                break;
 
-        _webCamL = new cv::VideoCapture(_appSet.CAMERA_LEFT_ID);
-        _webCamR = new cv::VideoCapture(_appSet.CAMERA_RIGHT_ID);
+            case 1:
+                qDebug() <<  "ERROR: Initialize SDK fail!";
+                break;
+            case 2:
+                qDebug() <<  "ERROR: Enum Devices fail!";
+                break;
 
-        // TODO VA (23-05-2024): Проверить что FPS выставляется
-        _webCamL->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
-        _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+            case 11:
+                qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
+                break;
+            case 12:
+                qDebug() <<  "ERROR: Left Camera - Open Device fail!";
+                break;
+            case 13:
+                qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
+                break;
+            case 14:
+                qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
+                break;
+            case 15:
+                qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+                break;
+
+            case 21:
+                qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
+                break;
+            case 22:
+                qDebug() <<  "ERROR: Right Camera - Open Device fail!";
+                break;
+            case 23:
+                qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
+                break;
+            case 24:
+                qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
+                break;
+            case 25:
+                qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
+                break;
+            default:
+                break;
+            }
+        }
+        else if (_appSet.CAMERA_TYPE == CameraType::WEB)
+        {
+            _webCamL = new cv::VideoCapture(_appSet.CAMERA_LEFT_ID);
+            _webCamR = new cv::VideoCapture(_appSet.CAMERA_RIGHT_ID);
+            // TODO VA (23-05-2024): Проверить что FPS выставляется
+            _webCamL->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+            _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+        }
 
         // Запускаем таймер
         if (!_videoTimer->isActive())
@@ -475,11 +535,42 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         break;
     case CameraConnection::OFF:
 
-        // Освобождаем ресурсы        
-        if (_webCamL->isOpened())
-            _webCamL->release();
-        if (_webCamR->isOpened())
-            _webCamR->release();
+        if (_appSet.CAMERA_TYPE == CameraType::IP)
+        {
+            int retCode = MV_SDK_Finalization();
+            switch (retCode)
+            {
+            case 10:
+                qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
+                break;
+            case 11:
+                qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
+                break;
+            case 12:
+                qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
+                break;
+
+            case 20:
+                qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
+                break;
+            case 21:
+                qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
+                break;
+            case 22:
+                qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
+                break;
+            default:
+                break;
+            }
+        }
+        else if (_appSet.CAMERA_TYPE == CameraType::WEB)
+        {
+            // Освобождаем ресурсы
+            if (_webCamL->isOpened())
+                _webCamL->release();
+            if (_webCamR->isOpened())
+                _webCamR->release();
+        }
 
         // Остановка таймера
         if (!_videoTimer->isActive())
@@ -602,19 +693,10 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            ///////////////////////////////////////////////////////////////////
-            // Start image acquisition.
-            nRet = MV_CC_StartGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Mono Camera - Start Grabbing fail!";
-                break;
-            }
-
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
-                qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                // qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
@@ -1163,17 +1245,6 @@ void MainWindow::onVideoTimer()
         }
 #pragma endregion
 
-        if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
-            ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_StopGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Mono Camera - Stop Grabbing fail!";
-                break;
-            }
-            ///////////////////////////////////////////////////////////////////
-        }
         break;
     case CameraView::STEREO:
         switch (_appSet.CAMERA_TYPE)
@@ -1182,18 +1253,10 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////
             // Left Camera
             ///////////////////////////////////////////////////////////////////
-            // Start image acquisition.
-            nRet = MV_CC_StartGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-                break;
-            }
-
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
-                qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
@@ -1225,38 +1288,15 @@ void MainWindow::onVideoTimer()
                           _destinationMatL.step,
                           QImage::Format_RGB888);
 
-        ui->lbCameraL->setPixmap(QPixmap::fromImage(_imgCamL));
-
-        if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
-            ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_StopGrabbing(handleL);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
-                break;
-            }
-            ///////////////////////////////////////////////////////////////////
-        }
+        ui->lbCameraL->setPixmap(QPixmap::fromImage(_imgCamL));        
 
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            ///////////////////////////////////////////////////////////////////
-            // Right Camera
-            ///////////////////////////////////////////////////////////////////
-            // Start image acquisition.
-            nRet = MV_CC_StartGrabbing(handleR);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-                break;
-            }
-
             nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
-                qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+                // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
 
@@ -1290,17 +1330,6 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
 
-        if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
-            ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_StopGrabbing(handleR);
-            if (MV_OK != nRet)
-            {
-                qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
-                break;
-            }
-            ///////////////////////////////////////////////////////////////////
-        }
         break;
     default:
         break;
@@ -1634,49 +1663,6 @@ void MainWindow::onStartStopButtonClicked()
         _jsController->start(); // Запуск процесса в поток
 
         _controlTimer->start(_appSet.JOYSTICK_TIMER_INTERVAL);
-
-        int retCode = MV_SDK_Initialization();
-        switch (retCode)
-        {
-        case -1:
-            qDebug() <<  "ERROR: The only one camera found!";
-            break;
-
-        case 1:
-            qDebug() <<  "ERROR: Initialize SDK fail!";
-            break;
-        case 2:
-            qDebug() <<  "ERROR: Enum Devices fail!";
-            break;
-
-        case 11:
-            qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
-            break;
-        case 12:
-            qDebug() <<  "ERROR: Left Camera - Open Device fail!";
-            break;
-        case 13:
-            qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
-            break;
-        case 14:
-            qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
-            break;
-
-        case 21:
-            qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
-            break;
-        case 22:
-            qDebug() <<  "ERROR: Right Camera - Open Device fail!";
-            break;
-        case 23:
-            qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
-            break;
-        case 24:
-            qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
-            break;
-        default:
-            break;
-        }
     }
     else // Connection OFF
     {
@@ -1691,26 +1677,6 @@ void MainWindow::onStartStopButtonClicked()
         _jsController->quit();
 
         _controlTimer->stop();
-
-        int retCode = MV_SDK_Finalization();
-        switch (retCode)
-        {
-        case 11:
-            qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
-            break;
-        case 12:
-            qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
-            break;
-
-        case 21:
-            qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
-            break;
-        case 22:
-            qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
-            break;
-        default:
-            break;
-        }
     }
 
     // Будем использовать connectToHost и disconnectFromHost
@@ -1778,20 +1744,10 @@ void MainWindow::onScreenshotButtonClicked()
     switch (_appSet.CAMERA_TYPE)
     {
     case CameraType::IP:
-        ///////////////////////////////////////////////////////////////////////
-        // Left Camera
-        ///////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleL);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-        }
-
         nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
         if (nRet == MV_OK)
         {
-            qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
 
@@ -1806,17 +1762,10 @@ void MainWindow::onScreenshotButtonClicked()
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
         ///////////////////////////////////////////////////////////////////////
-        // Start image acquisition.
-        nRet = MV_CC_StartGrabbing(handleR);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-        }
-
         nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
         if (nRet == MV_OK)
         {
-            qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
 
@@ -1867,25 +1816,6 @@ void MainWindow::onScreenshotButtonClicked()
 
     _toolWindow->move(x, y);
     _toolWindow->exec();
-
-    if (_appSet.CAMERA_TYPE == CameraType::IP)
-    {
-        ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleL);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Left Camera - Stop Grabbing fail!";
-        }
-        ///////////////////////////////////////////////////////////////////////
-
-        ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_StopGrabbing(handleR);
-        if (MV_OK != nRet)
-        {
-            qDebug() << "ERROR: Right Camera - Stop Grabbing fail!";
-        }
-        ///////////////////////////////////////////////////////////////////////
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Очищаем ресурсы
