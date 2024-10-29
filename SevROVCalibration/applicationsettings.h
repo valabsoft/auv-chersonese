@@ -34,9 +34,12 @@ public:
     int VIDEO_TIMER_INTERVAL = 50;
 
     int CAMERA_LEFT_ID = 1;
-    int CAMERA_RIGHT_ID = 1;
+    int CAMERA_RIGHT_ID = 2;
 
-    int CAMERA_TYPE = CameraType::IP;
+    int CAMERA_TYPE = CameraType::WEB;
+
+    int NUMBER_OF_SHOTS = 30;
+    int SHOTS_INTERVAL = 3;
 };
 
 #endif // APPLICATIONSETTINGS_H

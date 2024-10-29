@@ -7,6 +7,8 @@
 
 #include "applicationsettings.h"
 #include "enumclasses.h"
+#include "settingswindow.h"
+#include "calibration.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
@@ -14,6 +16,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -33,15 +36,24 @@ public:
     void setupWindowGeometry();
     void setupControlsStyle();
 
-    void setupCameraConnection(ProcessStatus connection);
+    void setupCameraConnection(ProcessStatus status);
 
     void onTimer();
 
+    void folderPreparation();
+
 private:
     Ui::MainWindow *ui;
+
     ApplicationSettings _appSet; // Уставки приложения
-    ProcessStatus _processStatus = ProcessStatus::OFF;
+
+    ProcessStatus _videoCaptureStatus = ProcessStatus::OFF;
+    ProcessStatus _calibrationStatus = ProcessStatus::OFF;
+
     QTimer *_timer;
+
+    // Окно настроек
+    SettingsWindow *_settingsWindow;
 
     cv::VideoCapture *_webCamL; // Стерео-камера (левая)
     cv::VideoCapture *_webCamR; // Стерео-камера (правая)
@@ -55,9 +67,16 @@ private:
     QImage _imgCamL;
     QImage _imgCamR;
 
+    int calibrationShotCounter = 0;
+    int calibrationPauseCounter = 0;
+
+    clock_t calibrationTimer;
+
+
 private slots:
-    void onStartStopButtonClicked();
+    void onVideoCaptureButtonClicked();
     void onCalibrationButtonClicked();
+    void onCalcButtonClicked();
     void onSettingsButtonClicked();
     void onCloseButtonClicked();
 };

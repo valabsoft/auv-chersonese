@@ -40,12 +40,12 @@
      <string>CAMERA RIGHT</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pbStartStop">
+   <widget class="QPushButton" name="pbVideoCapture">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>540</y>
-      <width>100</width>
+      <width>191</width>
       <height>50</height>
      </rect>
     </property>
@@ -55,13 +55,13 @@
      </font>
     </property>
     <property name="text">
-     <string>START</string>
+     <string>VIDEO CAPTURE OFF</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pbCalibration">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>210</x>
       <y>540</y>
       <width>150</width>
       <height>50</height>
@@ -73,7 +73,7 @@
      </font>
     </property>
     <property name="text">
-     <string>CALIBRATION</string>
+     <string>CALIBRATION OFF</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pbClose">
@@ -97,7 +97,7 @@
    <widget class="QPushButton" name="pbSettings">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>540</x>
       <y>540</y>
       <width>150</width>
       <height>50</height>
@@ -128,7 +128,47 @@
      </font>
     </property>
     <property name="text">
-     <string>КАЛИБРОВКА</string>
+     <string>...</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbCalc">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>540</y>
+      <width>100</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>CALC</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lbCounter">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>430</y>
+      <width>771</width>
+      <height>100</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>36</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>...</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignmentFlag::AlignCenter</set>

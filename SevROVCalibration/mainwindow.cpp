@@ -8,8 +8,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // Сигналы для кнопок
-    connect(ui->pbStartStop, &QPushButton::clicked, this, &MainWindow::onStartStopButtonClicked);
+    connect(ui->pbVideoCapture, &QPushButton::clicked, this, &MainWindow::onVideoCaptureButtonClicked);
     connect(ui->pbCalibration, &QPushButton::clicked, this, &MainWindow::onCalibrationButtonClicked);
+    connect(ui->pbCalc, &QPushButton::clicked, this, &MainWindow::onCalcButtonClicked);
     connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
     connect(ui->pbClose, &QPushButton::clicked, this, &MainWindow::onCloseButtonClicked);
 
@@ -23,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Таймер
     _timer = new QTimer(this);
     connect(_timer, &QTimer::timeout, this, &MainWindow::onTimer);
+
+    _appSet.load();
 }
 
 MainWindow::~MainWindow()
@@ -76,22 +79,28 @@ void MainWindow::setupWindowGeometry()
 
 
     // Позиционируем кнопки
-    ui->pbStartStop->setGeometry(
+    ui->pbVideoCapture->setGeometry(
         _appSet.CAMERA_VIEW_X0,
         mainWindowRect.height() - 50 - _appSet.CAMERA_VIEW_BORDER_WIDTH,
-        100,
+        170,
         50);
 
     ui->pbCalibration->setGeometry(
-        ui->pbStartStop->x() + ui->pbStartStop->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        ui->pbVideoCapture->x() + ui->pbVideoCapture->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
         mainWindowRect.height() - 50 - _appSet.CAMERA_VIEW_BORDER_WIDTH,
         150,
         50);
 
-    ui->pbSettings->setGeometry(
+    ui->pbCalc->setGeometry(
         ui->pbCalibration->x() + ui->pbCalibration->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
         mainWindowRect.height() - 50 - _appSet.CAMERA_VIEW_BORDER_WIDTH,
-        150,
+        80,
+        50);
+
+    ui->pbSettings->setGeometry(
+        ui->pbCalc->x() + ui->pbCalc->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - 50 - _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        100,
         50);
 
     ui->pbClose->setGeometry(
@@ -106,6 +115,12 @@ void MainWindow::setupWindowGeometry()
         _appSet.CAMERA_VIEW_BORDER_WIDTH,
         mainWindowRect.width() - _appSet.CAMERA_VIEW_BORDER_WIDTH * 2,
         100);
+
+    ui->lbCounter->setGeometry(
+        _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        ui->pbVideoCapture->y() - _appSet.CAMERA_VIEW_BORDER_WIDTH - 70,
+        mainWindowRect.width() - _appSet.CAMERA_VIEW_BORDER_WIDTH * 2,
+        70);
 
     // Геометрия окон камер
     ui->lbCameraL->setGeometry(
@@ -141,36 +156,128 @@ void MainWindow::setupControlsStyle()
                               "border-width: 1px;"
                               "border-color: #1A5276;"
                               "}");
+
+    ui->lbCounter->setStyleSheet("QLabel {"
+                              "border-style: solid;"
+                              "border-width: 1px;"
+                              "border-color: #1A5276;"
+                              "}");
 }
 
-void MainWindow::onStartStopButtonClicked()
+void MainWindow::onVideoCaptureButtonClicked()
 {
-    if (_processStatus == ProcessStatus::OFF)
+    if (_videoCaptureStatus == ProcessStatus::OFF)
     {
-        _processStatus = ProcessStatus::ON;
-        setupCameraConnection(_processStatus);
+        _videoCaptureStatus = ProcessStatus::ON;
+        setupCameraConnection(_videoCaptureStatus);
 
         // Обновляем надписи
-        ui->pbStartStop->setText("STOP");
+        ui->pbVideoCapture->setText("VIDEO CAPTURE ON");
+        ui->lbInfo->setText("ПОДГОТОВКА");
     }
     else
     {
-        _processStatus = ProcessStatus::OFF;
-        setupCameraConnection(_processStatus);
+        // Если процесс калибровки запущен - отключаем его
+        if (_calibrationStatus == ProcessStatus::ON)
+        {
+            ui->pbCalibration->click();
+        }
 
-        ui->pbStartStop->setText("START");
-        ui->lbInfo->setText("КАЛИБРОВКА");
+        _videoCaptureStatus = ProcessStatus::OFF;
+        setupCameraConnection(_videoCaptureStatus);
+
+        ui->pbVideoCapture->setText("VIDEO CAPTURE OFF");
+        ui->lbInfo->setText("");
     }
 }
 
 void MainWindow::onCalibrationButtonClicked()
 {
-    ;
+    if (_calibrationStatus == ProcessStatus::OFF)
+    {
+        folderPreparation();
+
+        _calibrationStatus = ProcessStatus::ON;
+
+        // Обновляем надписи
+        ui->pbCalibration->setText("CALIBRATION ON");
+    }
+    else
+    {
+        _calibrationStatus = ProcessStatus::OFF;
+
+        ui->pbCalibration->setText("CALIBRATION OFF");
+    }
+
+    // Сброс параметров калибровки
+    calibrationShotCounter = 0;
+    calibrationPauseCounter = 0;
+    calibrationTimer = clock();
+
+    ui->lbCounter->setText(QString::number(calibrationShotCounter) + " / " + QString::number(_appSet.NUMBER_OF_SHOTS));
+}
+
+void MainWindow::onCalcButtonClicked()
+{
+    try
+    {
+        ui->lbInfo->setText("ИДЕТ РАСЧЕТ ПАРАМЕТРОВ");
+
+        CalibrationConfig config;
+        std::filesystem::path configFile("config.dat");
+
+        auto currentPath = std::filesystem::current_path();
+        auto configPath = currentPath / configFile;
+
+        // Чтение конфигуарции процедуры калибровки
+        readCalibrartionConfigFile(configPath.u8string(), config);
+
+        CalibrationParametersMono monoParL;
+        CalibrationParametersMono monoParR;
+        CalibrationParametersStereo stereoPar;
+
+        std::vector<cv::String> imagesLeft;
+        std::vector<cv::String> imagesRight;
+
+        std::filesystem::path calibrationFile("calibration.xml");
+        auto calibrationPath = currentPath / calibrationFile;
+        std::string folderName = "calibration-images";
+
+        std::filesystem::path leftFramePath = currentPath / folderName / "L";
+        std::filesystem::path rightFramePath = currentPath / folderName / "R";
+
+        cameraCalibrationStereo(imagesLeft, imagesRight, leftFramePath.u8string() + "/", rightFramePath.u8string() + "/", stereoPar, config.keypoints_c, config.keypoints_r, config.square_size);
+        writeCalibrationParametersStereo(calibrationPath.u8string(), stereoPar);
+
+        ui->lbInfo->setText("РАСЧЕТ ЗАКОНЧЕН");
+    }
+    catch (...)
+    {
+        ui->lbInfo->setText("!!! ОШИБКА КАЛИБРОВКИ !!!");
+    }
 }
 
 void MainWindow::onSettingsButtonClicked()
 {
-    ;
+    // Если вызвать конструктор SettingsWindow(this),
+    // то копируются стили главного окна, поэтому вызываем с NULL
+    _settingsWindow = new SettingsWindow(NULL);
+
+    // Центрировать инструментальную панель
+    QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
+    int x = (screenGeometry.width() - _settingsWindow->width()) / 2;
+    int y = (screenGeometry.height() - _settingsWindow->height()) / 2;
+
+    _settingsWindow->setWindowTitle("ТНПА :: Настройки :: " + _appSet.getAppVersion());
+
+    _settingsWindow->move(x, y);
+
+    if (_settingsWindow->exec() == QDialog::Accepted)
+    {
+        _appSet.load();
+    }
+
+    delete _settingsWindow;
 }
 
 void MainWindow::onCloseButtonClicked()
@@ -265,11 +372,49 @@ void MainWindow::onTimer()
                       QImage::Format_RGB888);
 
     ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
+
+    if (_calibrationStatus == ProcessStatus::ON)
+    {
+        // Основной цикл грабинга
+        {
+            if (clock() - calibrationTimer < _appSet.SHOTS_INTERVAL * CLOCKS_PER_SEC)
+            {
+                int diff = _appSet.SHOTS_INTERVAL - (clock() - calibrationTimer) / CLOCKS_PER_SEC;
+                ui->lbInfo->setText(QString::number(std::round(diff)));
+            }
+            else
+            {
+                calibrationTimer = clock();
+                calibrationShotCounter++;
+                ui->lbCounter->setText(QString::number(calibrationShotCounter) + " / " + QString::number(_appSet.NUMBER_OF_SHOTS));
+
+                std::string fullPathToLeftFrameImage;
+                std::string fullPathToRightFrameImage;
+                std::string folderName = "calibration-images";
+                auto currentPath = std::filesystem::current_path();
+                std::filesystem::path leftFramePath = currentPath / folderName / "L";
+                std::filesystem::path rightFramePath = currentPath / folderName / "R";
+
+
+                fullPathToLeftFrameImage = (leftFramePath / (std::to_string(calibrationShotCounter) + ".png")).u8string();
+                fullPathToRightFrameImage = (rightFramePath / (std::to_string(calibrationShotCounter) + ".png")).u8string();
+
+                cv::imwrite(fullPathToLeftFrameImage, _sourceMatL);
+                cv::imwrite(fullPathToRightFrameImage, _sourceMatR);
+            }
+        }
+
+        if (calibrationShotCounter == _appSet.NUMBER_OF_SHOTS)
+        {
+            ui->lbInfo->setText("ВЫПОЛНЕНО");
+            ui->pbCalibration->click();
+        }
+    }
 }
 
-void MainWindow:: setupCameraConnection(ProcessStatus connection)
+void MainWindow::setupCameraConnection(ProcessStatus status)
 {
-    switch (connection)
+    switch (status)
     {
     case ProcessStatus::ON:
 
@@ -394,5 +539,44 @@ void MainWindow:: setupCameraConnection(ProcessStatus connection)
             _timer->stop();
 
         break;
+    }
+}
+
+void MainWindow::folderPreparation()
+{
+    std::string folderName = "calibration-images";
+    auto currentPath = std::filesystem::current_path();
+    std::filesystem::path leftFramePath = currentPath / folderName / "L";
+    std::filesystem::path rightFramePath = currentPath / folderName / "R";
+
+    if (!std::filesystem::is_directory(currentPath / folderName))
+    {
+        std::filesystem::create_directory(currentPath / folderName);
+
+        if (std::filesystem::is_directory(leftFramePath))
+        {
+            std::filesystem::remove_all(leftFramePath);
+        }
+        std::filesystem::create_directory(leftFramePath);
+
+        if (std::filesystem::is_directory(rightFramePath))
+        {
+            std::filesystem::remove_all(rightFramePath);
+        }
+        std::filesystem::create_directory(rightFramePath);
+    }
+    else
+    {
+        if (std::filesystem::is_directory(leftFramePath))
+        {
+            std::filesystem::remove_all(leftFramePath);
+        }
+        std::filesystem::create_directory(leftFramePath);
+
+        if (std::filesystem::is_directory(rightFramePath))
+        {
+            std::filesystem::remove_all(rightFramePath);
+        }
+        std::filesystem::create_directory(rightFramePath);
     }
 }

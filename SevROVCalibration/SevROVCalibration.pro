@@ -10,16 +10,21 @@ CONFIG += c++17
 
 SOURCES += \
     applicationsettings.cpp \
+    calibration.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    settingswindow.cpp
 
 HEADERS += \
     applicationsettings.h \
+    calibration.h \
     enumclasses.h \
-    mainwindow.h
+    mainwindow.h \
+    settingswindow.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    settingswindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -23,5 +23,8 @@ void ApplicationSettings::load()
 
     VIDEO_TIMER_INTERVAL = settings.value("/TimerInterval", "50").toInt();
     CAMERA_TYPE = settings.value("/CameraTypeID", 0).toInt();
+
+    NUMBER_OF_SHOTS = settings.value("/NumberOfShots", 30).toInt();
+    SHOTS_INTERVAL = settings.value("/ShotsInterval", 3).toInt();
     settings.endGroup();
 }
