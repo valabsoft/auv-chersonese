@@ -64,7 +64,7 @@ void SettingsWindow::loadSettings()
 {
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
-    settings.beginGroup("/CAMERA SETTINGS");
+    settings.beginGroup("/CAMERA_SETTINGS");
     ui->cbCameraResolution->setCurrentIndex(settings.value("/ResulutionIndex", 0).toInt());
     ui->leW->setText(settings.value("/Width", 640).toString());
     ui->leH->setText(settings.value("/Height", 480).toString());
@@ -116,7 +116,7 @@ void SettingsWindow::saveSettings()
 {
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
-    settings.beginGroup("/CAMERA SETTINGS");
+    settings.beginGroup("/CAMERA_SETTINGS");
     settings.setValue("/ResulutionIndex", ui->cbCameraResolution->currentIndex());
     settings.setValue("/Width", ui->leW->text());
     settings.setValue("/Height", ui->leH->text());
