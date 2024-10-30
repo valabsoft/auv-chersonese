@@ -631,6 +631,167 @@ void MainWindow::roundedRectangle(
     cv::ellipse(src, p4 + cv::Point(cornerRadius, -cornerRadius), cv::Size(cornerRadius, cornerRadius), 90.0, 0, 90, lineColor, thickness, lineType);
 }
 
+std::string generateFileName(std::string filename, std::string fileextension)
+{
+    using namespace std::chrono;
+    auto timer = system_clock::to_time_t(system_clock::now());
+    std::tm localTime = *std::localtime(&timer);
+    std::ostringstream oss;
+    std::string fileName = filename + "_%d%m%Y%H%M%S" + fileextension;
+    oss << std::put_time(&localTime, fileName.c_str());
+    // return filename + fileextension; // Возвращаем имя файла без таймстемпа
+    return oss.str();
+}
+std::string generateUniqueLogFileName()
+{
+    struct tm currentTime;
+    time_t nowTime = time(0);
+
+#ifdef _WIN32
+    localtime_s(&currentTime, &nowTime);
+#else
+    localtime_r(&nowTime, &currentTime);
+#endif
+
+    std::ostringstream outStringStream;
+    std::string fullFileName = "%d-%m-%Y.log";
+    outStringStream << std::put_time(&currentTime, fullFileName.c_str());
+    return outStringStream.str();
+}
+void writeLog(std::string logText, LOGTYPE logType)
+{
+    //if (!IS_DEBUG_LOG_ENABLED)
+    //    return;
+
+    try
+    {
+        std::filesystem::path pathToLogDirectory = std::filesystem::current_path() / "log";
+        std::filesystem::directory_entry directoryEntry{ pathToLogDirectory };
+
+        // Проверяем существование папки log в рабочем каталоге
+        bool isLogDirectoryExists = directoryEntry.exists();
+
+        if (!isLogDirectoryExists)
+        {
+            // Если папка log не существует, создаем ее
+            isLogDirectoryExists = std::filesystem::create_directory(pathToLogDirectory);
+            if (!isLogDirectoryExists)
+            {
+                return;
+            }
+        }
+
+        // Определяем тип записи
+        std::string logTypeAbbreviation;
+        switch (logType)
+        {
+        case LOGTYPE::DEBUG:
+            logTypeAbbreviation = "DEBG";
+            break;
+        case LOGTYPE::ERROR:
+            logTypeAbbreviation = "ERRR";
+            break;
+        case LOGTYPE::EXCEPTION:
+            logTypeAbbreviation = "EXCP";
+            break;
+        case LOGTYPE::INFO:
+            logTypeAbbreviation = "INFO";
+            break;
+        case LOGTYPE::WARNING:
+            logTypeAbbreviation = "WARN";
+            break;
+        default:
+            logTypeAbbreviation = "INFO";
+            break;
+        }
+
+        // Определяем временную метку
+        struct tm currentTime;
+        time_t nowTime = time(0);
+
+#ifdef _WIN32
+        localtime_s(&currentTime, &nowTime);
+#else
+        localtime_r(&nowTime, &currentTime);
+#endif
+
+        std::ostringstream outStringStream;
+        outStringStream << std::put_time(&currentTime, "%H:%M:%S");
+        std::string logTime = outStringStream.str();
+
+        // Генерируем уникальное имя файла в формате dd-mm-yyyy.log
+        std::string logFileName = generateUniqueLogFileName();
+        std::filesystem::path pathToLogFile = pathToLogDirectory / logFileName;
+
+        std::ofstream logFile; // Идентификатор лог-файла
+
+        if (std::filesystem::exists(pathToLogFile))
+        {
+            // Если файл лога существует, открываем файл для дозаписи и добавляем строку в конец
+            logFile.open(pathToLogFile.c_str(), std::ios_base::app);
+        }
+        else
+        {
+            // Если файл лога не существует, создаем его и добавляем строчку
+            logFile.open(pathToLogFile.c_str(), std::ios_base::out);
+        }
+
+        if (logFile.is_open())
+        {
+            logFile << logTime << " | " << logTypeAbbreviation << " | " << logText << std::endl;
+            logFile.close();
+        }
+    }
+    catch (...)
+    {
+        return;
+    }
+}
+
+void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution)
+{
+    writeLog("recordVideo() function call detected: ", LOGTYPE::DEBUG);
+
+    cv::VideoWriter videoWriter;
+    int fourccCode = cv::VideoWriter::fourcc('X', 'V', 'I', 'D');
+    std::string fileExtension = ".avi";
+    // Генерируем имя файла с привязкой к текущему времени
+    std::string fileName = generateFileName("сhersonesos", fileExtension);
+    int realFPS = (int)(frames.size() / recordInterval);
+    videoWriter = cv::VideoWriter(fileName, fourccCode, realFPS , cameraResolution);
+
+    writeLog("fileName: " + fileName, LOGTYPE::DEBUG);
+    writeLog("realFPS: " + std::to_string(realFPS), LOGTYPE::DEBUG);
+    writeLog("frames.size(): " + std::to_string(frames.size()), LOGTYPE::DEBUG);
+    writeLog("recordInterval: " + std::to_string(recordInterval), LOGTYPE::DEBUG);
+    writeLog("cameraResolution.width: " + std::to_string(cameraResolution.width), LOGTYPE::DEBUG);
+    writeLog("cameraResolution.height: " + std::to_string(cameraResolution.height), LOGTYPE::DEBUG);
+    writeLog("fourccCode: " + std::to_string(fourccCode), LOGTYPE::DEBUG);
+
+    try
+    {
+        if (videoWriter.isOpened())
+        {
+            writeLog("Saving video started", LOGTYPE::DEBUG);
+            for(auto& frame : frames)
+            {
+                videoWriter.write(frame);
+            }
+            // Освобождение объекта записи видеопотока
+            videoWriter.release();
+            writeLog("Saving video finished", LOGTYPE::DEBUG);
+        }
+        else
+             writeLog("cv::VideoWriter NOT opened!", LOGTYPE::ERROR);
+    }
+    catch (...)
+    {
+        writeLog("EXCEPTION", LOGTYPE::EXCEPTION);
+    }
+
+    writeLog("==================================================", LOGTYPE::DEBUG);
+}
+
 void MainWindow::onVideoTimer()
 {
     int X0 = _appSet.CAMERA_WIDTH / 2;
@@ -718,6 +879,45 @@ void MainWindow::onVideoTimer()
 
         if (_sourceMatL.empty())
             return;
+
+        // Цикл записи видеопотока в файл
+        if ((clock() - timerStart) <= (VIDEO_FRAGMENT_DURATION * CLOCKS_PER_SEC))
+        {
+            _videoFrame = _sourceMatL.clone();
+            if (true)
+            {
+                // Получаем текущие дату и время
+                auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                std::tm localTime = *std::localtime(&timer);
+                std::ostringstream oss;
+                std::string timeMask = "%d-%m-%Y %H:%M:%S";
+                oss << std::put_time(&localTime, timeMask.c_str());
+
+                // Вычисляем размер текста
+                cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
+
+                // Помещаем timestamp на кадр
+                cv::putText(_videoFrame,
+                            oss.str(),
+                            cv::Point((cameraResolution.width - txtSize.width) / 2, cameraResolution.height - txtSize.height - 5),
+                            cv::FONT_HERSHEY_SIMPLEX,
+                            0.5,
+                            cv::Scalar(255, 255, 255),
+                            1,
+                            cv::LINE_AA);
+            }
+            frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
+        }
+        else
+        {
+            // Запускаем поток записи
+            std::thread videoSaverThread(recordVideo, frames, VIDEO_FRAGMENT_DURATION, cameraResolution);
+            // videoSaverThread.join(); // Будет пауза при сохранении
+            videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
+
+            frames.clear(); // Очищаем буфер фреймов
+            timerStart = clock(); // Сбрасываем таймер записи
+        }
 
         cv::resize(_sourceMatL, resizedMatL, cv::Size(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT));
         cv::cvtColor(resizedMatL, _destinationMatL, cv::COLOR_BGR2RGB);
@@ -1642,6 +1842,22 @@ void MainWindow::onControlTimer()
         _ctrSet.updatePID = false;
 }
 
+void MainWindow::videoRecorderInitialization()
+{
+    if (frames.size() > 0)
+    {
+        frames.clear(); // Сброс буфера кадров
+        frames.shrink_to_fit(); // Requests the container to reduce its capacity to fit its size
+    }
+
+    cameraResolution.height = 480;
+    cameraResolution.width = 640;
+    cameraFPS = 30;
+    int bufferSize = cameraFPS * VIDEO_FRAGMENT_DURATION; // VIDEO_FRAGMENT_DURATION = 30 секунд - интервал записи одного ролика
+    frames.reserve((size_t)bufferSize); // Резервируем длину вектора под хранение фреймов
+    timerStart = clock(); // Запоминаем время начала записи
+}
+
 void MainWindow::onStartStopButtonClicked()
 {
     // Меняем состояние флага
@@ -1663,6 +1879,8 @@ void MainWindow::onStartStopButtonClicked()
         _jsController->start(); // Запуск процесса в поток
 
         _controlTimer->start(_appSet.JOYSTICK_TIMER_INTERVAL);
+
+        videoRecorderInitialization();
     }
     else // Connection OFF
     {

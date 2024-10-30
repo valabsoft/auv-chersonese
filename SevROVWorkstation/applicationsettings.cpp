@@ -13,7 +13,7 @@ void ApplicationSettings::load()
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
     // Camera Settings
-    settings.beginGroup("/CAMERA SETTINGS");
+    settings.beginGroup("/CAMERA_SETTINGS");
     CAMERA_WIDTH = settings.value("/Width", "640").toInt();
     CAMERA_HEIGHT = settings.value("/Height", "480").toInt();
     CAMERA_FPS = settings.value("/FPS", "30").toInt();
