@@ -79,6 +79,7 @@ private:
 
     cv::Mat _sourceMatL;
     cv::Mat _sourceMatR;
+    cv::Mat _videoFrame;
 
     cv::Mat _destinationMatL;
     cv::Mat _destinationMatR;

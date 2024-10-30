@@ -883,7 +883,30 @@ void MainWindow::onVideoTimer()
         // Цикл записи видеопотока в файл
         if ((clock() - timerStart) <= (VIDEO_FRAGMENT_DURATION * CLOCKS_PER_SEC))
         {
-            frames.push_back(_sourceMatL.clone()); // Запоминаем фрейм
+            _videoFrame = _sourceMatL.clone();
+            if (true)
+            {
+                // Получаем текущие дату и время
+                auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                std::tm localTime = *std::localtime(&timer);
+                std::ostringstream oss;
+                std::string timeMask = "%d-%m-%Y %H:%M:%S";
+                oss << std::put_time(&localTime, timeMask.c_str());
+
+                // Вычисляем размер текста
+                cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
+
+                // Помещаем timestamp на кадр
+                cv::putText(_videoFrame,
+                            oss.str(),
+                            cv::Point((cameraResolution.width - txtSize.width) / 2, cameraResolution.height - txtSize.height - 5),
+                            cv::FONT_HERSHEY_SIMPLEX,
+                            0.5,
+                            cv::Scalar(255, 255, 255),
+                            1,
+                            cv::LINE_AA);
+            }
+            frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
         }
         else
         {
