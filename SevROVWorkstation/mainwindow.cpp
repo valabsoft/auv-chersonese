@@ -912,7 +912,8 @@ void MainWindow::onVideoTimer()
         {
             // Запускаем поток записи
             std::thread videoSaverThread(recordVideo, frames, VIDEO_FRAGMENT_DURATION, cameraResolution);
-            videoSaverThread.join();
+            // videoSaverThread.join(); // Будет пауза при сохранении
+            videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
 
             frames.clear(); // Очищаем буфер фреймов
             timerStart = clock(); // Сбрасываем таймер записи
