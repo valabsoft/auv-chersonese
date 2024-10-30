@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QSettings>
 #include <QApplication>
+#include <QDebug>
 
 #include "enumclasses.h"
 

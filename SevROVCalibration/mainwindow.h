@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QScreen>
+#include <QDebug>
 
 #include "applicationsettings.h"
 #include "enumclasses.h"
@@ -17,6 +18,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d.hpp>
+
+#include "MvCameraControl.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -40,7 +43,12 @@ public:
 
     void onTimer();
 
+    // Подготовка папок для сохранения результатов калибровки
     void folderPreparation();
+
+    // Функции для инициализации модуля Hikrobot
+    int MV_SDK_Initialization();
+    int MV_SDK_Finalization();
 
 private:
     Ui::MainWindow *ui;
@@ -72,6 +80,9 @@ private:
 
     clock_t calibrationTimer;
 
+    // IP camera related
+    void* handleL = NULL;
+    void* handleR = NULL;
 
 private slots:
     void onVideoCaptureButtonClicked();

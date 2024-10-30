@@ -31,6 +31,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+# OpenCV Library
 win32 {
     INCLUDEPATH += c:\opencv-4.8.0-build\install\include\
 
@@ -45,4 +46,14 @@ win32 {
 unix {
     INCLUDEPATH += /usr/include/opencv4
     LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_features2d -lopencv_calib3d -lopencv_videoio -lopencv_imgproc
+}
+
+# MVS Library
+win32 {
+    LIBS += -LC:/MVS/Development/Libraries/win64 -lMvCameraControl
+    INCLUDEPATH += C:/MVS/Development/Includes
+}
+unix
+{
+
 }
