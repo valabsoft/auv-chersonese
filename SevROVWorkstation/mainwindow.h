@@ -34,6 +34,17 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+static int VIDEO_FRAGMENT_DURATION = 60;
+
+enum class LOGTYPE
+{
+    DEBUG,		// Отладака			DEBG
+    ERROR,		// Ошибка			ERRR
+    EXCEPTION,	// Исключение		EXCP
+    INFO,		// Информация		INFO
+    WARNING		// Предупреждение	WARN
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -68,6 +79,7 @@ private:
 
     cv::Mat _sourceMatL;
     cv::Mat _sourceMatR;
+    cv::Mat _videoFrame;
 
     cv::Mat _destinationMatL;
     cv::Mat _destinationMatR;
@@ -124,6 +136,14 @@ private:
     // Функции для инициализации модуля Hikrobot
     int MV_SDK_Initialization();
     int MV_SDK_Finalization();
+
+    std::vector<cv::Mat> frames; // Буфер для хранения фреймов
+    cv::Size cameraResolution; // Разрешение камеры
+    int cameraFPS; // FPS камеры
+    clock_t timerStart; // Таймер начала записи
+    void videoRecorderInitialization();
+    //void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution);
+    //std::string generateFileName(std::string filename, std::string fileextension);
 
 public:
     MainWindow(QWidget *parent = nullptr);
