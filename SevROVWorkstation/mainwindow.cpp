@@ -142,6 +142,123 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+std::string generateFileName(std::string filename, std::string fileextension)
+{
+    using namespace std::chrono;
+    auto timer = system_clock::to_time_t(system_clock::now());
+    std::tm localTime = *std::localtime(&timer);
+    std::ostringstream oss;
+    std::string fileName = filename + "_%d%m%Y%H%M%S" + fileextension;
+    oss << std::put_time(&localTime, fileName.c_str());
+    // return filename + fileextension; // Возвращаем имя файла без таймстемпа
+    return oss.str();
+}
+std::string generateUniqueLogFileName()
+{
+    struct tm currentTime;
+    time_t nowTime = time(0);
+
+#ifdef _WIN32
+    localtime_s(&currentTime, &nowTime);
+#else
+    localtime_r(&nowTime, &currentTime);
+#endif
+
+    std::ostringstream outStringStream;
+    std::string fullFileName = "%d-%m-%Y.log";
+    outStringStream << std::put_time(&currentTime, fullFileName.c_str());
+    return outStringStream.str();
+}
+void writeLog(std::string logText, LOGTYPE logType)
+{
+    //if (!IS_DEBUG_LOG_ENABLED)
+    //    return;
+
+    try
+    {
+        std::filesystem::path pathToLogDirectory = std::filesystem::current_path() / "log";
+        std::filesystem::directory_entry directoryEntry{ pathToLogDirectory };
+
+        // Проверяем существование папки log в рабочем каталоге
+        bool isLogDirectoryExists = directoryEntry.exists();
+
+        if (!isLogDirectoryExists)
+        {
+            // Если папка log не существует, создаем ее
+            isLogDirectoryExists = std::filesystem::create_directory(pathToLogDirectory);
+            if (!isLogDirectoryExists)
+            {
+                return;
+            }
+        }
+
+        // Определяем тип записи
+        std::string logTypeAbbreviation;
+        switch (logType)
+        {
+        case LOGTYPE::DEBUG:
+            logTypeAbbreviation = "DEBG";
+            break;
+        case LOGTYPE::ERROR:
+            logTypeAbbreviation = "ERRR";
+            break;
+        case LOGTYPE::EXCEPTION:
+            logTypeAbbreviation = "EXCP";
+            break;
+        case LOGTYPE::INFO:
+            logTypeAbbreviation = "INFO";
+            break;
+        case LOGTYPE::WARNING:
+            logTypeAbbreviation = "WARN";
+            break;
+        default:
+            logTypeAbbreviation = "INFO";
+            break;
+        }
+
+        // Определяем временную метку
+        struct tm currentTime;
+        time_t nowTime = time(0);
+
+#ifdef _WIN32
+        localtime_s(&currentTime, &nowTime);
+#else
+        localtime_r(&nowTime, &currentTime);
+#endif
+
+        std::ostringstream outStringStream;
+        outStringStream << std::put_time(&currentTime, "%H:%M:%S");
+        std::string logTime = outStringStream.str();
+
+        // Генерируем уникальное имя файла в формате dd-mm-yyyy.log
+        std::string logFileName = generateUniqueLogFileName();
+        std::filesystem::path pathToLogFile = pathToLogDirectory / logFileName;
+
+        std::ofstream logFile; // Идентификатор лог-файла
+
+        if (std::filesystem::exists(pathToLogFile))
+        {
+            // Если файл лога существует, открываем файл для дозаписи и добавляем строку в конец
+            logFile.open(pathToLogFile.c_str(), std::ios_base::app);
+        }
+        else
+        {
+            // Если файл лога не существует, создаем его и добавляем строчку
+            logFile.open(pathToLogFile.c_str(), std::ios_base::out);
+        }
+
+        if (logFile.is_open())
+        {
+            logFile << logTime << " | " << logTypeAbbreviation << " | " << logText << std::endl;
+            logFile.close();
+        }
+    }
+    catch (...)
+    {
+        return;
+    }
+}
+
 int MainWindow::MV_SDK_Initialization()
 {
     handleL = NULL;
@@ -182,15 +299,17 @@ int MainWindow::MV_SDK_Initialization()
         if (nPacketSize > 0)
         {
             nRet = MV_CC_SetIntValue(handleL, "GevSCPSPacketSize", nPacketSize);
-            //if (nRet != MV_OK)
-            //{
-            //    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
-            //}
+            if (nRet != MV_OK)
+            {
+                printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                writeLog("Set Packet Size fail!", LOGTYPE::WARNING);
+            }
         }
-        //else
-        //{
-        //    printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
-        //}
+        else
+        {
+            printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            writeLog("Get Packet Size fail!", LOGTYPE::WARNING);
+        }
     }
 
     // Get the symbol of the specified value of the enum type node.
@@ -202,8 +321,12 @@ int MainWindow::MV_SDK_Initialization()
     nRet = MV_CC_GetEnumEntrySymbolic(handleL, "PixelFormat", &stEnumEntry);
     if (MV_OK != nRet)
         return 14;
-    //else
-    //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+    else
+    {
+        printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        std::string pixelFormat(stEnumEntry.chSymbolic);
+        writeLog("PixelFormat: " + pixelFormat, LOGTYPE::INFO);
+    }
     ///////////////////////////////////////////////////////////////////////////
     // Start image acquisition
     nRet = MV_CC_StartGrabbing(handleL);
@@ -233,15 +356,17 @@ int MainWindow::MV_SDK_Initialization()
         if (nPacketSize > 0)
         {
             nRet = MV_CC_SetIntValue(handleR, "GevSCPSPacketSize", nPacketSize);
-            //if (nRet != MV_OK)
-            //{
-            //    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
-            //}
+            if (nRet != MV_OK)
+            {
+                printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                writeLog("Set Packet Size fail!", LOGTYPE::WARNING);
+            }
         }
-        //else
-        //{
-        //    printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
-        //}
+        else
+        {
+            printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            writeLog("Get Packet Size fail!", LOGTYPE::WARNING);
+        }
     }
 
     // Get the symbol of the specified value of the enum type node.
@@ -253,8 +378,12 @@ int MainWindow::MV_SDK_Initialization()
     nRet = MV_CC_GetEnumEntrySymbolic(handleR, "PixelFormat", &stEnumEntry);
     if (MV_OK != nRet)
         return 24;
-    //else
-    //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+    else
+    {
+        printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        std::string pixelFormat(stEnumEntry.chSymbolic);
+        writeLog("PixelFormat: " + pixelFormat, LOGTYPE::INFO);
+    }
     ///////////////////////////////////////////////////////////////////////////    
     // Start image acquisition
     nRet = MV_CC_StartGrabbing(handleR);
@@ -469,51 +598,64 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
     case CameraConnection::ON:
 
         if (_appSet.CAMERA_TYPE == CameraType::IP)
-        {
+        {            
             int retCode = MV_SDK_Initialization();
+            writeLog("MV_SDK_Initialization(): " + std::to_string(retCode), LOGTYPE::INFO);
             switch (retCode)
             {
             case -1:
                 qDebug() <<  "ERROR: The only one camera found!";
+                writeLog("setupCameraConnection(): ERROR: The only one camera found!", LOGTYPE::ERROR);
                 break;
-
             case 1:
                 qDebug() <<  "ERROR: Initialize SDK fail!";
+                writeLog("setupCameraConnection(): ERROR: Initialize SDK fail!", LOGTYPE::ERROR);
                 break;
             case 2:
                 qDebug() <<  "ERROR: Enum Devices fail!";
+                writeLog("setupCameraConnection(): ERROR: Enum Devices fail!", LOGTYPE::ERROR);
                 break;
 
             case 11:
                 qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
+                writeLog("setupCameraConnection(): ERROR: Left Camera - Create Handle fail!", LOGTYPE::ERROR);
                 break;
             case 12:
                 qDebug() <<  "ERROR: Left Camera - Open Device fail!";
+                writeLog("setupCameraConnection(): Left Camera - Open Device fail!", LOGTYPE::ERROR);
                 break;
             case 13:
                 qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
                 break;
             case 14:
                 qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
                 break;
             case 15:
                 qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+                writeLog("setupCameraConnection(): Left Camera - Start Grabbing fail!", LOGTYPE::ERROR);
                 break;
 
             case 21:
                 qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
+                writeLog("setupCameraConnection(): Right Camera - Create Handle fail!", LOGTYPE::ERROR);
                 break;
             case 22:
                 qDebug() <<  "ERROR: Right Camera - Open Device fail!";
+                writeLog("setupCameraConnection(): Right Camera - Open Device fail!", LOGTYPE::ERROR);
                 break;
             case 23:
                 qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
                 break;
             case 24:
                 qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
                 break;
             case 25:
                 qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
+                writeLog("setupCameraConnection(): Right Camera - Start Grabbing fail!", LOGTYPE::ERROR);
                 break;
             default:
                 break;
@@ -538,26 +680,33 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
             int retCode = MV_SDK_Finalization();
+            writeLog("MV_SDK_Finalization(): " + std::to_string(retCode), LOGTYPE::INFO);
             switch (retCode)
             {
             case 10:
                 qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
+                writeLog("setupCameraConnection(): Left Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
                 break;
             case 11:
                 qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
+                writeLog("setupCameraConnection(): Left Camera - CloseDevice fail!", LOGTYPE::ERROR);
                 break;
             case 12:
                 qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
+                writeLog("setupCameraConnection(): Left Camera - Destroy Handle fail!", LOGTYPE::ERROR);
                 break;
 
             case 20:
                 qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
+                writeLog("setupCameraConnection(): Right Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
                 break;
             case 21:
                 qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
+                writeLog("setupCameraConnection(): Right Camera - CloseDevice fail!", LOGTYPE::ERROR);
                 break;
             case 22:
                 qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
+                writeLog("setupCameraConnection(): Right Camera - Destroy Handle fail!", LOGTYPE::ERROR);
                 break;
             default:
                 break;
@@ -629,123 +778,6 @@ void MainWindow::roundedRectangle(
     cv::ellipse(src, p2 + cv::Point(-cornerRadius, cornerRadius), cv::Size(cornerRadius, cornerRadius), 270.0, 0, 90, lineColor, thickness, lineType);
     cv::ellipse(src, p3 + cv::Point(-cornerRadius, -cornerRadius), cv::Size(cornerRadius, cornerRadius), 0.0, 0, 90, lineColor, thickness, lineType);
     cv::ellipse(src, p4 + cv::Point(cornerRadius, -cornerRadius), cv::Size(cornerRadius, cornerRadius), 90.0, 0, 90, lineColor, thickness, lineType);
-}
-
-std::string generateFileName(std::string filename, std::string fileextension)
-{
-    using namespace std::chrono;
-    auto timer = system_clock::to_time_t(system_clock::now());
-    std::tm localTime = *std::localtime(&timer);
-    std::ostringstream oss;
-    std::string fileName = filename + "_%d%m%Y%H%M%S" + fileextension;
-    oss << std::put_time(&localTime, fileName.c_str());
-    // return filename + fileextension; // Возвращаем имя файла без таймстемпа
-    return oss.str();
-}
-std::string generateUniqueLogFileName()
-{
-    struct tm currentTime;
-    time_t nowTime = time(0);
-
-#ifdef _WIN32
-    localtime_s(&currentTime, &nowTime);
-#else
-    localtime_r(&nowTime, &currentTime);
-#endif
-
-    std::ostringstream outStringStream;
-    std::string fullFileName = "%d-%m-%Y.log";
-    outStringStream << std::put_time(&currentTime, fullFileName.c_str());
-    return outStringStream.str();
-}
-void writeLog(std::string logText, LOGTYPE logType)
-{
-    //if (!IS_DEBUG_LOG_ENABLED)
-    //    return;
-
-    try
-    {
-        std::filesystem::path pathToLogDirectory = std::filesystem::current_path() / "log";
-        std::filesystem::directory_entry directoryEntry{ pathToLogDirectory };
-
-        // Проверяем существование папки log в рабочем каталоге
-        bool isLogDirectoryExists = directoryEntry.exists();
-
-        if (!isLogDirectoryExists)
-        {
-            // Если папка log не существует, создаем ее
-            isLogDirectoryExists = std::filesystem::create_directory(pathToLogDirectory);
-            if (!isLogDirectoryExists)
-            {
-                return;
-            }
-        }
-
-        // Определяем тип записи
-        std::string logTypeAbbreviation;
-        switch (logType)
-        {
-        case LOGTYPE::DEBUG:
-            logTypeAbbreviation = "DEBG";
-            break;
-        case LOGTYPE::ERROR:
-            logTypeAbbreviation = "ERRR";
-            break;
-        case LOGTYPE::EXCEPTION:
-            logTypeAbbreviation = "EXCP";
-            break;
-        case LOGTYPE::INFO:
-            logTypeAbbreviation = "INFO";
-            break;
-        case LOGTYPE::WARNING:
-            logTypeAbbreviation = "WARN";
-            break;
-        default:
-            logTypeAbbreviation = "INFO";
-            break;
-        }
-
-        // Определяем временную метку
-        struct tm currentTime;
-        time_t nowTime = time(0);
-
-#ifdef _WIN32
-        localtime_s(&currentTime, &nowTime);
-#else
-        localtime_r(&nowTime, &currentTime);
-#endif
-
-        std::ostringstream outStringStream;
-        outStringStream << std::put_time(&currentTime, "%H:%M:%S");
-        std::string logTime = outStringStream.str();
-
-        // Генерируем уникальное имя файла в формате dd-mm-yyyy.log
-        std::string logFileName = generateUniqueLogFileName();
-        std::filesystem::path pathToLogFile = pathToLogDirectory / logFileName;
-
-        std::ofstream logFile; // Идентификатор лог-файла
-
-        if (std::filesystem::exists(pathToLogFile))
-        {
-            // Если файл лога существует, открываем файл для дозаписи и добавляем строку в конец
-            logFile.open(pathToLogFile.c_str(), std::ios_base::app);
-        }
-        else
-        {
-            // Если файл лога не существует, создаем его и добавляем строчку
-            logFile.open(pathToLogFile.c_str(), std::ios_base::out);
-        }
-
-        if (logFile.is_open())
-        {
-            logFile << logTime << " | " << logTypeAbbreviation << " | " << logText << std::endl;
-            logFile.close();
-        }
-    }
-    catch (...)
-    {
-        return;
-    }
 }
 
 void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution)
@@ -1860,6 +1892,20 @@ void MainWindow::videoRecorderInitialization()
 
 void MainWindow::onStartStopButtonClicked()
 {
+    // Логируем настройки приложения
+    writeLog("onStartStopButtonClicked()", LOGTYPE::INFO);
+    writeLog("SETTINGS ===>", LOGTYPE::INFO);
+    writeLog("Application Version: " + _appSet.getAppVersion().toStdString(), LOGTYPE::INFO);
+    writeLog("CAMERA_FPS: " + std::to_string(_appSet.CAMERA_FPS), LOGTYPE::INFO);
+    writeLog("CAMERA_WIDTH: " + std::to_string(_appSet.CAMERA_WIDTH), LOGTYPE::INFO);
+    writeLog("CAMERA_HEIGHT: " + std::to_string(_appSet.CAMERA_HEIGHT), LOGTYPE::INFO);
+    writeLog("CAMERA_FPS: " + std::to_string(_appSet.CAMERA_FPS), LOGTYPE::INFO);
+    writeLog("CAMERA_LEFT_ID: " + std::to_string(_appSet.CAMERA_LEFT_ID), LOGTYPE::INFO);
+    writeLog("CAMERA_RIGHT_ID: " + std::to_string(_appSet.CAMERA_RIGHT_ID), LOGTYPE::INFO);
+    writeLog("CAMERA_TYPE: " + std::to_string(_appSet.CAMERA_TYPE), LOGTYPE::INFO);
+    writeLog("VIDEO_TIMER_INTERVAL: " + std::to_string(_appSet.VIDEO_TIMER_INTERVAL), LOGTYPE::INFO);
+    writeLog("==================================================", LOGTYPE::INFO);
+
     // Меняем состояние флага
     _sevROV.isConnected = !_sevROV.isConnected;
     // _cnt = 0; // Сбрасываем счетчик
@@ -1871,6 +1917,7 @@ void MainWindow::onStartStopButtonClicked()
         ui->pbStartStop->setIcon(QIcon(":/img/on_button_icon.png"));
         ui->pbStartStop->setIconSize(QSize(64, 64));
 
+        writeLog("setupCameraConnection(CameraConnection::ON)", LOGTYPE::INFO);
         setupCameraConnection(CameraConnection::ON);
 
         // Joyjstick
@@ -1887,6 +1934,7 @@ void MainWindow::onStartStopButtonClicked()
         ui->pbStartStop->setIcon(QIcon(":/img/off_button_icon.png"));
         ui->pbStartStop->setIconSize(QSize(64, 64));
 
+        writeLog("setupCameraConnection(CameraConnection::OFF)", LOGTYPE::INFO);
         setupCameraConnection(CameraConnection::OFF);
 
         // Joystick
