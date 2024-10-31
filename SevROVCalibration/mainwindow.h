@@ -27,6 +27,15 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+enum class LOGTYPE
+{
+    DEBUG,      // Отладака			DEBG
+    ERROR,      // Ошибка			ERRR
+    EXCEPTION,  // Исключение		EXCP
+    INFO,       // Информация		INFO
+    WARNING     // Предупреждение	WARN
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
