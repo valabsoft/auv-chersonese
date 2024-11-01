@@ -1882,9 +1882,9 @@ void MainWindow::videoRecorderInitialization()
         frames.shrink_to_fit(); // Requests the container to reduce its capacity to fit its size
     }
 
-    cameraResolution.height = 480;
-    cameraResolution.width = 640;
-    cameraFPS = 30;
+    cameraResolution.height = _appSet.CAMERA_HEIGHT;
+    cameraResolution.width = _appSet.CAMERA_WIDTH;
+    cameraFPS = _appSet.CAMERA_FPS;
     int bufferSize = cameraFPS * VIDEO_FRAGMENT_DURATION; // VIDEO_FRAGMENT_DURATION = 30 секунд - интервал записи одного ролика
     frames.reserve((size_t)bufferSize); // Резервируем длину вектора под хранение фреймов
     timerStart = clock(); // Запоминаем время начала записи
