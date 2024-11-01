@@ -53,6 +53,114 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+
+std::string generateUniqueLogFileName()
+{
+    struct tm currentTime;
+    time_t nowTime = time(0);
+
+#ifdef _WIN32
+    localtime_s(&currentTime, &nowTime);
+#else
+    localtime_r(&nowTime, &currentTime);
+#endif
+
+    std::ostringstream outStringStream;
+    std::string fullFileName = "%d-%m-%Y.log";
+    outStringStream << std::put_time(&currentTime, fullFileName.c_str());
+    return outStringStream.str();
+}
+void writeLog(std::string logText, LOGTYPE logType)
+{
+    //if (!IS_DEBUG_LOG_ENABLED)
+    //    return;
+
+    try
+    {
+        std::filesystem::path pathToLogDirectory = std::filesystem::current_path() / "log";
+        std::filesystem::directory_entry directoryEntry{ pathToLogDirectory };
+
+        // Проверяем существование папки log в рабочем каталоге
+        bool isLogDirectoryExists = directoryEntry.exists();
+
+        if (!isLogDirectoryExists)
+        {
+            // Если папка log не существует, создаем ее
+            isLogDirectoryExists = std::filesystem::create_directory(pathToLogDirectory);
+            if (!isLogDirectoryExists)
+            {
+                return;
+            }
+        }
+
+        // Определяем тип записи
+        std::string logTypeAbbreviation;
+        switch (logType)
+        {
+        case LOGTYPE::DEBUG:
+            logTypeAbbreviation = "DEBG";
+            break;
+        case LOGTYPE::ERROR:
+            logTypeAbbreviation = "ERRR";
+            break;
+        case LOGTYPE::EXCEPTION:
+            logTypeAbbreviation = "EXCP";
+            break;
+        case LOGTYPE::INFO:
+            logTypeAbbreviation = "INFO";
+            break;
+        case LOGTYPE::WARNING:
+            logTypeAbbreviation = "WARN";
+            break;
+        default:
+            logTypeAbbreviation = "INFO";
+            break;
+        }
+
+        // Определяем временную метку
+        struct tm currentTime;
+        time_t nowTime = time(0);
+
+#ifdef _WIN32
+        localtime_s(&currentTime, &nowTime);
+#else
+        localtime_r(&nowTime, &currentTime);
+#endif
+
+        std::ostringstream outStringStream;
+        outStringStream << std::put_time(&currentTime, "%H:%M:%S");
+        std::string logTime = outStringStream.str();
+
+        // Генерируем уникальное имя файла в формате dd-mm-yyyy.log
+        std::string logFileName = generateUniqueLogFileName();
+        std::filesystem::path pathToLogFile = pathToLogDirectory / logFileName;
+
+        std::ofstream logFile; // Идентификатор лог-файла
+
+        if (std::filesystem::exists(pathToLogFile))
+        {
+            // Если файл лога существует, открываем файл для дозаписи и добавляем строку в конец
+            logFile.open(pathToLogFile.c_str(), std::ios_base::app);
+        }
+        else
+        {
+            // Если файл лога не существует, создаем его и добавляем строчку
+            logFile.open(pathToLogFile.c_str(), std::ios_base::out);
+        }
+
+        if (logFile.is_open())
+        {
+            logFile << logTime << " | " << logTypeAbbreviation << " | " << logText << std::endl;
+            logFile.close();
+        }
+    }
+    catch (...)
+    {
+        return;
+    }
+}
+
+
 void MainWindow::moveWindowToCenter()
 {
     auto primaryScreen = QGuiApplication::primaryScreen(); // Главный экран
@@ -425,55 +533,67 @@ void MainWindow::setupCameraConnection(ProcessStatus status)
 
         if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            MV_SDK_Initialization();
-            //int retCode = MV_SDK_Initialization();
-            //switch (retCode)
-            //{
-            //case -1:
-            //    qDebug() <<  "ERROR: The only one camera found!";
-            //    break;
+            int retCode = MV_SDK_Initialization();
+            writeLog("MV_SDK_Initialization(): " + std::to_string(retCode), LOGTYPE::INFO);
+            switch (retCode)
+            {
+            case -1:
+                qDebug() <<  "ERROR: The only one camera found!";
+                writeLog("setupCameraConnection(): ERROR: The only one camera found!", LOGTYPE::ERROR);
+                break;
+            case 1:
+                qDebug() <<  "ERROR: Initialize SDK fail!";
+                writeLog("setupCameraConnection(): ERROR: Initialize SDK fail!", LOGTYPE::ERROR);
+                break;
+            case 2:
+                qDebug() <<  "ERROR: Enum Devices fail!";
+                writeLog("setupCameraConnection(): ERROR: Enum Devices fail!", LOGTYPE::ERROR);
+                break;
 
-            //case 1:
-            //    qDebug() <<  "ERROR: Initialize SDK fail!";
-            //    break;
-            //case 2:
-            //    qDebug() <<  "ERROR: Enum Devices fail!";
-            //    break;
+            case 11:
+                qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
+                writeLog("setupCameraConnection(): ERROR: Left Camera - Create Handle fail!", LOGTYPE::ERROR);
+                break;
+            case 12:
+                qDebug() <<  "ERROR: Left Camera - Open Device fail!";
+                writeLog("setupCameraConnection(): Left Camera - Open Device fail!", LOGTYPE::ERROR);
+                break;
+            case 13:
+                qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
+                break;
+            case 14:
+                qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
+                break;
+            case 15:
+                qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
+                writeLog("setupCameraConnection(): Left Camera - Start Grabbing fail!", LOGTYPE::ERROR);
+                break;
 
-            //case 11:
-            //    qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
-            //    break;
-            //case 12:
-            //    qDebug() <<  "ERROR: Left Camera - Open Device fail!";
-            //    break;
-            //case 13:
-            //    qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
-            //    break;
-            //case 14:
-            //    qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
-            //    break;
-            //case 15:
-            //    qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-            //    break;
-
-            //case 21:
-            //    qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
-            //    break;
-            //case 22:
-            //    qDebug() <<  "ERROR: Right Camera - Open Device fail!";
-            //    break;
-            //case 23:
-            //    qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
-            //    break;
-            //case 24:
-            //    qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
-            //    break;
-            //case 25:
-            //    qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-            //    break;
-            //default:
-            //    break;
-            //}
+            case 21:
+                qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
+                writeLog("setupCameraConnection(): Right Camera - Create Handle fail!", LOGTYPE::ERROR);
+                break;
+            case 22:
+                qDebug() <<  "ERROR: Right Camera - Open Device fail!";
+                writeLog("setupCameraConnection(): Right Camera - Open Device fail!", LOGTYPE::ERROR);
+                break;
+            case 23:
+                qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
+                break;
+            case 24:
+                qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
+                break;
+            case 25:
+                qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
+                writeLog("setupCameraConnection(): Right Camera - Start Grabbing fail!", LOGTYPE::ERROR);
+                break;
+            default:
+                break;
+            }
         }
         else if (_appSet.CAMERA_TYPE == CameraType::WEB)
         {
@@ -490,32 +610,38 @@ void MainWindow::setupCameraConnection(ProcessStatus status)
 
         if (_appSet.CAMERA_TYPE == CameraType::IP)
         {
-            MV_SDK_Finalization();
-            //int retCode = MV_SDK_Finalization();
-            //switch (retCode)
-            //{
-            //case 10:
-            //    qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
-            //    break;
-            //case 11:
-            //    qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
-            //    break;
-            //case 12:
-            //    qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
-            //    break;
+            int retCode = MV_SDK_Finalization();
+            writeLog("MV_SDK_Finalization(): " + std::to_string(retCode), LOGTYPE::INFO);
+            switch (retCode)
+            {
+            case 10:
+                qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
+                writeLog("setupCameraConnection(): Left Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
+                break;
+            case 11:
+                qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
+                writeLog("setupCameraConnection(): Left Camera - CloseDevice fail!", LOGTYPE::ERROR);
+                break;
+            case 12:
+                qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
+                writeLog("setupCameraConnection(): Left Camera - Destroy Handle fail!", LOGTYPE::ERROR);
+                break;
 
-            //case 20:
-            //    qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
-            //    break;
-            //case 21:
-            //    qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
-            //    break;
-            //case 22:
-            //    qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
-            //    break;
-            //default:
-            //    break;
-            //}
+            case 20:
+                qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
+                writeLog("setupCameraConnection(): Right Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
+                break;
+            case 21:
+                qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
+                writeLog("setupCameraConnection(): Right Camera - CloseDevice fail!", LOGTYPE::ERROR);
+                break;
+            case 22:
+                qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
+                writeLog("setupCameraConnection(): Right Camera - Destroy Handle fail!", LOGTYPE::ERROR);
+                break;
+            default:
+                break;
+            }
         }
         else if (_appSet.CAMERA_TYPE == CameraType::WEB)
         {
@@ -628,15 +754,17 @@ int MainWindow::MV_SDK_Initialization()
         if (nPacketSize > 0)
         {
             nRet = MV_CC_SetIntValue(handleL, "GevSCPSPacketSize", nPacketSize);
-            //if (nRet != MV_OK)
-            //{
-            //    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
-            //}
+            if (nRet != MV_OK)
+            {
+                printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                writeLog("Set Packet Size fail!", LOGTYPE::WARNING);
+            }
         }
-        //else
-        //{
-        //    printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
-        //}
+        else
+        {
+            printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            writeLog("Get Packet Size fail!", LOGTYPE::WARNING);
+        }
     }
 
     // Get the symbol of the specified value of the enum type node.
@@ -648,8 +776,12 @@ int MainWindow::MV_SDK_Initialization()
     nRet = MV_CC_GetEnumEntrySymbolic(handleL, "PixelFormat", &stEnumEntry);
     if (MV_OK != nRet)
         return 14;
-    //else
-    //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+    else
+    {
+        printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        std::string pixelFormat(stEnumEntry.chSymbolic);
+        writeLog("PixelFormat: " + pixelFormat, LOGTYPE::INFO);
+    }
     ///////////////////////////////////////////////////////////////////////////
     // Start image acquisition
     nRet = MV_CC_StartGrabbing(handleL);
@@ -679,15 +811,17 @@ int MainWindow::MV_SDK_Initialization()
         if (nPacketSize > 0)
         {
             nRet = MV_CC_SetIntValue(handleR, "GevSCPSPacketSize", nPacketSize);
-            //if (nRet != MV_OK)
-            //{
-            //    printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
-            //}
+            if (nRet != MV_OK)
+            {
+                printf("Warning: Set Packet Size fail nRet [0x%x]!", nRet);
+                writeLog("Set Packet Size fail!", LOGTYPE::WARNING);
+            }
         }
-        //else
-        //{
-        //    printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
-        //}
+        else
+        {
+            printf("Warning: Get Packet Size fail nRet [0x%x]!", nPacketSize);
+            writeLog("Get Packet Size fail!", LOGTYPE::WARNING);
+        }
     }
 
     // Get the symbol of the specified value of the enum type node.
@@ -699,8 +833,12 @@ int MainWindow::MV_SDK_Initialization()
     nRet = MV_CC_GetEnumEntrySymbolic(handleR, "PixelFormat", &stEnumEntry);
     if (MV_OK != nRet)
         return 24;
-    //else
-    //    printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+    else
+    {
+        printf("PixelFormat:%s\n", stEnumEntry.chSymbolic);
+        std::string pixelFormat(stEnumEntry.chSymbolic);
+        writeLog("PixelFormat: " + pixelFormat, LOGTYPE::INFO);
+    }
     ///////////////////////////////////////////////////////////////////////////
     // Start image acquisition
     nRet = MV_CC_StartGrabbing(handleR);
