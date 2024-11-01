@@ -142,7 +142,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-std::string generateFileName(std::string filename, std::string fileextension)
+std::string MainWindow::generateFileName(std::string filename, std::string fileextension)
 {
     using namespace std::chrono;
     auto timer = system_clock::to_time_t(system_clock::now());
@@ -153,7 +153,7 @@ std::string generateFileName(std::string filename, std::string fileextension)
     // return filename + fileextension; // Возвращаем имя файла без таймстемпа
     return oss.str();
 }
-std::string generateUniqueLogFileName()
+std::string MainWindow::generateUniqueLogFileName()
 {
     struct tm currentTime;
     time_t nowTime = time(0);
@@ -169,7 +169,7 @@ std::string generateUniqueLogFileName()
     outStringStream << std::put_time(&currentTime, fullFileName.c_str());
     return outStringStream.str();
 }
-void writeLog(std::string logText, LOGTYPE logType)
+void MainWindow::writeLog(std::string logText, LOGTYPE logType)
 {
     //if (!IS_DEBUG_LOG_ENABLED)
     //    return;
@@ -780,7 +780,7 @@ void MainWindow::roundedRectangle(
     cv::ellipse(src, p4 + cv::Point(cornerRadius, -cornerRadius), cv::Size(cornerRadius, cornerRadius), 90.0, 0, 90, lineColor, thickness, lineType);
 }
 
-void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution)
+void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution)
 {
     writeLog("recordVideo() function call detected: ", LOGTYPE::DEBUG);
 
@@ -805,16 +805,20 @@ void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size camer
         int videoFileCount = 0;
         filesystem::directory_entry oldestVideoFile;
         for (const auto & entry : std::filesystem::directory_iterator(pathToVideoDirectory)) {
-            std::cout << entry.path() << std::endl;
+            //std::cout << entry.path() << std::endl; // с каким файлом/папкой имеем дело
             if (!entry.is_directory()){
                 videoFileCount++;
                 if (videoFileCount == 1)
                 {
+                    // в интернете видел инфо, что std::filesystem::directory_iterator
+                    // не по порядку итерирует файлы. во время тестов у меня это не проявилось -
+                    // всегда проходит по возрастанию в алфавитном порядке, если сойдет с ума -
+                    // копать здесь
                     oldestVideoFile = entry;
                 }
             }
         }
-        if (videoFileCount >= 100)
+        if (videoFileCount >= _appSet.STORED_VIDEO_FILES_LIMIT)
         {
             std::filesystem::remove(oldestVideoFile);
         }
@@ -913,6 +917,7 @@ void MainWindow::onVideoTimer()
     // fps = _webCamO->get(cv::CAP_PROP_FPS);
     //Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
     MV_FRAME_OUT stOutFrame = {0};
+    int videoLength = _appSet.VIDEO_RECORDING_LENGTH;
 
     switch (_sevROV.cameraView)
     {
@@ -949,10 +954,10 @@ void MainWindow::onVideoTimer()
             return;
 
         // Цикл записи видеопотока в файл
-        if ((clock() - timerStart) <= (VIDEO_FRAGMENT_DURATION * CLOCKS_PER_SEC))
+        if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
         {
             _videoFrame = _sourceMatL.clone();
-            if (true)
+            if (true) // timestamp на кадре
             {
                 // Получаем текущие дату и время
                 auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -979,7 +984,7 @@ void MainWindow::onVideoTimer()
         else
         {
             // Запускаем поток записи
-            std::thread videoSaverThread(recordVideo, frames, VIDEO_FRAGMENT_DURATION, cameraResolution);
+            std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
             // videoSaverThread.join(); // Будет пауза при сохранении
             videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
 
