@@ -148,7 +148,7 @@ std::string generateFileName(std::string filename, std::string fileextension)
     auto timer = system_clock::to_time_t(system_clock::now());
     std::tm localTime = *std::localtime(&timer);
     std::ostringstream oss;
-    std::string fileName = filename + "_%d%m%Y%H%M%S" + fileextension;
+    std::string fileName = filename + "_%Y%m%d%H%M%S" + fileextension;
     oss << std::put_time(&localTime, fileName.c_str());
     // return filename + fileextension; // Возвращаем имя файла без таймстемпа
     return oss.str();
@@ -784,13 +784,49 @@ void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size camer
 {
     writeLog("recordVideo() function call detected: ", LOGTYPE::DEBUG);
 
+    // проверяем наличие папки с видео - если ее нет, создаем
+    std::filesystem::path pathToVideoDirectory = std::filesystem::current_path() / "video";
+    std::filesystem::directory_entry videoDirectoryEntry{ pathToVideoDirectory };
+
+    // Проверяем существование папки video в рабочем каталоге
+    bool isVideoDirectoryExists = videoDirectoryEntry.exists();
+
+    if (!isVideoDirectoryExists)
+    {
+        // Если папка video не существует, создаем ее
+        isVideoDirectoryExists = std::filesystem::create_directory(pathToVideoDirectory);
+        if (!isVideoDirectoryExists)
+        {
+            return;
+        }
+    }
+    else
+    {
+        int videoFileCount = 0;
+        filesystem::directory_entry oldestVideoFile;
+        for (const auto & entry : std::filesystem::directory_iterator(pathToVideoDirectory)) {
+            std::cout << entry.path() << std::endl;
+            if (!entry.is_directory()){
+                videoFileCount++;
+                if (videoFileCount == 1)
+                {
+                    oldestVideoFile = entry;
+                }
+            }
+        }
+        if (videoFileCount >= 100)
+        {
+            std::filesystem::remove(oldestVideoFile);
+        }
+    }
+
     cv::VideoWriter videoWriter;
     int fourccCode = cv::VideoWriter::fourcc('X', 'V', 'I', 'D');
     std::string fileExtension = ".avi";
     // Генерируем имя файла с привязкой к текущему времени
-    std::string fileName = generateFileName("сhersonesos", fileExtension);
+    std::string fileName = generateFileName("chersonesos", fileExtension);
     int realFPS = (int)(frames.size() / recordInterval);
-    videoWriter = cv::VideoWriter(fileName, fourccCode, realFPS , cameraResolution);
+    videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , cameraResolution);
 
     writeLog("fileName: " + fileName, LOGTYPE::DEBUG);
     writeLog("realFPS: " + std::to_string(realFPS), LOGTYPE::DEBUG);
