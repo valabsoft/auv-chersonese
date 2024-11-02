@@ -73,6 +73,9 @@ void SettingsWindow::loadSettings()
     ui->cbCameraRightID->setCurrentIndex(settings.value("/RightID", 2).toInt());
     ui->leVideoTimerInterval->setText(settings.value("/TimerInterval", 50).toString());
     ui->cbCameraTypeID->setCurrentIndex(settings.value("/CameraTypeID", 0).toInt());
+    ui->cbVideoRecording->setChecked(settings.value("/isRecordingEnabled", true).toBool());
+    ui->leVideoRecordingLength->setText(settings.value("/VideoRecordingLength", 60).toString());
+    ui->leStoredVideoFilesLimit->setText(settings.value("/StoredVideoFilesLimit", 100).toString());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");
@@ -125,6 +128,9 @@ void SettingsWindow::saveSettings()
     settings.setValue("/RightID", ui->cbCameraRightID->currentIndex());
     settings.setValue("/TimerInterval", ui->leVideoTimerInterval->text());
     settings.setValue("/CameraTypeID", ui->cbCameraTypeID->currentIndex());
+    settings.setValue("/isRecordingEnabled", ui->cbVideoRecording->isChecked());
+    settings.setValue("/VideoRecordingLength", ui->leVideoRecordingLength->text());
+    settings.setValue("/StoredVideoFilesLimit", ui->leStoredVideoFilesLimit->text());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

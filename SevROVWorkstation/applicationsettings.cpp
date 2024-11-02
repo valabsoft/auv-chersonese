@@ -23,6 +23,10 @@ void ApplicationSettings::load()
 
     VIDEO_TIMER_INTERVAL = settings.value("/TimerInterval", "50").toInt();
     CAMERA_TYPE = settings.value("/CameraTypeID", 0).toInt();
+
+    IS_RECORDING_ENABLED = settings.value("/isRecordingEnabled", true).toBool();
+    VIDEO_RECORDING_LENGTH = settings.value("/VideoRecordingLength", 60).toInt();
+    STORED_VIDEO_FILES_LIMIT = settings.value("/StoredVideoFilesLimit", 100).toInt();
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

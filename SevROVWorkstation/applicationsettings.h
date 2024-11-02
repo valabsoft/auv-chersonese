@@ -44,6 +44,9 @@ public:
     int ROV_PORT;
 
     int CAMERA_TYPE = CameraType::IP;
+    bool IS_RECORDING_ENABLED = true;
+    int VIDEO_RECORDING_LENGTH = 60;
+    int STORED_VIDEO_FILES_LIMIT = 100;
 };
 
 #endif // APPLICATIONSETTINGS_H
