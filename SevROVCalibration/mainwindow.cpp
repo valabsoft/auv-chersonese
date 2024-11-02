@@ -351,7 +351,7 @@ void MainWindow::onCalcButtonClicked()
         std::vector<cv::String> imagesLeft;
         std::vector<cv::String> imagesRight;
 
-        std::filesystem::path calibrationFile("calibration.xml");
+        std::filesystem::path calibrationFile("calibration.yml");
         auto calibrationPath = currentPath / calibrationFile;
         std::string folderName = "calibration-images";
 

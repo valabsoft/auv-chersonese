@@ -142,8 +142,10 @@ private:
     int cameraFPS; // FPS камеры
     clock_t timerStart; // Таймер начала записи
     void videoRecorderInitialization();
-    //void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution);
-    //std::string generateFileName(std::string filename, std::string fileextension);
+    void writeLog(std::string logText, LOGTYPE logType);
+    std::string generateUniqueLogFileName();
+    void recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv::Size cameraResolution);
+    std::string generateFileName(std::string filename, std::string fileextension);
 
 public:
     MainWindow(QWidget *parent = nullptr);
