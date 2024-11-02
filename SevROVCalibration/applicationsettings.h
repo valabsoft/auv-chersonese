@@ -41,6 +41,9 @@ public:
 
     int NUMBER_OF_SHOTS = 30;
     int SHOTS_INTERVAL = 3;
+
+    std::string CALIBRATION_FILE_NAME = "camera_calibration_parameters";
+    CalibrationFileType CALIBRATION_FILE_TYPE = CalibrationFileType::YML;
 };
 
 #endif // APPLICATIONSETTINGS_H
