@@ -351,7 +351,21 @@ void MainWindow::onCalcButtonClicked()
         std::vector<cv::String> imagesLeft;
         std::vector<cv::String> imagesRight;
 
-        std::filesystem::path calibrationFile("camera_calibration_parameters.yml");
+        // Формируем имя калибровочного файла
+        std::string calibrationFileName = "";
+        switch (_appSet.CALIBRATION_FILE_TYPE) {
+        case CalibrationFileType::XML:
+            calibrationFileName = _appSet.CALIBRATION_FILE_NAME + ".xml";
+            break;
+        case CalibrationFileType::YML:
+            calibrationFileName = _appSet.CALIBRATION_FILE_NAME + ".yml";
+            break;
+        default:
+            calibrationFileName = _appSet.CALIBRATION_FILE_NAME + ".xml";
+            break;
+        }
+
+        std::filesystem::path calibrationFile(calibrationFileName);
         auto calibrationPath = currentPath / calibrationFile;
         std::string folderName = "calibration-images";
 

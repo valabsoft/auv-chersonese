@@ -72,6 +72,8 @@ void SettingsWindow::loadSettings()
     ui->cbCameraTypeID->setCurrentIndex(settings.value("/CameraTypeID", 0).toInt());
     ui->leNumberOfShots->setText(settings.value("/NumberOfShots", 30).toString());
     ui->leShotsInterval->setText(settings.value("/ShotsInterval", 3).toString());
+    ui->leCalibrationFileName->setText(settings.value("/CalibrationFileName", "camera_calibration_parameters").toString());
+    ui->cbCalibrationFileType->setCurrentIndex(settings.value("/CalibrationFileType", 1).toInt());
     settings.endGroup();
 }
 
@@ -89,6 +91,9 @@ void SettingsWindow::saveSettings()
     settings.setValue("/TimerInterval", ui->leVideoTimerInterval->text());
     settings.setValue("/CameraTypeID", ui->cbCameraTypeID->currentIndex());
     settings.setValue("/NumberOfShots", ui->leNumberOfShots->text());
-    settings.setValue("/ShotsInterval", ui->leShotsInterval->text());
+    settings.setValue("/ShotsInterval", ui->leShotsInterval->text());    
+    settings.setValue("/CalibrationFileName", ui->leCalibrationFileName->text());
+    settings.setValue("/CalibrationFileType", ui->cbCalibrationFileType->currentIndex());
+
     settings.endGroup();
 }
