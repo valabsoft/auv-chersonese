@@ -31,8 +31,8 @@ void DisparityWindow::moveWindowToCenter()
 void DisparityWindow::setupWindowGeometry()
 {
     // Установка размера главного окна// Установка размера главного окна
-    int windowWidth = 640 + _appSet.CAMERA_VIEW_BORDER_WIDTH * 2;
-    int windowHeight = 480 + _appSet.CAMERA_VIEW_BORDER_WIDTH * 2;
+    int windowWidth = 640 + _appSet.CAMERA_VIEW_BORDER_WIDTH * 2 + 20;
+    int windowHeight = 480 + _appSet.CAMERA_VIEW_BORDER_WIDTH * 2 + 70;
 
     // Фиксируем размер окна и убираем иконку ресайза
     setFixedSize(QSize(windowWidth, windowHeight));
@@ -41,19 +41,143 @@ void DisparityWindow::setupWindowGeometry()
 
     // Геометрия окон камер
     ui->lbDisparity->setGeometry(
-        _appSet.CAMERA_VIEW_X0,
+        _appSet.CAMERA_VIEW_X0 + 10,
         _appSet.CAMERA_VIEW_Y0,
         640,
         480);
+
+    QRect mainWindowRect = this->geometry();
+
+    ui->sbMinDisparity->setGeometry(
+        _appSet.CAMERA_VIEW_X0 + 10,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->sbMinDisparity->height(),
+        ui->sbMinDisparity->width(),
+        ui->sbMinDisparity->height());
+
+    ui->sbNumDisparities->setGeometry(
+        ui->sbMinDisparity->x() + ui->sbMinDisparity->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->sbNumDisparities->height(),
+        ui->sbNumDisparities->width(),
+        ui->sbNumDisparities->height());
+
+    ui->sbBlockSIze->setGeometry(
+        ui->sbNumDisparities->x() + ui->sbNumDisparities->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->sbBlockSIze->height(),
+        ui->sbBlockSIze->width(),
+        ui->sbBlockSIze->height());
+
+    ui->sbLambda->setGeometry(
+        ui->sbBlockSIze->x() + ui->sbBlockSIze->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->sbLambda->height(),
+        ui->sbLambda->width(),
+        ui->sbLambda->height());
+
+    ui->sbSigma->setGeometry(
+        ui->sbLambda->x() + ui->sbLambda->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->sbSigma->height(),
+        ui->sbSigma->width(),
+        ui->sbSigma->height());
+
+    ui->cbColorMap->setGeometry(
+        ui->sbSigma->x() + ui->sbSigma->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->cbColorMap->height(),
+        ui->cbColorMap->width(),
+        ui->cbColorMap->height());
+
+    ui->cbDisparityType->setGeometry(
+        ui->cbColorMap->x() + ui->cbColorMap->width() + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        mainWindowRect.height() - _appSet.CAMERA_VIEW_BORDER_WIDTH - ui->cbDisparityType->height(),
+        ui->cbDisparityType->width(),
+        ui->cbDisparityType->height());
+
+    ui->lbMinDisparity->setGeometry(
+        ui->sbMinDisparity->x(),
+        ui->sbMinDisparity->y() - ui->lbMinDisparity->height() - 5,
+        ui->lbMinDisparity->width(),
+        ui->lbMinDisparity->height());
+
+    ui->lbNumDisparity->setGeometry(
+        ui->sbNumDisparities->x(),
+        ui->sbNumDisparities->y() - ui->lbNumDisparity->height() - 5,
+        ui->lbNumDisparity->width(),
+        ui->lbNumDisparity->height());
+
+    ui->lbBlockSize->setGeometry(
+        ui->sbBlockSIze->x(),
+        ui->sbBlockSIze->y() - ui->lbBlockSize->height() - 5,
+        ui->lbBlockSize->width(),
+        ui->lbBlockSize->height());
+
+    ui->lbLambda->setGeometry(
+        ui->sbLambda->x(),
+        ui->sbLambda->y() - ui->lbLambda->height() - 5,
+        ui->lbLambda->width(),
+        ui->lbLambda->height());
+
+    ui->lbSigma->setGeometry(
+        ui->sbSigma->x(),
+        ui->sbSigma->y() - ui->lbSigma->height() - 5,
+        ui->lbSigma->width(),
+        ui->lbSigma->height());
+
+    ui->lbColor->setGeometry(
+        ui->cbColorMap->x(),
+        ui->cbColorMap->y() - ui->lbColor->height() - 5,
+        ui->lbColor->width(),
+        ui->lbColor->height());
+
+    ui->lbDisparityType->setGeometry(
+        ui->cbDisparityType->x(),
+        ui->cbDisparityType->y() - ui->lbDisparityType->height() - 5,
+        ui->lbDisparityType->width(),
+        ui->lbDisparityType->height());
 }
 
 void DisparityWindow::setupControlsStyle()
 {
-    ui->lbDisparity->setStyleSheet("QLabel {"
-                                   "border-style: solid;"
-                                   "border-width: 1px;"
-                                   "border-color: #F0BE50; "
-                                   "}");
+    QString QLabelCameraStyle = "QLabel {"
+                                "border-style: solid;"
+                                "border-width: 1px;"
+                                "border-color: #F0BE50;"
+                                "}";
+
+    QString QSpinBoxStyle = "QSpinBox {"
+                            "border-style: solid;"
+                            "border-width: 1px;"
+                            "border-color: silver;"
+                            "color: silver;"
+                            "}";
+
+    QString QComboBoxStyle = "QComboBox {"
+                             "border-style: solid;"
+                             "border-width: 1px;"
+                             "border-color: silver;"
+                             "color: silver;"
+                             "}"
+                             "QListView { color: silver; }";
+
+    QString QLabelTextStyle = "QLabel {"
+                              "color: silver;"
+                              "}";
+
+    ui->lbDisparity->setStyleSheet(QLabelCameraStyle);
+
+    ui->sbMinDisparity->setStyleSheet(QSpinBoxStyle);
+    ui->sbNumDisparities->setStyleSheet(QSpinBoxStyle);
+    ui->sbBlockSIze->setStyleSheet(QSpinBoxStyle);
+    ui->sbLambda->setStyleSheet(QSpinBoxStyle);
+    ui->sbSigma->setStyleSheet(QSpinBoxStyle);
+
+    ui->cbColorMap->setStyleSheet(QComboBoxStyle);
+    ui->cbDisparityType->setStyleSheet(QComboBoxStyle);
+    ui->lbMinDisparity->setStyleSheet(QLabelTextStyle);
+    ui->lbNumDisparity->setStyleSheet(QLabelTextStyle);
+    ui->lbBlockSize->setStyleSheet(QLabelTextStyle);
+    ui->lbLambda->setStyleSheet(QLabelTextStyle);
+    ui->lbSigma->setStyleSheet(QLabelTextStyle);
+    ui->lbColor->setStyleSheet(QLabelTextStyle);
+    ui->lbDisparityType->setStyleSheet(QLabelTextStyle);
+
 }
 
 int DisparityWindow::disparityMap(cv::Mat &map,
@@ -220,6 +344,48 @@ void DisparityWindow::onStereoCaptured(const cv::Mat &frameL, const cv::Mat &fra
     double sigma = 3;
     int colorMap = cv::COLORMAP_TURBO;
     DISPARITY_TYPE disparityType = DISPARITY_TYPE::FILTERED_HEATMAP;
+
+    minDisparity = ui->sbMinDisparity->value();
+    numDisparities = ui->sbNumDisparities->value();
+    blockSize = ui->sbBlockSIze->value();
+    lambda = ui->sbLambda->value();
+    sigma = ui->sbSigma->value();
+
+    switch (ui->cbColorMap->currentIndex()) {
+    case 0:
+        colorMap = cv::COLORMAP_JET;
+        break;
+    case 1:
+        colorMap = cv::COLORMAP_VIRIDIS;
+        break;
+    case 2:
+        colorMap = cv::COLORMAP_TURBO;
+        break;
+    case 3:
+        colorMap = cv::COLORMAP_HOT;
+        break;
+    default:
+        colorMap = cv::COLORMAP_TURBO;
+        break;
+    }
+
+    switch (ui->cbDisparityType->currentIndex()) {
+    case 0:
+        disparityType = DISPARITY_TYPE::BASIC_DISPARITY;
+        break;
+    case 1:
+        disparityType = DISPARITY_TYPE::BASIC_HEATMAP;
+        break;
+    case 2:
+        disparityType = DISPARITY_TYPE::FILTERED_DISPARITY;
+        break;
+    case 3:
+        disparityType = DISPARITY_TYPE::FILTERED_HEATMAP;
+        break;
+    default:
+        disparityType = DISPARITY_TYPE::FILTERED_HEATMAP;
+        break;
+    }
 
 
     if (disparityMap(disparity,
