@@ -12,6 +12,7 @@
 #include "datastructure.h"
 #include "toolwindow.h"
 #include "settingswindow.h"
+#include "disparitywindow.h"
 
 #include "sevrovxboxcontroller.h"
 #include "sevrovlibrary.h"
@@ -33,8 +34,6 @@ namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
-
-static int VIDEO_FRAGMENT_DURATION = 60;
 
 enum class LOGTYPE
 {
@@ -64,6 +63,9 @@ private:
 
     // Окно настроек
     SettingsWindow *_settingsWindow;
+
+    // Окно карты диспаратности
+    DisparityWindow *_disparityWindow;
 
     // long _cnt; // Счетчик вызовов
 
@@ -161,11 +163,13 @@ private slots:
     void onViewButtonClicked();
     void onScreenshotButtonClicked();
     void onSettingsButtonClicked();
+    void onDisparityButtonClicked();
 
 private:
     Ui::MainWindow *ui;
 
-Q_SIGNALS:
-    void updateCntValue(QString fps);
+signals:
+    // void updateCntValue(QString fps);
+    void onStereoCaptured(const cv::Mat &frameL, const cv::Mat &frameR);
 };
 #endif // MAINWINDOW_H

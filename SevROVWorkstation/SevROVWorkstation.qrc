@@ -16,5 +16,6 @@
         <file>img/sevsu.png</file>
         <file>img/trash_icon.png</file>
         <file>img/video_icon.png</file>
+        <file>img/earth_icon.png</file>
     </qresource>
 </RCC>
