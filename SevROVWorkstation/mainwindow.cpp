@@ -17,12 +17,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pbView, &QPushButton::clicked, this, &MainWindow::onViewButtonClicked);
     connect(ui->pbScreenshot, &QPushButton::clicked, this, &MainWindow::onScreenshotButtonClicked);
     connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
+    connect(ui->pbDisparity, &QPushButton::clicked, this, &MainWindow::onDisparityButtonClicked);
 
     // Загрузка настроек
     _appSet.load(_ctrSet);
 
-    // TODO VA (23-05-2024): После подключения общей библиотеки, использовать
-    // setWindowTitle("ТНПА :: Контроль :: " + QString(APP_VERSION.c_str()));
+    // Заголовок окна
     setWindowTitle("ТНПА :: AРМ Оператора :: " + _appSet.getAppVersion());
 
     // Устанавливаем геометрию окна и основных элементов
@@ -53,6 +53,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Работа с джойстиком
     _jsController = new SevROVXboxController();
+
+    // Создаем указатель на окно с картой диспаратности
+    _disparityWindow = new DisparityWindow(this);
 
     // Кнопки
     connect(_jsController, &SevROVXboxController::OnButtonA, this, &MainWindow::OnButtonA);
@@ -103,6 +106,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&_rovConnector, SIGNAL(OnConnected()), this, SLOT(onSocketConnect()));
     connect(&_rovConnector, SIGNAL(OnDisconnected()), this, SLOT(onSocketDisconnect()));
     connect(&_rovConnector, SIGNAL(OnProcessTelemetryDatagram()), this, SLOT(onSocketProcessTelemetryDatagram()));
+
+    // Связываем сигнал и слот для отображения окна
+    connect(this, &MainWindow::onStereoCaptured, _disparityWindow, &DisparityWindow::onStereoCaptured);
 }
 
 MainWindow::~MainWindow()
@@ -136,6 +142,9 @@ MainWindow::~MainWindow()
 
     if (_toolWindow)
         delete _toolWindow;
+
+    if (_disparityWindow)
+        delete _disparityWindow;
 
     delete _jsController;
 
@@ -464,6 +473,8 @@ void MainWindow::setupIcons()
     ui->pbView->setIcon(QIcon(":/img/display_icon.png"));
     ui->pbView->setIconSize(QSize(64, 64));
     ui->pbScreenshot->setIcon(QIcon(":/img/camera_icon.png"));
+    ui->pbDisparity->setIcon(QIcon(":/img/earth_icon.png"));
+    ui->pbDisparity->setIconSize(QSize(64, 64));
     ui->pbScreenshot->setIconSize(QSize(64, 64));
 }
 
@@ -912,9 +923,6 @@ void MainWindow::onVideoTimer()
 
     int nRet = MV_OK;
 
-    // VA (23-05-2024) Не работает...
-    // double fps;
-    // fps = _webCamO->get(cv::CAP_PROP_FPS);
     //Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
     MV_FRAME_OUT stOutFrame = {0};
     int videoLength = _appSet.VIDEO_RECORDING_LENGTH;
@@ -952,45 +960,6 @@ void MainWindow::onVideoTimer()
 
         if (_sourceMatL.empty())
             return;
-
-        // Цикл записи видеопотока в файл
-        if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
-        {
-            _videoFrame = _sourceMatL.clone();
-            if (true) // timestamp на кадре
-            {
-                // Получаем текущие дату и время
-                auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-                std::tm localTime = *std::localtime(&timer);
-                std::ostringstream oss;
-                std::string timeMask = "%d-%m-%Y %H:%M:%S";
-                oss << std::put_time(&localTime, timeMask.c_str());
-
-                // Вычисляем размер текста
-                cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
-
-                // Помещаем timestamp на кадр
-                cv::putText(_videoFrame,
-                            oss.str(),
-                            cv::Point((cameraResolution.width - txtSize.width) / 2, cameraResolution.height - txtSize.height - 5),
-                            cv::FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            cv::Scalar(255, 255, 255),
-                            1,
-                            cv::LINE_AA);
-            }
-            frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
-        }
-        else
-        {
-            // Запускаем поток записи
-            std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
-            // videoSaverThread.join(); // Будет пауза при сохранении
-            videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
-
-            frames.clear(); // Очищаем буфер фреймов
-            timerStart = clock(); // Сбрасываем таймер записи
-        }
 
         cv::resize(_sourceMatL, resizedMatL, cv::Size(_appSet.CAMERA_WIDTH, _appSet.CAMERA_HEIGHT));
         cv::cvtColor(resizedMatL, _destinationMatL, cv::COLOR_BGR2RGB);
@@ -1603,9 +1572,57 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
 
+        if (!_sourceMatL.empty() && !_sourceMatR.empty())
+        {
+            // Передаем кадры для отображения на карте диспаратности
+            emit this->onStereoCaptured(_sourceMatL, _sourceMatR);
+        }
+
         break;
     default:
         break;
+    }
+
+    if (!_sourceMatL.empty())
+    {
+        // Цикл записи видеопотока в файл
+        if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
+        {
+            _videoFrame = _sourceMatL.clone();
+            if (true) // timestamp на кадре
+            {
+                // Получаем текущие дату и время
+                auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                std::tm localTime = *std::localtime(&timer);
+                std::ostringstream oss;
+                std::string timeMask = "%d-%m-%Y %H:%M:%S";
+                oss << std::put_time(&localTime, timeMask.c_str());
+
+                // Вычисляем размер текста
+                cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
+
+                // Помещаем timestamp на кадр
+                cv::putText(_videoFrame,
+                            oss.str(),
+                            cv::Point((cameraResolution.width - txtSize.width) / 2, cameraResolution.height - txtSize.height - 5),
+                            cv::FONT_HERSHEY_SIMPLEX,
+                            0.5,
+                            cv::Scalar(255, 255, 255),
+                            1,
+                            cv::LINE_AA);
+            }
+            frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
+        }
+        else
+        {
+            // Запускаем поток записи
+            std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
+            // videoSaverThread.join(); // Будет пауза при сохранении
+            videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
+
+            frames.clear(); // Очищаем буфер фреймов
+            timerStart = clock(); // Сбрасываем таймер записи
+        }
     }
 }
 
@@ -1926,7 +1943,7 @@ void MainWindow::videoRecorderInitialization()
     cameraResolution.height = _appSet.CAMERA_HEIGHT;
     cameraResolution.width = _appSet.CAMERA_WIDTH;
     cameraFPS = _appSet.CAMERA_FPS;
-    int bufferSize = cameraFPS * VIDEO_FRAGMENT_DURATION; // VIDEO_FRAGMENT_DURATION = 30 секунд - интервал записи одного ролика
+    int bufferSize = cameraFPS * _appSet.VIDEO_RECORDING_LENGTH; // VIDEO_RECORDING_LENGTH - интервал записи одного ролика
     frames.reserve((size_t)bufferSize); // Резервируем длину вектора под хранение фреймов
     timerStart = clock(); // Запоминаем время начала записи
 }
@@ -2254,4 +2271,19 @@ void MainWindow::onSocketConnect()
 void MainWindow::onSocketDisconnect()
 {
     qDebug() << "Socket disconnected successfully";
+}
+void MainWindow::onDisparityButtonClicked()
+{
+    if (_disparityWindow)
+    {
+        // Центрировать инструментальную панель
+        QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
+        int x = (screenGeometry.width() - _disparityWindow->width()) / 2;
+        int y = (screenGeometry.height() - _disparityWindow->height()) / 2;
+
+        _disparityWindow->setWindowTitle("ТНПА :: Карта диспаратности :: " + _appSet.getAppVersion());
+
+        _disparityWindow->show();
+        _disparityWindow->move(x, y);
+    }
 }

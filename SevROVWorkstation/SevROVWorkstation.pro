@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     applicationsettings.cpp \
     camerascene.cpp \
+    disparitywindow.cpp \
     main.cpp \
     mainwindow.cpp \
     pointcloud/calibrate.cpp \
@@ -24,6 +25,7 @@ HEADERS += \
     applicationsettings.h \
     camerascene.h \
     datastructure.h \
+    disparitywindow.h \
     enumclasses.h \
     mainwindow.h \
     pointcloud/calibrate.h \
@@ -34,6 +36,7 @@ HEADERS += \
     toolwindow.h
 
 FORMS += \
+    disparitywindow.ui \
     mainwindow.ui \
     settingswindow.ui \
     toolwindow.ui
@@ -70,10 +73,11 @@ win32 {
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_calib3d480.dll
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_videoio480.dll
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_imgproc480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_ximgproc480.dll
 }
 unix {
     INCLUDEPATH += /usr/include/opencv4
-    LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_features2d -lopencv_calib3d -lopencv_videoio -lopencv_imgproc
+    LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_features2d -lopencv_calib3d -lopencv_videoio -lopencv_imgproc -lopencv_ximgproc
 }
 
 RESOURCES += \
