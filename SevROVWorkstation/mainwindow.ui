@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>362</width>
-    <height>501</height>
+    <height>681</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>230</x>
       <y>10</y>
       <width>122</width>
-      <height>480</height>
+      <height>651</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -93,6 +93,28 @@
        </item>
        <item>
         <widget class="QPushButton" name="pbDisparity">
+         <property name="minimumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pbAcoustics">
          <property name="minimumSize">
           <size>
            <width>64</width>

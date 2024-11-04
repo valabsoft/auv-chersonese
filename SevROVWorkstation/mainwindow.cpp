@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pbScreenshot, &QPushButton::clicked, this, &MainWindow::onScreenshotButtonClicked);
     connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
     connect(ui->pbDisparity, &QPushButton::clicked, this, &MainWindow::onDisparityButtonClicked);
+    connect(ui->pbDisparity, &QPushButton::clicked, this, &MainWindow::onAcousticButtonClicked);
 
     // Загрузка настроек
     _appSet.load(_ctrSet);
@@ -475,6 +476,8 @@ void MainWindow::setupIcons()
     ui->pbScreenshot->setIcon(QIcon(":/img/camera_icon.png"));
     ui->pbDisparity->setIcon(QIcon(":/img/earth_icon.png"));
     ui->pbDisparity->setIconSize(QSize(64, 64));
+    ui->pbAcoustics->setIcon(QIcon(":/img/location_icon.png"));
+    ui->pbAcoustics->setIconSize(QSize(64, 64));
     ui->pbScreenshot->setIconSize(QSize(64, 64));
 }
 
@@ -2286,4 +2289,8 @@ void MainWindow::onDisparityButtonClicked()
         _disparityWindow->show();
         _disparityWindow->move(x, y);
     }
+}
+void MainWindow::onAcousticButtonClicked()
+{
+    ;
 }

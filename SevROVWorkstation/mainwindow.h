@@ -164,6 +164,7 @@ private slots:
     void onScreenshotButtonClicked();
     void onSettingsButtonClicked();
     void onDisparityButtonClicked();
+    void onAcousticButtonClicked();
 
 private:
     Ui::MainWindow *ui;
