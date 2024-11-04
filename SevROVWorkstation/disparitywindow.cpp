@@ -337,7 +337,7 @@ void DisparityWindow::onStereoCaptured(const cv::Mat &frameL, const cv::Mat &fra
 {
     cv::Mat disparity;
 
-    int minDisparity = 16;
+    int minDisparity = 32;
     int numDisparities = 16 * 10;
     int blockSize = 15;
     double lambda = 5000.0;
