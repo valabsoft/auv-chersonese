@@ -3,7 +3,7 @@
 
 #include <QScreen>
 #include <QDir>
-
+//#include "mjpeg_streamer.hpp"
 #include <fstream>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -49,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     _controlTimer = new QTimer(this);
     connect(_controlTimer, &QTimer::timeout, this, &MainWindow::onControlTimer);
+
+    // адрес - localhost:8080/leftcam
+    this->leftCamStreaming = new VideoStreaming(8080, "leftcam");
 
     // QObject::connect(this, SIGNAL(updateCntValue(QString)), ui->lbFPS, SLOT(setText(QString)));
 
@@ -209,7 +212,7 @@ void MainWindow::writeLog(std::string logText, LOGTYPE logType)
         case LOGTYPE::DEBUG:
             logTypeAbbreviation = "DEBG";
             break;
-        case LOGTYPE::ERROR:
+        case LOGTYPE::ERR:
             logTypeAbbreviation = "ERRR";
             break;
         case LOGTYPE::EXCEPTION:
@@ -619,57 +622,57 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             {
             case -1:
                 qDebug() <<  "ERROR: The only one camera found!";
-                writeLog("setupCameraConnection(): ERROR: The only one camera found!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: The only one camera found!", LOGTYPE::ERR);
                 break;
             case 1:
                 qDebug() <<  "ERROR: Initialize SDK fail!";
-                writeLog("setupCameraConnection(): ERROR: Initialize SDK fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: Initialize SDK fail!", LOGTYPE::ERR);
                 break;
             case 2:
                 qDebug() <<  "ERROR: Enum Devices fail!";
-                writeLog("setupCameraConnection(): ERROR: Enum Devices fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: Enum Devices fail!", LOGTYPE::ERR);
                 break;
 
             case 11:
                 qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
-                writeLog("setupCameraConnection(): ERROR: Left Camera - Create Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: Left Camera - Create Handle fail!", LOGTYPE::ERR);
                 break;
             case 12:
                 qDebug() <<  "ERROR: Left Camera - Open Device fail!";
-                writeLog("setupCameraConnection(): Left Camera - Open Device fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Open Device fail!", LOGTYPE::ERR);
                 break;
             case 13:
                 qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
-                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's value fail!", LOGTYPE::ERR);
                 break;
             case 14:
                 qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
-                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERR);
                 break;
             case 15:
                 qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-                writeLog("setupCameraConnection(): Left Camera - Start Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Start Grabbing fail!", LOGTYPE::ERR);
                 break;
 
             case 21:
                 qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
-                writeLog("setupCameraConnection(): Right Camera - Create Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Create Handle fail!", LOGTYPE::ERR);
                 break;
             case 22:
                 qDebug() <<  "ERROR: Right Camera - Open Device fail!";
-                writeLog("setupCameraConnection(): Right Camera - Open Device fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Open Device fail!", LOGTYPE::ERR);
                 break;
             case 23:
                 qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
-                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's value fail!", LOGTYPE::ERR);
                 break;
             case 24:
                 qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
-                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERR);
                 break;
             case 25:
                 qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-                writeLog("setupCameraConnection(): Right Camera - Start Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Start Grabbing fail!", LOGTYPE::ERR);
                 break;
             default:
                 break;
@@ -699,28 +702,28 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             {
             case 10:
                 qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
-                writeLog("setupCameraConnection(): Left Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Stop Grabbing fail!", LOGTYPE::ERR);
                 break;
             case 11:
                 qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
-                writeLog("setupCameraConnection(): Left Camera - CloseDevice fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - CloseDevice fail!", LOGTYPE::ERR);
                 break;
             case 12:
                 qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
-                writeLog("setupCameraConnection(): Left Camera - Destroy Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Destroy Handle fail!", LOGTYPE::ERR);
                 break;
 
             case 20:
                 qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
-                writeLog("setupCameraConnection(): Right Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Stop Grabbing fail!", LOGTYPE::ERR);
                 break;
             case 21:
                 qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
-                writeLog("setupCameraConnection(): Right Camera - CloseDevice fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - CloseDevice fail!", LOGTYPE::ERR);
                 break;
             case 22:
                 qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
-                writeLog("setupCameraConnection(): Right Camera - Destroy Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Destroy Handle fail!", LOGTYPE::ERR);
                 break;
             default:
                 break;
@@ -868,7 +871,7 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
             writeLog("Saving video finished", LOGTYPE::DEBUG);
         }
         else
-             writeLog("cv::VideoWriter NOT opened!", LOGTYPE::ERROR);
+             writeLog("cv::VideoWriter NOT opened!", LOGTYPE::ERR);
     }
     catch (...)
     {
@@ -1588,6 +1591,10 @@ void MainWindow::onVideoTimer()
 
     if (!_sourceMatL.empty())
     {
+        if (this->leftCamStreaming->streamer.isRunning())
+        {
+            this->leftCamStreaming->passImageToStreamer(_sourceMatL);
+        }
         // Цикл записи видеопотока в файл
         if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
         {

@@ -13,6 +13,7 @@
 #include "toolwindow.h"
 #include "settingswindow.h"
 #include "disparitywindow.h"
+#include "videostreaming.h"
 
 #include "sevrovxboxcontroller.h"
 #include "sevrovlibrary.h"
@@ -37,8 +38,8 @@ QT_END_NAMESPACE
 
 enum class LOGTYPE
 {
-    DEBUG,		// Отладака			DEBG
-    ERROR,		// Ошибка			ERRR
+    DEBUG,		// Отладка			DEBG
+    ERR,		// Ошибка			ERRR // ERROR - конфликтует с библиотекой стримера
     EXCEPTION,	// Исключение		EXCP
     INFO,		// Информация		INFO
     WARNING		// Предупреждение	WARN
@@ -88,6 +89,7 @@ private:
 
     QImage _imgCamL;
     QImage _imgCamR;
+    VideoStreaming *leftCamStreaming;
     ///////////////////////////////////////////////////////////////////////////
     // IP camera related
     void* handleL = NULL;
