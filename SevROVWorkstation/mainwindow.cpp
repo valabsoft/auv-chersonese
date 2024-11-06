@@ -688,7 +688,15 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
 
         // адрес - localhost:8080/leftcam
         if (_appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
-            this->_leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, "leftcam");
+        {
+            if (_leftCamStreaming)
+            {
+                if (_leftCamStreaming->streamer.isRunning())
+                    _leftCamStreaming->streamer.stop(); // Останавливаем стриминг
+                delete _leftCamStreaming; // очищаем память
+            }
+            _leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, "leftcam");
+        }
 
         // Запускаем таймер
         if (!_videoTimer->isActive())
