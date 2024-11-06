@@ -947,8 +947,6 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            cameraResolution.width = 1440; // грязный хак но так с ip камеры пишет в ее разрешении не меняя размер окна
-            cameraResolution.height = 1080;
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
@@ -1509,8 +1507,6 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////
             // Left Camera
             ///////////////////////////////////////////////////////////////////
-            cameraResolution.width = 1440; // грязный хак
-            cameraResolution.height = 1080;
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
             if (nRet == MV_OK)
             {
