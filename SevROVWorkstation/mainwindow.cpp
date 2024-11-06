@@ -3,7 +3,6 @@
 
 #include <QScreen>
 #include <QDir>
-//#include "mjpeg_streamer.hpp"
 #include <fstream>
 
 MainWindow::MainWindow(QWidget *parent)
