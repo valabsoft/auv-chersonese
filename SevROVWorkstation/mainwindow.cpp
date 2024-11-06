@@ -50,9 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
     _controlTimer = new QTimer(this);
     connect(_controlTimer, &QTimer::timeout, this, &MainWindow::onControlTimer);
 
-    // адрес - localhost:8080/leftcam
-    this->leftCamStreaming = new VideoStreaming(8080, "leftcam");
-
     // QObject::connect(this, SIGNAL(updateCntValue(QString)), ui->lbFPS, SLOT(setText(QString)));
 
     // Работа с джойстиком
@@ -149,6 +146,9 @@ MainWindow::~MainWindow()
 
     if (_disparityWindow)
         delete _disparityWindow;
+
+    if (_leftCamStreaming)
+        delete _leftCamStreaming;
 
     delete _jsController;
 
@@ -687,6 +687,10 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
         }
 
+        // адрес - localhost:8080/leftcam
+        if (_appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
+            this->_leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, "leftcam");
+
         // Запускаем таймер
         if (!_videoTimer->isActive())
             _videoTimer->start(_appSet.VIDEO_TIMER_INTERVAL);
@@ -755,6 +759,9 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         pixmap.fill(color);
         ui->lbCameraL->setPixmap(pixmap);
         ui->lbCameraR->setPixmap(pixmap);
+
+        if (this->_leftCamStreaming->streamer.isRunning())
+            this->_leftCamStreaming->streamer.stop();
 
         // Останавливаем таймер
         if (_videoTimer->isActive())
@@ -1591,9 +1598,9 @@ void MainWindow::onVideoTimer()
 
     if (!_sourceMatL.empty())
     {
-        if (this->leftCamStreaming->streamer.isRunning())
+        if (this->_leftCamStreaming->streamer.isRunning() && _appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
         {
-            this->leftCamStreaming->passImageToStreamer(_sourceMatL);
+            this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
         }
         // Цикл записи видеопотока в файл
         if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)

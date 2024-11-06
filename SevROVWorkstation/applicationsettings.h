@@ -45,6 +45,8 @@ public:
 
     int CAMERA_TYPE = CameraType::IP;
     bool IS_RECORDING_ENABLED = true;
+    bool IS_LEFT_CAMERA_STREAMING_ENABLED = false;
+    int LEFT_CAMERA_STREAMING_PORT = 8080;
     int VIDEO_RECORDING_LENGTH = 60;
     int STORED_VIDEO_FILES_LIMIT = 100;
 };

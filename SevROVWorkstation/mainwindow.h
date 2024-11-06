@@ -89,7 +89,7 @@ private:
 
     QImage _imgCamL;
     QImage _imgCamR;
-    VideoStreaming *leftCamStreaming;
+    VideoStreaming *_leftCamStreaming;
     ///////////////////////////////////////////////////////////////////////////
     // IP camera related
     void* handleL = NULL;
