@@ -26,6 +26,7 @@ void ApplicationSettings::load()
 
     IS_LEFT_CAMERA_STREAMING_ENABLED = settings.value("/isLeftCameraStreamingEnabled", false).toBool();
     LEFT_CAMERA_STREAMING_PORT = settings.value("/LeftCameraStreamingPort", 8080).toInt();
+    LEFT_CAMERA_STREAMING_ADDRESS = settings.value("/LeftCameraStreamingAddress", "leftcam").toString().toStdString();
 
     IS_RECORDING_ENABLED = settings.value("/isRecordingEnabled", true).toBool();
     VIDEO_RECORDING_LENGTH = settings.value("/VideoRecordingLength", 60).toInt();

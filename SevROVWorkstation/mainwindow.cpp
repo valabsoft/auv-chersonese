@@ -693,9 +693,9 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             {
                 if (_leftCamStreaming->streamer.isRunning())
                     _leftCamStreaming->streamer.stop(); // Останавливаем стриминг
-                delete _leftCamStreaming; // очищаем память
+                delete _leftCamStreaming; // очищаем память // вылетает
             }
-            _leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, "leftcam");
+            _leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, _appSet.LEFT_CAMERA_STREAMING_ADDRESS);
         }
 
         // Запускаем таймер
@@ -1607,7 +1607,9 @@ void MainWindow::onVideoTimer()
     {
         if (this->_leftCamStreaming->streamer.isRunning() && _appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
         {
-            this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
+            std::thread updateStreamThread(&VideoStreaming::passImageToStreamer, this->_leftCamStreaming, this->_sourceMatL);
+            updateStreamThread.detach();
+            //this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
         }
         // Цикл записи видеопотока в файл
         if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)

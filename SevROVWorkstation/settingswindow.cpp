@@ -78,6 +78,7 @@ void SettingsWindow::loadSettings()
     ui->leStoredVideoFilesLimit->setText(settings.value("/StoredVideoFilesLimit", 100).toString());
     ui->cbLeftCameraStreaming->setChecked(settings.value("/isLeftCameraStreamingEnabled", false).toBool());
     ui->leLeftCameraStreamingPort->setText(settings.value("/LeftCameraStreamingPort", 8080).toString());
+    ui->leLeftCameraStreamingAddress->setText(settings.value("/LeftCameraStreamingAddress", "leftcam").toString());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");
@@ -135,6 +136,7 @@ void SettingsWindow::saveSettings()
     settings.setValue("/StoredVideoFilesLimit", ui->leStoredVideoFilesLimit->text());
     settings.setValue("/isLeftCameraStreamingEnabled", ui->cbLeftCameraStreaming->isChecked());
     settings.setValue("/LeftCameraStreamingPort", ui->leLeftCameraStreamingPort->text());
+    settings.setValue("/LeftCameraStreamingAddress", ui->leLeftCameraStreamingAddress->text());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");
