@@ -689,12 +689,6 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         // адрес - localhost:8080/leftcam
         if (_appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
         {
-            if (_leftCamStreaming)
-            {
-                if (_leftCamStreaming->streamer.isRunning())
-                    _leftCamStreaming->streamer.stop(); // Останавливаем стриминг
-                delete _leftCamStreaming; // очищаем память // вылетает
-            }
             _leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, _appSet.LEFT_CAMERA_STREAMING_ADDRESS);
         }
 
@@ -768,7 +762,10 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         ui->lbCameraR->setPixmap(pixmap);
 
         if (this->_leftCamStreaming->streamer.isRunning())
+        {
             this->_leftCamStreaming->streamer.stop();
+            delete this->_leftCamStreaming;
+        }
 
         // Останавливаем таймер
         if (_videoTimer->isActive())
