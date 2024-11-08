@@ -14,7 +14,9 @@ public:
     VideoStreaming(int port, std::string name);
     ~VideoStreaming();
     int passImageToStreamer(cv::Mat image);
+    int updateStream();
     nadjieb::MJPEGStreamer streamer;
+    cv::Mat passedImage;
 private:
     std::vector<uchar> frameToDisplay; // транслируемый кадр
     std::string name;

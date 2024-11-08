@@ -1604,9 +1604,9 @@ void MainWindow::onVideoTimer()
     {
         if (this->_leftCamStreaming->streamer.isRunning() && _appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
         {
-            std::thread updateStreamThread(&VideoStreaming::passImageToStreamer, this->_leftCamStreaming, this->_sourceMatL);
-            updateStreamThread.detach();
-            //this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
+            //std::thread updateStreamThread(&VideoStreaming::passImageToStreamer, this->_leftCamStreaming, this->_sourceMatL);
+            //updateStreamThread.detach();
+            this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
         }
         // Цикл записи видеопотока в файл
         if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
