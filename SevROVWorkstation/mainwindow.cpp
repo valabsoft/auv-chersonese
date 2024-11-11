@@ -957,7 +957,6 @@ void MainWindow::onVideoTimer()
             nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
             {
-                // qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
@@ -1589,12 +1588,23 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
 
-        if (!_sourceMatL.empty() && !_sourceMatR.empty())
+        if (_appSet.IS_DISPARITY_ENABLED)
         {
-            // Передаем кадры для отображения на карте диспаратности
-            emit this->onStereoCaptured(_sourceMatL.clone(), _sourceMatR.clone());
-        }
+            if (clock() - disparityTimer >= _appSet.MVS_TIMEOUT)
+            {
+                disparityTimer = clock();
 
+                if (!_sourceMatL.empty() && !_sourceMatR.empty())
+                {
+                    // Сразу уменьшаем кадр перед передачей на карту диспаратности
+                    cv::resize(_sourceMatL, _sourceMatL_640_480, cv::Size(640, 480));
+                    cv::resize(_sourceMatR, _sourceMatR_640_480, cv::Size(640, 480));
+
+                    // Передаем кадры для отображения на карте диспаратности
+                    emit this->onStereoCaptured(_sourceMatL_640_480, _sourceMatR_640_480);
+                }
+            }
+        }
         break;
     default:
         break;
@@ -1983,6 +1993,7 @@ void MainWindow::onStartStopButtonClicked()
     writeLog("CAMERA_RIGHT_ID: " + std::to_string(_appSet.CAMERA_RIGHT_ID), LOGTYPE::INFO);
     writeLog("CAMERA_TYPE: " + std::to_string(_appSet.CAMERA_TYPE), LOGTYPE::INFO);
     writeLog("VIDEO_TIMER_INTERVAL: " + std::to_string(_appSet.VIDEO_TIMER_INTERVAL), LOGTYPE::INFO);
+    writeLog("MVS_TIMEOUT: " + std::to_string(_appSet.MVS_TIMEOUT), LOGTYPE::INFO);
     writeLog("==================================================", LOGTYPE::INFO);
 
     // Меняем состояние флага
@@ -2047,6 +2058,8 @@ void MainWindow::onStartStopButtonClicked()
     }
 
     setupConnectedControlsStyle(_sevROV.isConnected);
+
+    disparityTimer = clock();
 }
 
 void MainWindow::onViewButtonClicked()

@@ -82,6 +82,10 @@ private:
 
     cv::Mat _sourceMatL;
     cv::Mat _sourceMatR;
+
+    cv::Mat _sourceMatL_640_480;
+    cv::Mat _sourceMatR_640_480;
+
     cv::Mat _videoFrame;
 
     cv::Mat _destinationMatL;
@@ -170,6 +174,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    clock_t disparityTimer;
 
 signals:
     // void updateCntValue(QString fps);
