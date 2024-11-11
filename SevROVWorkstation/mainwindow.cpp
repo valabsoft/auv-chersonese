@@ -942,6 +942,8 @@ void MainWindow::onVideoTimer()
 
     //Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
     MV_FRAME_OUT stOutFrame = {0};
+    MV_FRAME_OUT stOutFrameL = {0};
+    MV_FRAME_OUT stOutFrameR = {0};
     int videoLength = _appSet.VIDEO_RECORDING_LENGTH;
 
     switch (_sevROV.cameraView)
@@ -952,7 +954,7 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
             {
                 // qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
@@ -1512,14 +1514,13 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////
             // Left Camera
             ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrameL, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
-            {
-                // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-                _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+            {                
+                _sourceMatL = cv::Mat(stOutFrameL.stFrameInfo.nHeight, stOutFrameL.stFrameInfo.nWidth, CV_8U, stOutFrameL.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
-                nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
+                nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrameL);
 
                 if(nRet != MV_OK)
                     qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
@@ -1552,14 +1553,13 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
+            nRet = MV_CC_GetImageBuffer(handleR, &stOutFrameR, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
             {
-                // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-                _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+                _sourceMatR = cv::Mat(stOutFrameR.stFrameInfo.nHeight, stOutFrameR.stFrameInfo.nWidth, CV_8U, stOutFrameR.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
 
-                nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
+                nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrameR);
 
                 if(nRet != MV_OK)
                     qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
@@ -1592,7 +1592,7 @@ void MainWindow::onVideoTimer()
         if (!_sourceMatL.empty() && !_sourceMatR.empty())
         {
             // Передаем кадры для отображения на карте диспаратности
-            emit this->onStereoCaptured(_sourceMatL, _sourceMatR);
+            emit this->onStereoCaptured(_sourceMatL.clone(), _sourceMatR.clone());
         }
 
         break;
@@ -2089,7 +2089,7 @@ void MainWindow::onScreenshotButtonClicked()
     switch (_appSet.CAMERA_TYPE)
     {
     case CameraType::IP:
-        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
         if (nRet == MV_OK)
         {
             // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
@@ -2107,7 +2107,7 @@ void MainWindow::onScreenshotButtonClicked()
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
         ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
+        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, _appSet.MVS_TIMEOUT);
         if (nRet == MV_OK)
         {
             // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";

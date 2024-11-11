@@ -31,6 +31,7 @@ void ApplicationSettings::load()
     IS_RECORDING_ENABLED = settings.value("/isRecordingEnabled", true).toBool();
     VIDEO_RECORDING_LENGTH = settings.value("/VideoRecordingLength", 60).toInt();
     STORED_VIDEO_FILES_LIMIT = settings.value("/StoredVideoFilesLimit", 100).toInt();
+    MVS_TIMEOUT = settings.value("/MVSTimeout", 1000).toInt();
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

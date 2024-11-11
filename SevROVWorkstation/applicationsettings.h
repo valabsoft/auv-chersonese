@@ -50,6 +50,7 @@ public:
     std::string LEFT_CAMERA_STREAMING_ADDRESS = "leftcam";
     int VIDEO_RECORDING_LENGTH = 60;
     int STORED_VIDEO_FILES_LIMIT = 100;
+    int MVS_TIMEOUT = 1000;
 };
 
 #endif // APPLICATIONSETTINGS_H
