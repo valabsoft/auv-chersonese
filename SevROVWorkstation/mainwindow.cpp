@@ -1633,11 +1633,11 @@ void MainWindow::onVideoTimer()
 
                 // Вычисляем размер текста
                 cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
-
+                cv::Size videoResolution = _videoFrame.size();
                 // Помещаем timestamp на кадр
                 cv::putText(_videoFrame,
                             oss.str(),
-                            cv::Point((cameraResolution.width - txtSize.width) / 2, cameraResolution.height - txtSize.height - 5),
+                            cv::Point((videoResolution.width - txtSize.width) / 2, videoResolution.height - txtSize.height - 5),
                             cv::FONT_HERSHEY_SIMPLEX,
                             0.5,
                             cv::Scalar(255, 255, 255),
