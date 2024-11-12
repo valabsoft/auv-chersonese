@@ -31,6 +31,8 @@ void ApplicationSettings::load()
     IS_RECORDING_ENABLED = settings.value("/isRecordingEnabled", true).toBool();
     VIDEO_RECORDING_LENGTH = settings.value("/VideoRecordingLength", 60).toInt();
     STORED_VIDEO_FILES_LIMIT = settings.value("/StoredVideoFilesLimit", 100).toInt();
+    DISPARITY_TIMEOUT = settings.value("/DISPARITYTimeout", 500).toInt();
+    IS_DISPARITY_ENABLED = settings.value("/isDisparityEnabled", false).toBool();
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

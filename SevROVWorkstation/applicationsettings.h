@@ -12,7 +12,7 @@
 class ApplicationSettings
 {
 private:
-    const std::string APP_VERSION = "1.4.1";
+    const std::string APP_VERSION = "1.4.2";
     QString _settingsFileName;
 public:
     ApplicationSettings();
@@ -50,6 +50,9 @@ public:
     std::string LEFT_CAMERA_STREAMING_ADDRESS = "leftcam";
     int VIDEO_RECORDING_LENGTH = 60;
     int STORED_VIDEO_FILES_LIMIT = 100;
+    int MVS_TIMEOUT = 1000;
+    int DISPARITY_TIMEOUT = 500;
+    bool IS_DISPARITY_ENABLED = false;
 };
 
 #endif // APPLICATIONSETTINGS_H
