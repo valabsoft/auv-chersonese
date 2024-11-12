@@ -1590,7 +1590,7 @@ void MainWindow::onVideoTimer()
 
         if (_appSet.IS_DISPARITY_ENABLED)
         {
-            if (clock() - disparityTimer >= _appSet.MVS_TIMEOUT)
+            if (clock() - disparityTimer >= _appSet.DISPARITY_TIMEOUT)
             {
                 disparityTimer = clock();
 
@@ -1994,6 +1994,7 @@ void MainWindow::onStartStopButtonClicked()
     writeLog("CAMERA_TYPE: " + std::to_string(_appSet.CAMERA_TYPE), LOGTYPE::INFO);
     writeLog("VIDEO_TIMER_INTERVAL: " + std::to_string(_appSet.VIDEO_TIMER_INTERVAL), LOGTYPE::INFO);
     writeLog("MVS_TIMEOUT: " + std::to_string(_appSet.MVS_TIMEOUT), LOGTYPE::INFO);
+    writeLog("DISPARITY_TIMEOUT: " + std::to_string(_appSet.DISPARITY_TIMEOUT), LOGTYPE::INFO);
     writeLog("==================================================", LOGTYPE::INFO);
 
     // Меняем состояние флага

@@ -51,6 +51,7 @@ public:
     int VIDEO_RECORDING_LENGTH = 60;
     int STORED_VIDEO_FILES_LIMIT = 100;
     int MVS_TIMEOUT = 1000;
+    int DISPARITY_TIMEOUT = 500;
     bool IS_DISPARITY_ENABLED = false;
 };
 

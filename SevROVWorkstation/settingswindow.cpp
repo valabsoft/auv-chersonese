@@ -79,8 +79,8 @@ void SettingsWindow::loadSettings()
     ui->cbLeftCameraStreaming->setChecked(settings.value("/isLeftCameraStreamingEnabled", false).toBool());
     ui->leLeftCameraStreamingPort->setText(settings.value("/LeftCameraStreamingPort", 8080).toString());
     ui->leLeftCameraStreamingAddress->setText(settings.value("/LeftCameraStreamingAddress", "leftcam").toString());
-    ui->leMVSTimeout->setText(settings.value("/MVSTimeout", 1000).toString());
-    ui->cbVideoRecording->setChecked(settings.value("/isDisparityEnabled", false).toBool());
+    ui->leDisparityTimeout->setText(settings.value("/DisparityTimeout", 500).toString());
+    ui->cbDisparity->setChecked(settings.value("/isDisparityEnabled", false).toBool());
 
     settings.endGroup();
 
@@ -140,7 +140,7 @@ void SettingsWindow::saveSettings()
     settings.setValue("/isLeftCameraStreamingEnabled", ui->cbLeftCameraStreaming->isChecked());
     settings.setValue("/LeftCameraStreamingPort", ui->leLeftCameraStreamingPort->text());
     settings.setValue("/LeftCameraStreamingAddress", ui->leLeftCameraStreamingAddress->text());
-    settings.setValue("/MVSTimeout", ui->leMVSTimeout->text());
+    settings.setValue("/DisparityTimeout", ui->leDisparityTimeout->text());
     settings.setValue("/isDisparityEnabled", ui->cbDisparity->isChecked());
     settings.endGroup();
 
