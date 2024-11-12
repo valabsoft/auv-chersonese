@@ -544,11 +544,13 @@ class Listener : public nadjieb::utils::NonCopyable, public nadjieb::utils::Runn
 
     void closeAll() {
         state_ = nadjieb::utils::State::TERMINATING;
-        for (auto& pfd : fds_) {
-            if (pfd.fd >= 0) {
+        for (auto& pfd : fds_)
+        {
+            // if (pfd.fd >= 0) -- VA 12-11-2024: Always True
+            // {
                 on_before_close_cb_(pfd.fd);
                 closeSocket(pfd.fd);
-            }
+            // }
         }
 
         fds_.clear();
