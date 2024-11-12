@@ -417,7 +417,7 @@ void MainWindow::onTimer()
     cv::Mat resizedMatR;
 
     int nRet = MV_OK;
-    MV_FRAME_OUT stOutFrame = {0};
+    MV_FRAME_OUT stOutFrame = {};
 
     switch (_appSet.CAMERA_TYPE)
     {
@@ -745,8 +745,8 @@ int MainWindow::MV_SDK_Initialization()
     if (MV_OK != nRet)
         return 2;
 
-    MVCC_ENUMVALUE stEnumValue = {0};
-    MVCC_ENUMENTRY stEnumEntry = {0};
+    MVCC_ENUMVALUE stEnumValue = {};
+    MVCC_ENUMENTRY stEnumEntry = {};
 
     ///////////////////////////////////////////////////////////////////////////
     // Left Camera Initialization

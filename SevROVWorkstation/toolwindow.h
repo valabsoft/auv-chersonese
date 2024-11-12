@@ -34,7 +34,7 @@ public:
     enum ToolMode {Mode2D, Mode3D};
     void setMode(ToolMode mode);
     void setDataCloud3D(cv::Mat image, t_vuxyzrgb data);
-    void setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud);
+    // void setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud);
     ToolMode getMode();
     void clearData();
 
