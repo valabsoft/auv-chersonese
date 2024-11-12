@@ -831,24 +831,25 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
     else
     {
         int videoFileCount = 0;
-        filesystem::directory_entry oldestVideoFile;
         for (const auto & entry : std::filesystem::directory_iterator(pathToVideoDirectory)) {
             //std::cout << entry.path() << std::endl; // с каким файлом/папкой имеем дело
             if (!entry.is_directory()){
                 videoFileCount++;
-                if (videoFileCount == 1)
-                {
-                    // в интернете видел инфо, что std::filesystem::directory_iterator
-                    // не по порядку итерирует файлы. во время тестов у меня это не проявилось -
-                    // всегда проходит по возрастанию в алфавитном порядке, если сойдет с ума -
-                    // копать здесь
-                    oldestVideoFile = entry;
-                }
             }
         }
-        if (videoFileCount >= _appSet.STORED_VIDEO_FILES_LIMIT)
+        while (videoFileCount >= _appSet.STORED_VIDEO_FILES_LIMIT)
         {
-            std::filesystem::remove(oldestVideoFile);
+            for (const auto & entry : std::filesystem::directory_iterator(pathToVideoDirectory)) {
+                if (!entry.is_directory()){
+                    std::filesystem::remove(entry);
+                    videoFileCount--;
+                    break;
+                }
+                else
+                {
+                    continue;
+                }
+            }
         }
     }
 
@@ -858,7 +859,8 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
     // Генерируем имя файла с привязкой к текущему времени
     std::string fileName = generateFileName("chersonesos", fileExtension);
     int realFPS = (int)(frames.size() / recordInterval);
-    videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , cameraResolution);
+    cv::Size videoResolution = frames[0].size();
+    videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , videoResolution);
 
     writeLog("fileName: " + fileName, LOGTYPE::DEBUG);
     writeLog("realFPS: " + std::to_string(realFPS), LOGTYPE::DEBUG);
