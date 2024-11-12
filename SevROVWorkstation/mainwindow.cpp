@@ -1619,42 +1619,45 @@ void MainWindow::onVideoTimer()
             this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
         }
         // Цикл записи видеопотока в файл
-        if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
+        if (_appSet.IS_RECORDING_ENABLED)
         {
-            _videoFrame = _sourceMatL.clone();
-            if (true) // timestamp на кадре
+            if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
             {
-                // Получаем текущие дату и время
-                auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-                std::tm localTime = *std::localtime(&timer);
-                std::ostringstream oss;
-                std::string timeMask = "%d-%m-%Y %H:%M:%S";
-                oss << std::put_time(&localTime, timeMask.c_str());
+                _videoFrame = _sourceMatL.clone();
+                if (true) // timestamp на кадре
+                {
+                    // Получаем текущие дату и время
+                    auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                    std::tm localTime = *std::localtime(&timer);
+                    std::ostringstream oss;
+                    std::string timeMask = "%d-%m-%Y %H:%M:%S";
+                    oss << std::put_time(&localTime, timeMask.c_str());
 
-                // Вычисляем размер текста
-                cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
-                cv::Size videoResolution = _videoFrame.size();
-                // Помещаем timestamp на кадр
-                cv::putText(_videoFrame,
-                            oss.str(),
-                            cv::Point((videoResolution.width - txtSize.width) / 2, videoResolution.height - txtSize.height - 5),
-                            cv::FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            cv::Scalar(255, 255, 255),
-                            1,
-                            cv::LINE_AA);
+                    // Вычисляем размер текста
+                    cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
+                    cv::Size videoResolution = _videoFrame.size();
+                    // Помещаем timestamp на кадр
+                    cv::putText(_videoFrame,
+                                oss.str(),
+                                cv::Point((videoResolution.width - txtSize.width) / 2, videoResolution.height - txtSize.height - 5),
+                                cv::FONT_HERSHEY_SIMPLEX,
+                                0.5,
+                                cv::Scalar(255, 255, 255),
+                                1,
+                                cv::LINE_AA);
+                }
+                frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
             }
-            frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
-        }
-        else
-        {
-            // Запускаем поток записи
-            std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
-            // videoSaverThread.join(); // Будет пауза при сохранении
-            videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
+            else
+            {
+                // Запускаем поток записи
+                std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
+                // videoSaverThread.join(); // Будет пауза при сохранении
+                videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
 
-            frames.clear(); // Очищаем буфер фреймов
-            timerStart = clock(); // Сбрасываем таймер записи
+                frames.clear(); // Очищаем буфер фреймов
+                timerStart = clock(); // Сбрасываем таймер записи
+            }
         }
     }
 }
