@@ -859,8 +859,11 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
     // Генерируем имя файла с привязкой к текущему времени
     std::string fileName = generateFileName("chersonesos", fileExtension);
     int realFPS = (int)(frames.size() / recordInterval);
-    cv::Size videoResolution = frames[0].size();
-    videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , videoResolution);
+    if (!frames.empty())
+    {
+        cv::Size videoResolution = frames[0].size();
+        videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , videoResolution);
+    }
 
     writeLog("fileName: " + fileName, LOGTYPE::DEBUG);
     writeLog("realFPS: " + std::to_string(realFPS), LOGTYPE::DEBUG);
