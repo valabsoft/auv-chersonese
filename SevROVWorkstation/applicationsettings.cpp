@@ -13,7 +13,7 @@ void ApplicationSettings::load()
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
     // Camera Settings
-    settings.beginGroup("/CAMERA SETTINGS");
+    settings.beginGroup("/CAMERA_SETTINGS");
     CAMERA_WIDTH = settings.value("/Width", "640").toInt();
     CAMERA_HEIGHT = settings.value("/Height", "480").toInt();
     CAMERA_FPS = settings.value("/FPS", "30").toInt();
@@ -23,6 +23,10 @@ void ApplicationSettings::load()
 
     VIDEO_TIMER_INTERVAL = settings.value("/TimerInterval", "50").toInt();
     CAMERA_TYPE = settings.value("/CameraTypeID", 0).toInt();
+
+    IS_RECORDING_ENABLED = settings.value("/isRecordingEnabled", true).toBool();
+    VIDEO_RECORDING_LENGTH = settings.value("/VideoRecordingLength", 60).toInt();
+    STORED_VIDEO_FILES_LIMIT = settings.value("/StoredVideoFilesLimit", 100).toInt();
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

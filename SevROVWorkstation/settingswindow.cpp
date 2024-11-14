@@ -64,7 +64,7 @@ void SettingsWindow::loadSettings()
 {
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
-    settings.beginGroup("/CAMERA SETTINGS");
+    settings.beginGroup("/CAMERA_SETTINGS");
     ui->cbCameraResolution->setCurrentIndex(settings.value("/ResulutionIndex", 0).toInt());
     ui->leW->setText(settings.value("/Width", 640).toString());
     ui->leH->setText(settings.value("/Height", 480).toString());
@@ -73,6 +73,9 @@ void SettingsWindow::loadSettings()
     ui->cbCameraRightID->setCurrentIndex(settings.value("/RightID", 2).toInt());
     ui->leVideoTimerInterval->setText(settings.value("/TimerInterval", 50).toString());
     ui->cbCameraTypeID->setCurrentIndex(settings.value("/CameraTypeID", 0).toInt());
+    ui->cbVideoRecording->setChecked(settings.value("/isRecordingEnabled", true).toBool());
+    ui->leVideoRecordingLength->setText(settings.value("/VideoRecordingLength", 60).toString());
+    ui->leStoredVideoFilesLimit->setText(settings.value("/StoredVideoFilesLimit", 100).toString());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");
@@ -116,7 +119,7 @@ void SettingsWindow::saveSettings()
 {
     QSettings settings(_settingsFileName, QSettings::IniFormat);
 
-    settings.beginGroup("/CAMERA SETTINGS");
+    settings.beginGroup("/CAMERA_SETTINGS");
     settings.setValue("/ResulutionIndex", ui->cbCameraResolution->currentIndex());
     settings.setValue("/Width", ui->leW->text());
     settings.setValue("/Height", ui->leH->text());
@@ -125,6 +128,9 @@ void SettingsWindow::saveSettings()
     settings.setValue("/RightID", ui->cbCameraRightID->currentIndex());
     settings.setValue("/TimerInterval", ui->leVideoTimerInterval->text());
     settings.setValue("/CameraTypeID", ui->cbCameraTypeID->currentIndex());
+    settings.setValue("/isRecordingEnabled", ui->cbVideoRecording->isChecked());
+    settings.setValue("/VideoRecordingLength", ui->leVideoRecordingLength->text());
+    settings.setValue("/StoredVideoFilesLimit", ui->leStoredVideoFilesLimit->text());
     settings.endGroup();
 
     settings.beginGroup("/JOYSTICK");

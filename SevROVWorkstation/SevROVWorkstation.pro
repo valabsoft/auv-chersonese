@@ -11,6 +11,13 @@ CONFIG += c++17
 SOURCES += \
     applicationsettings.cpp \
     camerascene.cpp \
+    disparitywindow.cpp \
+    hydroacoustics/checksum/checksum.c \
+    hydroacoustics/interfaces/uart.c \
+    hydroacoustics/parsers/at_parser.c \
+    hydroacoustics/parsers/common_parser.c \
+    hydroacoustics/parsers/puwv_parser.c \
+    hydroacousticswindow.cpp \
     main.cpp \
     mainwindow.cpp \
     pointcloud/calibrate.cpp \
@@ -24,7 +31,28 @@ HEADERS += \
     applicationsettings.h \
     camerascene.h \
     datastructure.h \
+    disparitywindow.h \
     enumclasses.h \
+    #hydroacoustics/checksum/checksum.h \
+    #hydroacoustics/codes/codes.h \
+    #hydroacoustics/codes/phys.h \
+    #hydroacoustics/codes/phys_pvt.h \
+    #hydroacoustics/interfaces/socket_.h \
+    #hydroacoustics/interfaces/uart.h \
+    #hydroacoustics/parsers/at_parser.h \
+    #hydroacoustics/parsers/common_parser.h \
+    #hydroacoustics/parsers/puwv_codes.h \
+    #hydroacoustics/parsers/puwv_parser.h \
+    hydroacoustics/checksum/checksum.h \
+    hydroacoustics/codes/codes.h \
+    hydroacoustics/codes/phys.h \
+    hydroacoustics/codes/phys_pvt.h \
+    hydroacoustics/interfaces/uart.h \
+    hydroacoustics/parsers/at_parser.h \
+    hydroacoustics/parsers/common_parser.h \
+    hydroacoustics/parsers/puwv_codes.h \
+    hydroacoustics/parsers/puwv_parser.h \
+    hydroacousticswindow.h \
     mainwindow.h \
     pointcloud/calibrate.h \
     pointcloud/disparity.h \
@@ -34,6 +62,8 @@ HEADERS += \
     toolwindow.h
 
 FORMS += \
+    disparitywindow.ui \
+    hydroacousticswindow.ui \
     mainwindow.ui \
     settingswindow.ui \
     toolwindow.ui
@@ -70,10 +100,11 @@ win32 {
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_calib3d480.dll
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_videoio480.dll
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_imgproc480.dll
+    LIBS += c:\opencv-4.8.0-build\bin\libopencv_ximgproc480.dll
 }
 unix {
     INCLUDEPATH += /usr/include/opencv4
-    LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_features2d -lopencv_calib3d -lopencv_videoio -lopencv_imgproc
+    LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_features2d -lopencv_calib3d -lopencv_videoio -lopencv_imgproc -lopencv_ximgproc
 }
 
 RESOURCES += \
@@ -100,4 +131,12 @@ unix
 
 }
 
+win32 {
+    LIBS += -lsetupapi
+}
+
 QMAKE_CXXFLAGS_WARN_ON += -Wno-unknown-pragmas
+
+DISTFILES += \
+    hydroacoustics/checksum/.gitkeep \
+    hydroacoustics/codes/.gitkeep
