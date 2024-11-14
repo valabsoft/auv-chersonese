@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Создаем указатель на окно с картой диспаратности
     _disparityWindow = new DisparityWindow(this);
+    
     _acousticWindow = new AcousticWindow(this);
 
     // Кнопки
@@ -2297,13 +2298,8 @@ void MainWindow::onDisparityButtonClicked()
 void MainWindow::onAcousticButtonClicked()
 {
     if(_acousticWindow){
-        //QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
-        //int x = (screenGeometry.width() - _acousticWindow->width()) / 2;
-        //int y = (screenGeometry.height() - _acousticWindow->height()) / 2;
-
-        //_acousticWindow->setWindowTitle("ТНПА :: Акустика :: " + _appSet.getAppVersion());
+        _acousticWindow->setWindowTitle("ТНПА :: Акустика :: " + _appSet.getAppVersion());
 
         _acousticWindow->show();
-        //_acousticWindow->move(x, y);
     }
 }
