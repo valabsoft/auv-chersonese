@@ -25,7 +25,8 @@ SOURCES += \
     pointcloud/three_dimensional_proc.cpp \
     settingswindow.cpp \
     sevrovcontroller.cpp \
-    toolwindow.cpp
+    toolwindow.cpp \
+    videostreaming.cpp
 
 HEADERS += \
     applicationsettings.h \
@@ -59,7 +60,20 @@ HEADERS += \
     pointcloud/three_dimensional_proc.h \
     settingswindow.h \
     sevrovcontroller.h \
-    toolwindow.h
+    toolwindow.h \
+    mjpeg_streamer.hpp \
+    nadjieb/net/http_request.hpp \
+    videostreaming.h
+    nadjieb/net/http_response.hpp
+    nadjieb/net/listener.hpp
+    nadjieb/net/publisher.hpp
+    nadjieb/net/socket.hpp
+    nadjieb/net/topic.hpp
+    nadjieb/utils/non_copyable.hpp
+    nadjieb/utils/platform.hpp
+    nadjieb/utils/runnable.hpp
+    nadjieb/utils/version.hpp
+    nadjieb/streamer.hpp
 
 FORMS += \
     disparitywindow.ui \
@@ -92,7 +106,8 @@ else:unix:!macx: PRE_TARGETDEPS += $$OUT_PWD/../SevROVLibrary/libSevROVLibrary.a
 
 win32 {
     INCLUDEPATH += c:\opencv-4.8.0-build\install\include\
-
+    LIBS += -lwsock32
+    LIBS += -lws2_32
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_core480.dll
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_highgui480.dll
     LIBS += c:\opencv-4.8.0-build\bin\libopencv_imgcodecs480.dll

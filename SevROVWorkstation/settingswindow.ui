@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>743</width>
-    <height>523</height>
+    <height>635</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>480</y>
+     <y>590</y>
      <width>81</width>
      <height>32</height>
     </rect>
@@ -35,7 +35,7 @@
    <property name="geometry">
     <rect>
      <x>630</x>
-     <y>480</y>
+     <y>590</y>
      <width>101</width>
      <height>32</height>
     </rect>
@@ -55,7 +55,7 @@
      <x>10</x>
      <y>10</y>
      <width>321</width>
-     <height>511</height>
+     <height>611</height>
     </rect>
    </property>
    <property name="font">
@@ -395,7 +395,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>470</y>
+      <y>564</y>
       <width>101</width>
       <height>21</height>
      </rect>
@@ -416,7 +416,7 @@
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>470</y>
+      <y>560</y>
       <width>181</width>
       <height>31</height>
      </rect>
@@ -436,7 +436,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>320</y>
+      <y>324</y>
       <width>150</width>
       <height>21</height>
      </rect>
@@ -458,9 +458,12 @@
      <rect>
       <x>180</x>
       <y>320</y>
-      <width>21</width>
+      <width>121</width>
       <height>28</height>
      </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LayoutDirection::RightToLeft</enum>
     </property>
     <property name="text">
      <string/>
@@ -470,9 +473,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>350</y>
-      <width>151</width>
-      <height>51</height>
+      <y>364</y>
+      <width>150</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -510,9 +513,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>400</y>
-      <width>151</width>
-      <height>51</height>
+      <y>404</y>
+      <width>150</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -534,7 +537,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>410</y>
+      <y>400</y>
       <width>121</width>
       <height>31</height>
      </rect>
@@ -546,12 +549,129 @@
      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
     </property>
    </widget>
+   <widget class="QCheckBox" name="cbLeftCameraStreaming">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>440</y>
+      <width>91</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LayoutDirection::RightToLeft</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lbLeftCameraStreamingPort">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>484</y>
+      <width>141</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Streaming Port</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+    </property>
+    <property name="wordWrap">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lbLeftCameraStreaming">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>444</y>
+      <width>161</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Streaming</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="leLeftCameraStreamingPort">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>480</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>8080</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="leLeftCameraStreamingAddress">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>520</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>leftcam</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lbLeftCameraStreamingAddress">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>524</y>
+      <width>141</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Streaming Address</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+    </property>
+    <property name="wordWrap">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="gbCameraSettings_2">
    <property name="geometry">
     <rect>
      <x>340</x>
-     <y>130</y>
+     <y>140</y>
      <width>391</width>
      <height>121</height>
     </rect>
@@ -569,7 +689,7 @@
      <rect>
       <x>190</x>
       <y>80</y>
-      <width>191</width>
+      <width>181</width>
       <height>31</height>
      </rect>
     </property>
@@ -582,7 +702,7 @@
      <rect>
       <x>190</x>
       <y>40</y>
-      <width>191</width>
+      <width>181</width>
       <height>31</height>
      </rect>
     </property>
@@ -646,9 +766,9 @@
    <property name="geometry">
     <rect>
      <x>340</x>
-     <y>250</y>
+     <y>270</y>
      <width>391</width>
-     <height>221</height>
+     <height>291</height>
     </rect>
    </property>
    <property name="font">
@@ -663,9 +783,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>180</y>
+      <y>244</y>
       <width>91</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -681,9 +801,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>60</y>
+      <y>84</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -699,9 +819,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>90</y>
+      <y>124</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -717,9 +837,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>120</y>
+      <y>164</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -735,9 +855,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>180</y>
+      <y>240</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -757,9 +877,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>30</y>
+      <y>44</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -778,9 +898,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>30</y>
+      <y>44</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -799,9 +919,9 @@
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>30</y>
+      <y>44</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -820,9 +940,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>60</y>
+      <y>80</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -842,9 +962,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>90</y>
+      <y>120</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -864,9 +984,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>120</y>
+      <y>160</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -886,9 +1006,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>60</y>
+      <y>80</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -908,9 +1028,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>90</y>
+      <y>120</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -930,9 +1050,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>120</y>
+      <y>160</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -952,9 +1072,9 @@
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>60</y>
+      <y>80</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -974,9 +1094,9 @@
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>90</y>
+      <y>120</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -996,9 +1116,9 @@
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>120</y>
+      <y>160</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -1018,10 +1138,13 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>60</y>
+      <y>80</y>
       <width>21</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LayoutDirection::RightToLeft</enum>
     </property>
     <property name="text">
      <string/>
@@ -1031,9 +1154,9 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>150</y>
+      <y>200</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -1053,9 +1176,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>150</y>
+      <y>204</y>
       <width>71</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -1071,9 +1194,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>150</y>
+      <y>200</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -1093,9 +1216,9 @@
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>150</y>
+      <y>200</y>
       <width>71</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="decimals">
@@ -1115,10 +1238,13 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>90</y>
+      <y>120</y>
       <width>21</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LayoutDirection::RightToLeft</enum>
     </property>
     <property name="text">
      <string/>
@@ -1128,10 +1254,13 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>120</y>
+      <y>160</y>
       <width>21</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LayoutDirection::RightToLeft</enum>
     </property>
     <property name="text">
      <string/>
@@ -1141,10 +1270,13 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>150</y>
+      <y>200</y>
       <width>21</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LayoutDirection::RightToLeft</enum>
     </property>
     <property name="text">
      <string/>
@@ -1154,9 +1286,9 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>30</y>
+      <y>44</y>
       <width>41</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
@@ -1175,9 +1307,9 @@
     <property name="geometry">
      <rect>
       <x>190</x>
-      <y>180</y>
+      <y>240</y>
       <width>151</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
@@ -1246,7 +1378,7 @@
      <rect>
       <x>190</x>
       <y>40</y>
-      <width>191</width>
+      <width>181</width>
       <height>31</height>
      </rect>
     </property>
@@ -1264,7 +1396,7 @@
      <rect>
       <x>190</x>
       <y>80</y>
-      <width>191</width>
+      <width>181</width>
       <height>31</height>
      </rect>
     </property>
@@ -1277,6 +1409,48 @@
      <string>1234</string>
     </property>
    </widget>
+  </widget>
+  <widget class="QLineEdit" name="leDisparityTimeout">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>590</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>500</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="cbDisparity">
+   <property name="geometry">
+    <rect>
+     <x>342</x>
+     <y>560</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LayoutDirection::LeftToRight</enum>
+   </property>
+   <property name="text">
+    <string>Disparity</string>
+   </property>
   </widget>
  </widget>
  <tabstops>

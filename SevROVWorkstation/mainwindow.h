@@ -14,6 +14,7 @@
 #include "settingswindow.h"
 #include "disparitywindow.h"
 #include "hydroacousticswindow.h"
+#include "videostreaming.h"
 
 #include "sevrovxboxcontroller.h"
 #include "sevrovlibrary.h"
@@ -38,8 +39,8 @@ QT_END_NAMESPACE
 
 enum class LOGTYPE
 {
-    DEBUG,		// Отладака			DEBG
-    ERROR,		// Ошибка			ERRR
+    DEBUG,		// Отладка			DEBG
+    ERR,		// Ошибка			ERRR // ERROR - конфликтует с библиотекой стримера
     EXCEPTION,	// Исключение		EXCP
     INFO,		// Информация		INFO
     WARNING		// Предупреждение	WARN
@@ -84,6 +85,10 @@ private:
 
     cv::Mat _sourceMatL;
     cv::Mat _sourceMatR;
+
+    cv::Mat _sourceMatL_640_480;
+    cv::Mat _sourceMatR_640_480;
+
     cv::Mat _videoFrame;
 
     cv::Mat _destinationMatL;
@@ -91,6 +96,7 @@ private:
 
     QImage _imgCamL;
     QImage _imgCamR;
+    VideoStreaming *_leftCamStreaming;
     ///////////////////////////////////////////////////////////////////////////
     // IP camera related
     void* handleL = NULL;
@@ -171,6 +177,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    clock_t disparityTimer;
 
 signals:
     // void updateCntValue(QString fps);

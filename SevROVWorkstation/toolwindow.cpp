@@ -64,100 +64,100 @@ void ToolWindow::setupWindowGeometry()
     moveWindowToCenter();
 }
 
-void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud)
-{
-    // Check the source image
-    if (image.empty())
-        return;
-
-    // Image copy
-    _source = image.clone();
-
-    // Data copy
-    _allPoints = data;
-
-    // Get unique clusters IDs
-    std::vector<int> clusterIDs;
-    clusterIDs.push_back(0); // Для датасета Олега у нас только один кластер
-
-    // Image preprocessing
-    cv::cvtColor(_source, _destination, cv::COLOR_BGR2RGB);
-    _imgcam = QImage((uchar*) _destination.data,
-                    _destination.cols,
-                    _destination.rows,
-                    _destination.step,
-                    QImage::Format_RGB888);
-
-    _cameraScene = new CameraScene(_imgcam);
-    ui->graphicsView->setScene(_cameraScene);
-    // https://stackoverflow.com/questions/7772080/tracking-mouse-move-in-qgraphicsscene-class
-    ui->graphicsView->setMouseTracking(true);
-
-    // Добавляем слот-сигнал
-    QObject::connect(_cameraScene, &CameraScene::updateInfo, this, &ToolWindow::updateInfoA);
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Создаем объекты для работы с 3D-графиком
-    _graph3D = new Q3DScatter();
-    _series3D = new QScatter3DSeries();
-
-    _series3D->setItemSize(0.2f);
-    _series3D->setMeshSmooth(true);
-
-    _graph3D->axisX()->setTitle("X");
-    _graph3D->axisY()->setTitle("Y");
-    _graph3D->axisZ()->setTitle("Z");
-
-    _series3D->setItemLabelFormat(
-        QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
-
-    _graph3D->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
-    _graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
-
-    _graph3D->addSeries(_series3D);
-
-    _container3D = QWidget::createWindowContainer(_graph3D);
-    ///////////////////////////////////////////////////////////////////////////
-
-    // Checkbox list generationi
-    for (int i : clusterIDs)
-    {
-        // Checkbox List
-        // QListWidgetItem *item = new QListWidgetItem;
-        // item->setText("Claster " + QString::number(i + 1));
-        // item->setCheckState(Qt::Unchecked);
-        // ui->lswClusters->addItem(item);
-
-        // Radiobutton list
-        QListWidgetItem *item = new QListWidgetItem(ui->lswClusters);
-        ui->lswClusters->setItemWidget(
-            item,
-            new QRadioButton(QString("Cluster %1").arg(i)));
-    }
-
-    // Check the first item
-    if (ui->lswClusters->count() > 0)
-    {
-        auto firstItem =
-            static_cast<QRadioButton*>(
-                ui->lswClusters->itemWidget(ui->lswClusters->item(0)));
-        firstItem->setChecked(true);
-
-        ui->lswClusters->item(0)->setSelected(true);
-    }
-
-    // Установка темы
-    Q3DTheme *currentTheme = _graph3D->activeTheme();
-    currentTheme->setBackgroundEnabled(false);
-    currentTheme->setType(Q3DTheme::ThemeArmyBlue);
-
-    setMode(ToolMode::Mode2D);
-
-    // Для фиксации кнопок с правой стороны (сбивает выравнивание сцены)
-    // ui->verticalLayoutBtn->setAlignment(Qt::AlignRight);
-
-    ui->btnDelete->setVisible(false);
-}
+//void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data, std::vector<Cloud3DItem> cloud)
+//{
+//    // Check the source image
+//    if (image.empty())
+//        return;
+//
+//    // Image copy
+//    _source = image.clone();
+//
+//    // Data copy
+//    _allPoints = data;
+//
+//    // Get unique clusters IDs
+//    std::vector<int> clusterIDs;
+//    clusterIDs.push_back(0); // Для датасета Олега у нас только один кластер
+//
+//    // Image preprocessing
+//    cv::cvtColor(_source, _destination, cv::COLOR_BGR2RGB);
+//    _imgcam = QImage((uchar*) _destination.data,
+//                    _destination.cols,
+//                    _destination.rows,
+//                    _destination.step,
+//                    QImage::Format_RGB888);
+//
+//    _cameraScene = new CameraScene(_imgcam);
+//    ui->graphicsView->setScene(_cameraScene);
+//    // https://stackoverflow.com/questions/7772080/tracking-mouse-move-in-qgraphicsscene-class
+//    ui->graphicsView->setMouseTracking(true);
+//
+//    // Добавляем слот-сигнал
+//    QObject::connect(_cameraScene, &CameraScene::updateInfo, this, &ToolWindow::updateInfoA);
+//
+//    ///////////////////////////////////////////////////////////////////////////
+//    // Создаем объекты для работы с 3D-графиком
+//    _graph3D = new Q3DScatter();
+//    _series3D = new QScatter3DSeries();
+//
+//    _series3D->setItemSize(0.2f);
+//    _series3D->setMeshSmooth(true);
+//
+//    _graph3D->axisX()->setTitle("X");
+//    _graph3D->axisY()->setTitle("Y");
+//    _graph3D->axisZ()->setTitle("Z");
+//
+//    _series3D->setItemLabelFormat(
+//        QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
+//
+//    _graph3D->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
+//    _graph3D->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
+//
+//    _graph3D->addSeries(_series3D);
+//
+//    _container3D = QWidget::createWindowContainer(_graph3D);
+//    ///////////////////////////////////////////////////////////////////////////
+//
+//    // Checkbox list generationi
+//    for (int i : clusterIDs)
+//    {
+//        // Checkbox List
+//        // QListWidgetItem *item = new QListWidgetItem;
+//        // item->setText("Claster " + QString::number(i + 1));
+//        // item->setCheckState(Qt::Unchecked);
+//        // ui->lswClusters->addItem(item);
+//
+//        // Radiobutton list
+//        QListWidgetItem *item = new QListWidgetItem(ui->lswClusters);
+//        ui->lswClusters->setItemWidget(
+//            item,
+//            new QRadioButton(QString("Cluster %1").arg(i)));
+//    }
+//
+//    // Check the first item
+//    if (ui->lswClusters->count() > 0)
+//    {
+//        auto firstItem =
+//            static_cast<QRadioButton*>(
+//                ui->lswClusters->itemWidget(ui->lswClusters->item(0)));
+//        firstItem->setChecked(true);
+//
+//        ui->lswClusters->item(0)->setSelected(true);
+//    }
+//
+//    // Установка темы
+//    Q3DTheme *currentTheme = _graph3D->activeTheme();
+//    currentTheme->setBackgroundEnabled(false);
+//    currentTheme->setType(Q3DTheme::ThemeArmyBlue);
+//
+//    setMode(ToolMode::Mode2D);
+//
+//    // Для фиксации кнопок с правой стороны (сбивает выравнивание сцены)
+//    // ui->verticalLayoutBtn->setAlignment(Qt::AlignRight);
+//
+//    ui->btnDelete->setVisible(false);
+//}
 
 void ToolWindow::setDataCloud3D(cv::Mat image, t_vuxyzrgb data)
 {

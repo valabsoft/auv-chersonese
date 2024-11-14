@@ -3,7 +3,6 @@
 
 #include <QScreen>
 #include <QDir>
-
 #include <fstream>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -149,8 +148,8 @@ MainWindow::~MainWindow()
     if (_disparityWindow)
         delete _disparityWindow;
 
-    if (_disparityWindow)
-        delete _disparityWindow;
+    if (_leftCamStreaming)
+        delete _leftCamStreaming;
 
     delete _jsController;
 
@@ -214,7 +213,7 @@ void MainWindow::writeLog(std::string logText, LOGTYPE logType)
         case LOGTYPE::DEBUG:
             logTypeAbbreviation = "DEBG";
             break;
-        case LOGTYPE::ERROR:
+        case LOGTYPE::ERR:
             logTypeAbbreviation = "ERRR";
             break;
         case LOGTYPE::EXCEPTION:
@@ -291,8 +290,8 @@ int MainWindow::MV_SDK_Initialization()
     if (MV_OK != nRet)
         return 2;
 
-    MVCC_ENUMVALUE stEnumValue = {0};
-    MVCC_ENUMENTRY stEnumEntry = {0};
+    MVCC_ENUMVALUE stEnumValue = {};
+    MVCC_ENUMENTRY stEnumEntry = {};
 
     ///////////////////////////////////////////////////////////////////////////
     // Left Camera Initialization
@@ -624,57 +623,57 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             {
             case -1:
                 qDebug() <<  "ERROR: The only one camera found!";
-                writeLog("setupCameraConnection(): ERROR: The only one camera found!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: The only one camera found!", LOGTYPE::ERR);
                 break;
             case 1:
                 qDebug() <<  "ERROR: Initialize SDK fail!";
-                writeLog("setupCameraConnection(): ERROR: Initialize SDK fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: Initialize SDK fail!", LOGTYPE::ERR);
                 break;
             case 2:
                 qDebug() <<  "ERROR: Enum Devices fail!";
-                writeLog("setupCameraConnection(): ERROR: Enum Devices fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: Enum Devices fail!", LOGTYPE::ERR);
                 break;
 
             case 11:
                 qDebug() <<  "ERROR: Left Camera - Create Handle fail!";
-                writeLog("setupCameraConnection(): ERROR: Left Camera - Create Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): ERROR: Left Camera - Create Handle fail!", LOGTYPE::ERR);
                 break;
             case 12:
                 qDebug() <<  "ERROR: Left Camera - Open Device fail!";
-                writeLog("setupCameraConnection(): Left Camera - Open Device fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Open Device fail!", LOGTYPE::ERR);
                 break;
             case 13:
                 qDebug() <<  "ERROR: Left Camera - Get PixelFormat's value fail!";
-                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's value fail!", LOGTYPE::ERR);
                 break;
             case 14:
                 qDebug() <<  "ERROR: Left Camera - Get PixelFormat's symbol fail!";
-                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERR);
                 break;
             case 15:
                 qDebug() << "ERROR: Left Camera - Start Grabbing fail!";
-                writeLog("setupCameraConnection(): Left Camera - Start Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Start Grabbing fail!", LOGTYPE::ERR);
                 break;
 
             case 21:
                 qDebug() <<  "ERROR: Right Camera - Create Handle fail!";
-                writeLog("setupCameraConnection(): Right Camera - Create Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Create Handle fail!", LOGTYPE::ERR);
                 break;
             case 22:
                 qDebug() <<  "ERROR: Right Camera - Open Device fail!";
-                writeLog("setupCameraConnection(): Right Camera - Open Device fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Open Device fail!", LOGTYPE::ERR);
                 break;
             case 23:
                 qDebug() <<  "ERROR: Right Camera - Get PixelFormat's value fail!";
-                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's value fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's value fail!", LOGTYPE::ERR);
                 break;
             case 24:
                 qDebug() <<  "ERROR: Right Camera - Get PixelFormat's symbol fail!";
-                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Get PixelFormat's symbol fail!", LOGTYPE::ERR);
                 break;
             case 25:
                 qDebug() << "ERROR: Right Camera - Start Grabbing fail!";
-                writeLog("setupCameraConnection(): Right Camera - Start Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Start Grabbing fail!", LOGTYPE::ERR);
                 break;
             default:
                 break;
@@ -687,6 +686,12 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             // TODO VA (23-05-2024): Проверить что FPS выставляется
             _webCamL->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
             _webCamR->set(cv::CAP_PROP_FPS, _appSet.CAMERA_FPS);
+        }
+
+        // адрес - localhost:8080/leftcam
+        if (_appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
+        {
+            _leftCamStreaming = new VideoStreaming(_appSet.LEFT_CAMERA_STREAMING_PORT, _appSet.LEFT_CAMERA_STREAMING_ADDRESS);
         }
 
         // Запускаем таймер
@@ -704,28 +709,28 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
             {
             case 10:
                 qDebug() <<  "ERROR: Left Camera - Stop Grabbing fail!";
-                writeLog("setupCameraConnection(): Left Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Stop Grabbing fail!", LOGTYPE::ERR);
                 break;
             case 11:
                 qDebug() <<  "ERROR: Left Camera - CloseDevice fail!";
-                writeLog("setupCameraConnection(): Left Camera - CloseDevice fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - CloseDevice fail!", LOGTYPE::ERR);
                 break;
             case 12:
                 qDebug() <<  "ERROR: Left Camera - Destroy Handle fail!";
-                writeLog("setupCameraConnection(): Left Camera - Destroy Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Left Camera - Destroy Handle fail!", LOGTYPE::ERR);
                 break;
 
             case 20:
                 qDebug() <<  "ERROR: Right Camera - Stop Grabbing fail!";
-                writeLog("setupCameraConnection(): Right Camera - Stop Grabbing fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Stop Grabbing fail!", LOGTYPE::ERR);
                 break;
             case 21:
                 qDebug() <<  "ERROR: Right Camera - CloseDevice fail!";
-                writeLog("setupCameraConnection(): Right Camera - CloseDevice fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - CloseDevice fail!", LOGTYPE::ERR);
                 break;
             case 22:
                 qDebug() <<  "ERROR: Right Camera - Destroy Handle fail!";
-                writeLog("setupCameraConnection(): Right Camera - Destroy Handle fail!", LOGTYPE::ERROR);
+                writeLog("setupCameraConnection(): Right Camera - Destroy Handle fail!", LOGTYPE::ERR);
                 break;
             default:
                 break;
@@ -757,6 +762,12 @@ void MainWindow::setupCameraConnection(CameraConnection connection)
         pixmap.fill(color);
         ui->lbCameraL->setPixmap(pixmap);
         ui->lbCameraR->setPixmap(pixmap);
+
+        if (this->_leftCamStreaming->streamer.isRunning())
+        {
+            this->_leftCamStreaming->streamer.stop();
+            delete this->_leftCamStreaming;
+        }
 
         // Останавливаем таймер
         if (_videoTimer->isActive())
@@ -822,24 +833,25 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
     else
     {
         int videoFileCount = 0;
-        filesystem::directory_entry oldestVideoFile;
         for (const auto & entry : std::filesystem::directory_iterator(pathToVideoDirectory)) {
             //std::cout << entry.path() << std::endl; // с каким файлом/папкой имеем дело
             if (!entry.is_directory()){
                 videoFileCount++;
-                if (videoFileCount == 1)
-                {
-                    // в интернете видел инфо, что std::filesystem::directory_iterator
-                    // не по порядку итерирует файлы. во время тестов у меня это не проявилось -
-                    // всегда проходит по возрастанию в алфавитном порядке, если сойдет с ума -
-                    // копать здесь
-                    oldestVideoFile = entry;
-                }
             }
         }
-        if (videoFileCount >= _appSet.STORED_VIDEO_FILES_LIMIT)
+        while (videoFileCount >= _appSet.STORED_VIDEO_FILES_LIMIT)
         {
-            std::filesystem::remove(oldestVideoFile);
+            for (const auto & entry : std::filesystem::directory_iterator(pathToVideoDirectory)) {
+                if (!entry.is_directory()){
+                    std::filesystem::remove(entry);
+                    videoFileCount--;
+                    break;
+                }
+                else
+                {
+                    continue;
+                }
+            }
         }
     }
 
@@ -849,7 +861,8 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
     // Генерируем имя файла с привязкой к текущему времени
     std::string fileName = generateFileName("chersonesos", fileExtension);
     int realFPS = (int)(frames.size() / recordInterval);
-    videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , cameraResolution);
+    cv::Size videoResolution = frames[0].size();
+    videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , videoResolution);
 
     writeLog("fileName: " + fileName, LOGTYPE::DEBUG);
     writeLog("realFPS: " + std::to_string(realFPS), LOGTYPE::DEBUG);
@@ -873,7 +886,7 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
             writeLog("Saving video finished", LOGTYPE::DEBUG);
         }
         else
-             writeLog("cv::VideoWriter NOT opened!", LOGTYPE::ERROR);
+             writeLog("cv::VideoWriter NOT opened!", LOGTYPE::ERR);
     }
     catch (...)
     {
@@ -932,7 +945,9 @@ void MainWindow::onVideoTimer()
     int nRet = MV_OK;
 
     //Q_EMIT updateCntValue("CNT: " + QString::number(_cnt++));
-    MV_FRAME_OUT stOutFrame = {0};
+    MV_FRAME_OUT stOutFrame = {};
+    MV_FRAME_OUT stOutFrameL = {};
+    MV_FRAME_OUT stOutFrameR = {};
     int videoLength = _appSet.VIDEO_RECORDING_LENGTH;
 
     switch (_sevROV.cameraView)
@@ -943,10 +958,9 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
             {
-                // qDebug() << "Mono Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
@@ -1503,14 +1517,13 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////
             // Left Camera
             ///////////////////////////////////////////////////////////////////
-            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrameL, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
-            {
-                // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-                _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+            {                
+                _sourceMatL = cv::Mat(stOutFrameL.stFrameInfo.nHeight, stOutFrameL.stFrameInfo.nWidth, CV_8U, stOutFrameL.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatL, _sourceMatL, cv::COLOR_BayerRG2RGB);
 
-                nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
+                nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrameL);
 
                 if(nRet != MV_OK)
                     qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
@@ -1543,14 +1556,13 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
+            nRet = MV_CC_GetImageBuffer(handleR, &stOutFrameR, _appSet.MVS_TIMEOUT);
             if (nRet == MV_OK)
             {
-                // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
-                _sourceMatR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+                _sourceMatR = cv::Mat(stOutFrameR.stFrameInfo.nHeight, stOutFrameR.stFrameInfo.nWidth, CV_8U, stOutFrameR.pBufAddr); // TODO: Почему H x W а не W x H ?
                 cv::cvtColor(_sourceMatR, _sourceMatR, cv::COLOR_BayerRG2RGB);
 
-                nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
+                nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrameR);
 
                 if(nRet != MV_OK)
                     qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
@@ -1580,12 +1592,23 @@ void MainWindow::onVideoTimer()
 
         ui->lbCameraR->setPixmap(QPixmap::fromImage(_imgCamR));
 
-        if (!_sourceMatL.empty() && !_sourceMatR.empty())
+        if (_appSet.IS_DISPARITY_ENABLED)
         {
-            // Передаем кадры для отображения на карте диспаратности
-            emit this->onStereoCaptured(_sourceMatL, _sourceMatR);
-        }
+            if (clock() - disparityTimer >= _appSet.DISPARITY_TIMEOUT)
+            {
+                disparityTimer = clock();
 
+                if (!_sourceMatL.empty() && !_sourceMatR.empty())
+                {
+                    // Сразу уменьшаем кадр перед передачей на карту диспаратности
+                    cv::resize(_sourceMatL, _sourceMatL_640_480, cv::Size(640, 480));
+                    cv::resize(_sourceMatR, _sourceMatR_640_480, cv::Size(640, 480));
+
+                    // Передаем кадры для отображения на карте диспаратности
+                    emit this->onStereoCaptured(_sourceMatL_640_480, _sourceMatR_640_480);
+                }
+            }
+        }
         break;
     default:
         break;
@@ -1593,43 +1616,50 @@ void MainWindow::onVideoTimer()
 
     if (!_sourceMatL.empty())
     {
-        // Цикл записи видеопотока в файл
-        if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
+        if (this->_leftCamStreaming->streamer.isRunning() && _appSet.IS_LEFT_CAMERA_STREAMING_ENABLED)
         {
-            _videoFrame = _sourceMatL.clone();
-            if (true) // timestamp на кадре
-            {
-                // Получаем текущие дату и время
-                auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-                std::tm localTime = *std::localtime(&timer);
-                std::ostringstream oss;
-                std::string timeMask = "%d-%m-%Y %H:%M:%S";
-                oss << std::put_time(&localTime, timeMask.c_str());
-
-                // Вычисляем размер текста
-                cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
-
-                // Помещаем timestamp на кадр
-                cv::putText(_videoFrame,
-                            oss.str(),
-                            cv::Point((cameraResolution.width - txtSize.width) / 2, cameraResolution.height - txtSize.height - 5),
-                            cv::FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            cv::Scalar(255, 255, 255),
-                            1,
-                            cv::LINE_AA);
-            }
-            frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
+            this->_leftCamStreaming->passImageToStreamer(_sourceMatL);
         }
-        else
+        // Цикл записи видеопотока в файл
+        if (_appSet.IS_RECORDING_ENABLED)
         {
-            // Запускаем поток записи
-            std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
-            // videoSaverThread.join(); // Будет пауза при сохранении
-            videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
+            if (((clock() - timerStart) <= (videoLength * CLOCKS_PER_SEC)) && _appSet.IS_RECORDING_ENABLED)
+            {
+                _videoFrame = _sourceMatL.clone();
+                if (true) // timestamp на кадре
+                {
+                    // Получаем текущие дату и время
+                    auto timer = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                    std::tm localTime = *std::localtime(&timer);
+                    std::ostringstream oss;
+                    std::string timeMask = "%d-%m-%Y %H:%M:%S";
+                    oss << std::put_time(&localTime, timeMask.c_str());
 
-            frames.clear(); // Очищаем буфер фреймов
-            timerStart = clock(); // Сбрасываем таймер записи
+                    // Вычисляем размер текста
+                    cv::Size txtSize = cv::getTextSize(oss.str(), cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, 0);
+                    cv::Size videoResolution = _videoFrame.size();
+                    // Помещаем timestamp на кадр
+                    cv::putText(_videoFrame,
+                                oss.str(),
+                                cv::Point((videoResolution.width - txtSize.width) / 2, videoResolution.height - txtSize.height - 5),
+                                cv::FONT_HERSHEY_SIMPLEX,
+                                0.5,
+                                cv::Scalar(255, 255, 255),
+                                1,
+                                cv::LINE_AA);
+                }
+                frames.push_back(_videoFrame.clone()); // Запоминаем фрейм
+            }
+            else
+            {
+                // Запускаем поток записи
+                std::thread videoSaverThread(&MainWindow::recordVideo, this, frames, videoLength, cameraResolution);
+                // videoSaverThread.join(); // Будет пауза при сохранении
+                videoSaverThread.detach(); // Открепляем поток от основного потока (паузы не будет вообще)
+
+                frames.clear(); // Очищаем буфер фреймов
+                timerStart = clock(); // Сбрасываем таймер записи
+            }
         }
     }
 }
@@ -1970,6 +2000,8 @@ void MainWindow::onStartStopButtonClicked()
     writeLog("CAMERA_RIGHT_ID: " + std::to_string(_appSet.CAMERA_RIGHT_ID), LOGTYPE::INFO);
     writeLog("CAMERA_TYPE: " + std::to_string(_appSet.CAMERA_TYPE), LOGTYPE::INFO);
     writeLog("VIDEO_TIMER_INTERVAL: " + std::to_string(_appSet.VIDEO_TIMER_INTERVAL), LOGTYPE::INFO);
+    writeLog("MVS_TIMEOUT: " + std::to_string(_appSet.MVS_TIMEOUT), LOGTYPE::INFO);
+    writeLog("DISPARITY_TIMEOUT: " + std::to_string(_appSet.DISPARITY_TIMEOUT), LOGTYPE::INFO);
     writeLog("==================================================", LOGTYPE::INFO);
 
     // Меняем состояние флага
@@ -2034,6 +2066,8 @@ void MainWindow::onStartStopButtonClicked()
     }
 
     setupConnectedControlsStyle(_sevROV.isConnected);
+
+    disparityTimer = clock();
 }
 
 void MainWindow::onViewButtonClicked()
@@ -2071,12 +2105,12 @@ void MainWindow::onScreenshotButtonClicked()
     cv::Mat imageR;
 
     int nRet = MV_OK;
-    MV_FRAME_OUT stOutFrame = {0};
+    MV_FRAME_OUT stOutFrame = {};
 
     switch (_appSet.CAMERA_TYPE)
     {
     case CameraType::IP:
-        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, 1000);
+        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
         if (nRet == MV_OK)
         {
             // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
@@ -2094,7 +2128,7 @@ void MainWindow::onScreenshotButtonClicked()
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
         ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, 1000);
+        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, _appSet.MVS_TIMEOUT);
         if (nRet == MV_OK)
         {
             // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
