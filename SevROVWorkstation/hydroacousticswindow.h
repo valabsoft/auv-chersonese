@@ -128,6 +128,10 @@ public:
     */
     ~AcousticWindow ();
 
+    void setupControlsStyle();
+    void setupWindowGeometry();
+    void moveWindowToCenter();
+
 public slots:
     /**
      * @brief Функция-обработчик нажатия кнопки для отправки данных

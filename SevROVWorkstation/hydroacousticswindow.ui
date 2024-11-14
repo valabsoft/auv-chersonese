@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>480</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,12 +18,12 @@
     <rect>
      <x>20</x>
      <y>20</y>
-     <width>611</width>
+     <width>601</width>
      <height>141</height>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(30, 30, 30);</string>
+    <string notr="true"/>
    </property>
    <property name="frameShape">
     <enum>QFrame::Shape::StyledPanel</enum>
@@ -65,7 +65,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="lbBaudrate">
+           <widget class="QLabel" name="lbBaudRate">
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -92,7 +92,13 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QComboBox" name="serialPortListDropDown"/>
+           <widget class="QComboBox" name="serialPortListDropDown">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QLineEdit" name="serialBaudrate">
@@ -203,40 +209,26 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="pbserialConnect">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>160</y>
-     <width>291</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QPushButton {
-	background-color: rgb(0,127,0)
-} 
-
-QPushButton:pressed {
-    background-color:  rgb(118, 118, 118);
-}</string>
-   </property>
-   <property name="text">
-    <string>Connect</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="pbsocketConnect">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>330</x>
+     <x>323</x>
      <y>160</y>
-     <width>291</width>
-     <height>24</height>
+     <width>289</width>
+     <height>41</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton {
-	background-color: rgb(0,127,0)
+	background-color: rgb(70,70,70)
 } 
 
 QPushButton:pressed {
@@ -244,20 +236,20 @@ QPushButton:pressed {
 }</string>
    </property>
    <property name="text">
-    <string>Connect</string>
+    <string>CONNECT</string>
    </property>
   </widget>
   <widget class="QFrame" name="frame_7">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>230</y>
+     <y>200</y>
      <width>601</width>
-     <height>241</height>
+     <height>281</height>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(30, 30, 30);</string>
+    <string notr="true">border-color: rgb(255, 255, 0);</string>
    </property>
    <property name="frameShape">
     <enum>QFrame::Shape::StyledPanel</enum>
@@ -268,12 +260,17 @@ QPushButton:pressed {
    <layout class="QVBoxLayout" name="verticalLayout_5">
     <item>
      <widget class="QFrame" name="frame_6">
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);
-background-color: rgb(30, 30, 30);</string>
+       <string notr="true">background-color: rgb(30, 30, 30);
+border-color: rgb(255, 255, 0);</string>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
+       <enum>QFrame::Shape::Panel</enum>
       </property>
       <property name="frameShadow">
        <enum>QFrame::Shadow::Raised</enum>
@@ -281,8 +278,16 @@ background-color: rgb(30, 30, 30);</string>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
         <widget class="QLineEdit" name="inputField">
+         <property name="font">
+          <font>
+           <family>Segoe UI</family>
+           <pointsize>12</pointsize>
+           <italic>true</italic>
+           <bold>false</bold>
+          </font>
+         </property>
          <property name="styleSheet">
-          <string notr="true">font: italic 9pt &quot;Segoe UI&quot;;</string>
+          <string notr="true">font: italic 12pt &quot;Segoe UI&quot;;</string>
          </property>
          <property name="text">
           <string/>
@@ -300,20 +305,36 @@ background-color: rgb(30, 30, 30);</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>255</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="requestTyprComboBox"/>
+        <widget class="QComboBox" name="requestTyprComboBox">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="sendButton">
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
          <property name="styleSheet">
           <string notr="true">QPushButton {
 	color: rgb(0, 0, 0);
-	background-color: rgb(255, 255, 0);
+	background-color: rgb(224, 170, 60);
 } 
 
 QPushButton:pressed {
@@ -331,11 +352,20 @@ QPushButton:pressed {
     </item>
     <item>
      <widget class="QScrollArea" name="outputArea">
+      <property name="font">
+       <font>
+        <family>Consolas</family>
+        <pointsize>11</pointsize>
+        <italic>false</italic>
+        <bold>false</bold>
+       </font>
+      </property>
       <property name="autoFillBackground">
        <bool>false</bool>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(66, 66, 66);</string>
+       <string notr="true">background-color: rgb(66, 66, 66);
+font: 11pt &quot;Consolas&quot;;</string>
       </property>
       <property name="widgetResizable">
        <bool>true</bool>
@@ -346,7 +376,7 @@ QPushButton:pressed {
          <x>0</x>
          <y>0</y>
          <width>579</width>
-         <height>169</height>
+         <height>204</height>
         </rect>
        </property>
       </widget>
@@ -354,6 +384,54 @@ QPushButton:pressed {
     </item>
    </layout>
   </widget>
+  <widget class="QPushButton" name="pbserialConnect">
+   <property name="geometry">
+    <rect>
+     <x>29</x>
+     <y>160</y>
+     <width>291</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+	background-color: rgb(76,175,80)
+} 
+
+QPushButton:pressed {
+    background-color:  rgb(118, 118, 118);
+}</string>
+   </property>
+   <property name="text">
+    <string>CONNECT</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lbBorder">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>170</y>
+     <width>21</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>VA</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignCenter</set>
+   </property>
+  </widget>
+  <zorder>lbBorder</zorder>
+  <zorder>frame_5</zorder>
+  <zorder>pbsocketConnect</zorder>
+  <zorder>frame_7</zorder>
+  <zorder>pbserialConnect</zorder>
  </widget>
  <resources/>
  <connections/>
