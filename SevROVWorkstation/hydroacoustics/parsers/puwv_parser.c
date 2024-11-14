@@ -217,9 +217,8 @@ void puwv2str(puwv_t puwv, int command, char *out_buffer) {
     }
 }
 
-int puwv_parser(char *buffer, int *mine_id){
-    puwv_t puwv;
-    int command = parse_line(&puwv, buffer, mine_id);
+int puwv_parser(char *buffer, int *mine_id, puwv_t *puwv){
+    int command = parse_line(puwv, buffer, mine_id);
     //puwv2str(puwv, command, buffer);
     return command;
 }

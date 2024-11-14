@@ -103,8 +103,10 @@ void AcousticWindow::onSendButtonClicked()
         break;
     case TEST:
         queryForPktSend(sendBuffer, dest_addr, 2, qStringToChar("hydro_test"));
+        break;
     case PING:
         queryRemoteModem(sendBuffer, dest_addr, 0, RC_PING);
+        break;
     case DEVINFO:
         queryForDeviceInfo(sendBuffer);
         break;
@@ -343,7 +345,7 @@ void AcousticWindow::updatePortList () {
  * @param command - ID пришедшей команды
  * @param out_buffer - Выходная строка с обработанным результатом
  */
-void puwv2Qstr(puwv_t& puwv, int command, QString& out_buffer) {
+void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
     QString result;
     QString data;
     char cdata[64] = {0};
@@ -385,7 +387,7 @@ void puwv2Qstr(puwv_t& puwv, int command, QString& out_buffer) {
         break;
 
     case DINFO:
-        qDebug() << "AAAAA" << puwv.dinfo.serial_number << " " << puwv.dinfo.system_moniker;
+        qDebug() << "AAAAA" << charToString(puwv.dinfo.serial_number) << " " << charToString(puwv.dinfo.system_moniker);
         result += QStringLiteral("\n\t\t\tResponse to device information request:\n");
         result += QString(" Serial num: %1\n Moniker: %2\n Version: %3\n Core moniker: %4\n Core version: %5\n Baudrate: %6\n")
                       .arg(charToString(puwv.dinfo.serial_number))
@@ -484,7 +486,7 @@ void SerialOutput::run()
         DWORD bytes_read = uart_read(h_serial, buffer, sizeof(buffer));
         if (bytes_read > 0) {
             emit dataReceived(" >> " + QString::fromLocal8Bit(buffer, bytes_read));
-            puwv_command = puwv_parser(buffer, &mine_id);
+            puwv_command = puwv_parser(buffer, &mine_id, &puwv);
             puwv2Qstr(puwv, puwv_command, parse_descript);
             if (parse_descript.length() > 0){
                 emit dataReceived(parse_descript);
@@ -499,7 +501,6 @@ void SerialOutput::run()
 void SerialInput::run() {
     while(!isInterruptionRequested()){
         if (dataToWrite != nullptr && strlen(dataToWrite)>0){
-            //dataToWrite = writeQueue.dequeue();
             uart_send(h_serial, dataToWrite);
             dataToWrite = nullptr;
         }
@@ -509,7 +510,6 @@ void SerialInput::run() {
 void SerialInput::writeData(char *data)
 {
     dataToWrite = data;
-    //writeQueue.enqueue(data);
     if(!isRunning()){
         start();
     }

@@ -604,7 +604,7 @@ void parse_itg_command(char* command_line, int* addr, int* dataID);
 
 void puwv2str(puwv_t puwv, int command, char *out_buffer);
 
-int puwv_parser(char *buffer, int *mine_id);
+int puwv_parser(char *buffer, int *mine_id, puwv_t *puwv);
 
 void print_values(puwv_t puwv, int command);
 
