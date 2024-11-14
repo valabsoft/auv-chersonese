@@ -15,6 +15,10 @@ AcousticWindow::AcousticWindow(QWidget *parent)
     commandNumScroller();   // Подгрузка доступных запросов для uWave
     updatePortList();       // Обновление списка доступных COM-портов при запуске программы
 
+    setupWindowGeometry();  // Позиционирование окна
+    setupControlsStyle();   // Установка стилей компонентов
+
+
     connect(ui->sendButton, &QPushButton::clicked, this, &AcousticWindow::onSendButtonClicked);
     connect(ui->pbserialConnect, &QPushButton::clicked, this, &AcousticWindow::onSerialConnectClicked);
     connect(ui->pbsocketConnect, &QPushButton::clicked, this, &AcousticWindow::onSocketConnectClicked);
@@ -215,7 +219,7 @@ void AcousticWindow::onSerialConnectClicked(){
         updateOutput("--- Serial disconnected from " + portName + " ---"); // Вывод в текстовое поле
 
         // Изменение параметров кнопки при отключении от последовательного порта
-        ui->pbserialConnect->setText("Connect");
+        ui->pbserialConnect->setText("CONNECT");
         ui->pbserialConnect->setStyleSheet("background-color: rgb(0,127,0);");
     }
     else
@@ -226,7 +230,7 @@ void AcousticWindow::onSerialConnectClicked(){
         {
             updateOutput("--- Serial connected to " + portName + " ---"); // Вывод в текстовое поле
 
-            ui->pbserialConnect->setText("Disconnet");
+            ui->pbserialConnect->setText("DISCONNECT");
             ui->pbserialConnect->setStyleSheet("background-color: rgb(127,0,0);");
 
             // Инициализация потоков чтения и записи с последовательного порта
@@ -514,4 +518,90 @@ void SerialInput::writeData(char *data)
         start();
     }
 
+}
+
+void AcousticWindow::setupControlsStyle()
+{
+    QString QComboBoxStyle = "QComboBox {"
+                             "border-style: solid;"
+                             "border-width: 1px;"
+                             "border-color: silver;"
+                             "color: silver;"
+                             "}"
+                             "QListView { color: silver; }";
+
+    QString QLabelTextStyle = "QLabel {"
+                              "color: silver;"
+                              "}";
+
+    QString QLineEditStyle = "QLineEdit {"
+                             "color: silver;"
+                             "border: 1px solid silver;"
+                             "}";
+
+    QString QGroupBoxStyle = "QGroupBox {"
+                             "color: silver;"
+                             "}";
+
+    QString QScroolAreaStyle = "QScroolArea {"
+                               "color: silver;"
+                               "}"
+                               "QWidget{ background-color: black; color: silver; }"
+                               "QScrollBar{ background-color: none }";
+
+    ui->serialPortListDropDown->setStyleSheet(QComboBoxStyle);
+    ui->requestTyprComboBox->setStyleSheet(QComboBoxStyle);
+
+    ui->lbPort->setStyleSheet(QLabelTextStyle);
+    ui->lbBaudRate->setStyleSheet(QLabelTextStyle);
+    ui->lbSocketIP->setStyleSheet(QLabelTextStyle);
+    ui->lbSocketPort->setStyleSheet(QLabelTextStyle);
+
+    ui->serialBaudrate->setStyleSheet(QLineEditStyle);
+    ui->socketIPField->setStyleSheet(QLineEditStyle);
+    ui->socketPortField->setStyleSheet(QLineEditStyle);
+    ui->dstAddressField->setStyleSheet(QLineEditStyle);
+    ui->inputField->setStyleSheet(QLineEditStyle);
+
+    ui->gbSerialConfig->setStyleSheet(QGroupBoxStyle);
+    ui->gbSocketConfig->setStyleSheet(QGroupBoxStyle);
+
+    ui->outputArea->setStyleSheet(QScroolAreaStyle);
+
+    ui->frame_6->setStyleSheet("QFrame { border: 1px solid silver; }");
+    ui->lbBorder->setStyleSheet("QLabel {"
+                                "border-style: solid;"
+                                "border-width: 1px;"
+                                "border-color: #F0BE50; "
+                                "}");
+}
+
+void AcousticWindow::setupWindowGeometry()
+{
+    // Установка размера главного окна// Установка размера главного окна
+    int windowWidth = 640; //_appSet.CAMERA_WIDTH + _appSet.CONTROL_PANEL_WIDTH + _appSet.CAMERA_VIEW_BORDER_WIDTH * 4;
+    int windowHeight = 500; //_appSet.CAMERA_HEIGHT + _appSet.CAMERA_VIEW_BORDER_WIDTH * 2;
+
+    // Фиксируем размер окна и убираем иконку ресайза
+    setFixedSize(QSize(windowWidth, windowHeight));
+
+    // Центрируем окно в пределах экрана
+    moveWindowToCenter();
+
+    QRect mainWindowRect = this->geometry();
+    ui->lbBorder->setGeometry(
+        10,
+        10,
+        mainWindowRect.width() - 20,
+        mainWindowRect.height() - 20);
+}
+
+void AcousticWindow::moveWindowToCenter()
+{
+    auto primaryScreen = QGuiApplication::primaryScreen(); // Главный экран
+    QRect primaryScreenRect = primaryScreen->availableGeometry(); // Размер главного экрана
+    QPoint primaryScreenRectCenter = primaryScreenRect.center();
+    primaryScreenRectCenter.setX(primaryScreenRectCenter.x() - (this->width()/2));
+    primaryScreenRectCenter.setY(primaryScreenRectCenter.y() - (this->height()/2));
+    move(primaryScreenRectCenter);
 }
