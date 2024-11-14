@@ -860,9 +860,12 @@ void MainWindow::recordVideo(std::vector<cv::Mat> frames, int recordInterval, cv
     std::string fileExtension = ".avi";
     // Генерируем имя файла с привязкой к текущему времени
     std::string fileName = generateFileName("chersonesos", fileExtension);
-    int realFPS = (int)(frames.size() / recordInterval);
+
+    int realFPS = 0; // Параметр для расчета реального FPS
+
     if (!frames.empty())
     {
+        realFPS = (int)(frames.size() / recordInterval);
         cv::Size videoResolution = frames[0].size();
         videoWriter = cv::VideoWriter("video\\" + fileName, fourccCode, realFPS , videoResolution);
     }
