@@ -13,6 +13,7 @@
 #include "toolwindow.h"
 #include "settingswindow.h"
 #include "disparitywindow.h"
+#include "hydroacousticswindow.h"
 #include "videostreaming.h"
 
 #include "sevrovxboxcontroller.h"
@@ -67,6 +68,8 @@ private:
 
     // Окно карты диспаратности
     DisparityWindow *_disparityWindow;
+
+    AcousticWindow *_acousticWindow;
 
     // long _cnt; // Счетчик вызовов
 
