@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pbScreenshot, &QPushButton::clicked, this, &MainWindow::onScreenshotButtonClicked);
     connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
     connect(ui->pbDisparity, &QPushButton::clicked, this, &MainWindow::onDisparityButtonClicked);
-    connect(ui->pbDisparity, &QPushButton::clicked, this, &MainWindow::onAcousticButtonClicked);
+    connect(ui->pbAcoustics, &QPushButton::clicked, this, &MainWindow::onAcousticButtonClicked);
 
     // Загрузка настроек
     _appSet.load(_ctrSet);
@@ -56,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Создаем указатель на окно с картой диспаратности
     _disparityWindow = new DisparityWindow(this);
+    
+    _acousticWindow = new AcousticWindow(this);
 
     // Кнопки
     connect(_jsController, &SevROVXboxController::OnButtonA, this, &MainWindow::OnButtonA);
@@ -2332,5 +2334,9 @@ void MainWindow::onDisparityButtonClicked()
 }
 void MainWindow::onAcousticButtonClicked()
 {
-    ;
+    if(_acousticWindow){
+        _acousticWindow->setWindowTitle("ТНПА :: Акустика :: " + _appSet.getAppVersion());
+
+        _acousticWindow->show();
+    }
 }

@@ -12,6 +12,12 @@ SOURCES += \
     applicationsettings.cpp \
     camerascene.cpp \
     disparitywindow.cpp \
+    hydroacoustics/checksum/checksum.c \
+    hydroacoustics/interfaces/uart.c \
+    hydroacoustics/parsers/at_parser.c \
+    hydroacoustics/parsers/common_parser.c \
+    hydroacoustics/parsers/puwv_parser.c \
+    hydroacousticswindow.cpp \
     main.cpp \
     mainwindow.cpp \
     pointcloud/calibrate.cpp \
@@ -28,6 +34,26 @@ HEADERS += \
     datastructure.h \
     disparitywindow.h \
     enumclasses.h \
+    #hydroacoustics/checksum/checksum.h \
+    #hydroacoustics/codes/codes.h \
+    #hydroacoustics/codes/phys.h \
+    #hydroacoustics/codes/phys_pvt.h \
+    #hydroacoustics/interfaces/socket_.h \
+    #hydroacoustics/interfaces/uart.h \
+    #hydroacoustics/parsers/at_parser.h \
+    #hydroacoustics/parsers/common_parser.h \
+    #hydroacoustics/parsers/puwv_codes.h \
+    #hydroacoustics/parsers/puwv_parser.h \
+    hydroacoustics/checksum/checksum.h \
+    hydroacoustics/codes/codes.h \
+    hydroacoustics/codes/phys.h \
+    hydroacoustics/codes/phys_pvt.h \
+    hydroacoustics/interfaces/uart.h \
+    hydroacoustics/parsers/at_parser.h \
+    hydroacoustics/parsers/common_parser.h \
+    hydroacoustics/parsers/puwv_codes.h \
+    hydroacoustics/parsers/puwv_parser.h \
+    hydroacousticswindow.h \
     mainwindow.h \
     pointcloud/calibrate.h \
     pointcloud/disparity.h \
@@ -51,6 +77,7 @@ HEADERS += \
 
 FORMS += \
     disparitywindow.ui \
+    hydroacousticswindow.ui \
     mainwindow.ui \
     settingswindow.ui \
     toolwindow.ui
@@ -119,4 +146,12 @@ unix
 
 }
 
+win32 {
+    LIBS += -lsetupapi
+}
+
 QMAKE_CXXFLAGS_WARN_ON += -Wno-unknown-pragmas
+
+DISTFILES += \
+    hydroacoustics/checksum/.gitkeep \
+    hydroacoustics/codes/.gitkeep
