@@ -111,6 +111,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Связываем сигнал и слот для отображения окна
     connect(this, &MainWindow::onStereoCaptured, _disparityWindow, &DisparityWindow::onStereoCaptured);
+
+    connect(_acousticWindow, &AcousticWindow::onTelemetry, this, &MainWindow::onTelemetry);
 }
 
 MainWindow::~MainWindow()
@@ -154,6 +156,14 @@ MainWindow::~MainWindow()
     delete _jsController;
 
     delete ui;
+}
+
+std::string to_string_with_precision(double value, const int n = 2)
+{
+    std::ostringstream out;
+    out.precision(n);
+    out << std::fixed << value;
+    return std::move(out).str();
 }
 
 std::string MainWindow::generateFileName(std::string filename, std::string fileextension)
@@ -1171,14 +1181,24 @@ void MainWindow::onVideoTimer()
             ///////////////////////////////////////////////////////////////////////
             // Диагностика
 
+            //cv::putText(_destinationMatL,
+            //            "DIAGNOSTIC: " +
+            //                QTime::currentTime().toString("hh:mm:ss").toStdString(),
+            //            cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
+            //            cv::FONT_HERSHEY_SIMPLEX,
+            //            1,
+            //            CV_RGB(255, 255, 255),
+            //            2);
+
+
             cv::putText(_destinationMatL,
-                        "DIAGNOSTIC: " +
-                            QTime::currentTime().toString("hh:mm:ss").toStdString(),
+                        "D: " + to_string_with_precision(acousticTelemery.Distance) + " P: " +  to_string_with_precision(acousticTelemery.Pressure) + " T: " +  to_string_with_precision(acousticTelemery.Temperature),
                         cv::Point(XV0 + 20, _appSet.CAMERA_HEIGHT - 65),
                         cv::FONT_HERSHEY_SIMPLEX,
-                        1,
+                        0.75,
                         CV_RGB(255, 255, 255),
                         2);
+
 
             ///////////////////////////////////////////////////////////////////////
             // Левая информацияонная панель (CONTROL)
@@ -2337,9 +2357,20 @@ void MainWindow::onDisparityButtonClicked()
 }
 void MainWindow::onAcousticButtonClicked()
 {
-    if(_acousticWindow){
-        _acousticWindow->setWindowTitle("ТНПА :: Акустика :: " + _appSet.getAppVersion());
+    if(_acousticWindow)
+    {
+        QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
+        int x = (screenGeometry.width() - _disparityWindow->width()) / 2;
+        int y = (screenGeometry.height() - _disparityWindow->height()) / 2;
 
+        _acousticWindow->setWindowTitle("ТНПА :: Акустика :: " + _appSet.getAppVersion());
         _acousticWindow->show();
+        _acousticWindow->move(x, y);
     }
+}
+void MainWindow::onTelemetry(const double &distance, const double &pressure, const double &temperature)
+{
+    acousticTelemery.Distance = distance;
+    acousticTelemery.Pressure = pressure;
+    acousticTelemery.Temperature = temperature;
 }
