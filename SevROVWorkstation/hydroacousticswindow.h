@@ -66,7 +66,7 @@ signals:
      *
      * @param data - Принятые данные в формате строки
      */
-    void dataReceived(const QString &data);
+    void dataReceived(const QString &data);    
 
 private:
     HANDLE h_serial; /**< Дескпритор последовательного порта */
@@ -188,6 +188,9 @@ private:
     void updatePortList();
 
     void commandNumScroller();
+
+signals:
+    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
 };
 
 

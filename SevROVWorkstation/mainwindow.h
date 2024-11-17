@@ -166,6 +166,7 @@ public slots:
     void onSocketProcessTelemetryDatagram();
     void onSocketConnect();
     void onSocketDisconnect();
+    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
 
 private slots:
     void onStartStopButtonClicked();
@@ -179,8 +180,11 @@ private:
     Ui::MainWindow *ui;
     clock_t disparityTimer;
 
+    AcousticTelemetry acousticTelemery;
+
 signals:
     // void updateCntValue(QString fps);
-    void onStereoCaptured(const cv::Mat &frameL, const cv::Mat &frameR);
+    void onStereoCaptured(const cv::Mat &frameL, const cv::Mat &frameR);    
+
 };
 #endif // MAINWINDOW_H
