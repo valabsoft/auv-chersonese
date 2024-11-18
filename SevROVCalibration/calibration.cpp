@@ -181,6 +181,7 @@ void cameraCalibrationMono(std::vector<cv::String> images, std::string pathToIma
  * @param chessboardRowCount
  * @param chessboardSquareSize
  */
+/*
 void cameraCalibrationStereo(std::vector<cv::String> imagesL, std::vector<cv::String> imagesR, std::string pathToImagesL, std::string pathToImagesR, CalibrationParametersStereo& calibrationParameters, int chessboardColCount, int chessboardRowCount, float chessboardSquareSize)
 {
     std::vector<std::vector<cv::Point3f>> keyPoints;
@@ -218,6 +219,9 @@ void cameraCalibrationStereo(std::vector<cv::String> imagesL, std::vector<cv::St
 
     for (size_t i = 0; i < imagesL.size(); i++)
     {
+        cv::resize(cornerImagesL[i], cornerImagesL[i], cv::Size(), 0.5, 0.5, cv::INTER_AREA);
+        cv::resize(cornerImagesR[i], cornerImagesR[i], cv::Size(), 0.5, 0.5, cv::INTER_AREA);
+
         cv::cvtColor(cornerImagesL[i], grayL, cv::COLOR_BGR2GRAY);
         cv::cvtColor(cornerImagesR[i], grayR, cv::COLOR_BGR2GRAY);
 
@@ -258,6 +262,120 @@ void cameraCalibrationStereo(std::vector<cv::String> imagesL, std::vector<cv::St
         0,
         criteria);
 }
+*/
+void cameraCalibrationStereo(std::vector<cv::String> imagesL, std::vector<cv::String> imagesR, std::string pathToImagesL, std::string pathToImagesR, CalibrationParametersStereo& calibrationParameters, int chessboardColCount, int chessboardRowCount, float chessboardSquareSize)
+{
+    cv::Size targetResolution = cv::Size(900, 600);
+    std::vector<std::vector<cv::Point3f>> keyPoints;
+    std::vector<std::vector<cv::Point2f>> imgPointsL;
+    std::vector<std::vector<cv::Point2f>> imgPointsR;
+
+    cv::glob(pathToImagesL, imagesL);
+    cv::glob(pathToImagesR, imagesR);
+
+    cv::TermCriteria criteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.001);
+
+    // Генерация 3D точек шахматной доски
+    std::vector<cv::Point3f> points3D;
+    for (int i{ 0 }; i < chessboardRowCount; i++)
+    {
+        for (int j{ 0 }; j < chessboardColCount; j++)
+        {
+            points3D.push_back(cv::Point3f(j * chessboardSquareSize, i * chessboardSquareSize, 0));
+        }
+    }
+
+    // Загрузка изображений
+    std::vector<cv::Mat> cornerImagesL;
+    std::vector<cv::Mat> cornerImagesR;
+    cv::Size originalSize;
+
+    for (int i{ 0 }; i < (int)imagesL.size(); i++)
+    {
+        cv::Mat cornerImageL = cv::imread(imagesL[i], 1);
+        cv::Mat cornerImageR = cv::imread(imagesR[i], 1);
+
+        if (i == 0) {
+            originalSize = cornerImageL.size(); // Сохраняем оригинальный размер
+        }
+
+        // Ресайз изображений
+        cv::resize(cornerImageL, cornerImageL, targetResolution, 0, 0, cv::INTER_AREA);
+        cv::resize(cornerImageR, cornerImageR, targetResolution, 0, 0, cv::INTER_AREA);
+
+        cornerImagesL.push_back(cornerImageL);
+        cornerImagesR.push_back(cornerImageR);
+    }
+
+    cv::Mat grayL, grayR;
+
+    for (size_t i = 0; i < imagesL.size(); i++)
+    {
+        cv::cvtColor(cornerImagesL[i], grayL, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(cornerImagesR[i], grayR, cv::COLOR_BGR2GRAY);
+
+        std::vector<cv::Point2f> cornersL;
+        std::vector<cv::Point2f> cornersR;
+
+        // Поиск углов шахматной доски
+        bool cornerPositionFoundL = cv::findChessboardCorners(
+            grayL,
+            cv::Size(chessboardColCount, chessboardRowCount),
+            cornersL,
+            cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_FILTER_QUADS);
+
+        bool cornerPositionFoundR = cv::findChessboardCorners(
+            grayR,
+            cv::Size(chessboardColCount, chessboardRowCount),
+            cornersR,
+            cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_FILTER_QUADS);
+
+        if (cornerPositionFoundL && cornerPositionFoundR)
+        {
+            cv::cornerSubPix(grayL, cornersL, cv::Size(11, 11), cv::Size(-1, -1), criteria);
+            cv::cornerSubPix(grayR, cornersR, cv::Size(11, 11), cv::Size(-1, -1), criteria);
+
+            cv::drawChessboardCorners(cornerImagesL[i], cv::Size(chessboardColCount, chessboardRowCount), cornersL, cornerPositionFoundL);
+            cv::drawChessboardCorners(cornerImagesR[i], cv::Size(chessboardColCount, chessboardRowCount), cornersR, cornerPositionFoundR);
+
+            keyPoints.push_back(points3D);
+
+            // Масштабирование углов обратно к исходному разрешению
+            double scaleX = static_cast<double>(originalSize.width) / targetResolution.width;
+            double scaleY = static_cast<double>(originalSize.height) / targetResolution.height;
+
+            for (auto& pt : cornersL) {
+                pt.x *= scaleX;
+                pt.y *= scaleY;
+            }
+            for (auto& pt : cornersR) {
+                pt.x *= scaleX;
+                pt.y *= scaleY;
+            }
+
+            imgPointsL.push_back(cornersL);
+            imgPointsR.push_back(cornersR);
+        }
+    }
+
+    calibrationParameters.RMS = cv::stereoCalibrate(
+        keyPoints,
+        imgPointsL,
+        imgPointsR,
+        calibrationParameters.cameraMatrixL,
+        calibrationParameters.distCoeffsL,
+        calibrationParameters.cameraMatrixR,
+        calibrationParameters.distCoeffsR,
+        originalSize, // Используем оригинальный размер для калибровки
+        calibrationParameters.R,
+        calibrationParameters.T,
+        calibrationParameters.E,
+        calibrationParameters.F,
+        calibrationParameters.perViewErrors,
+        0,
+        criteria);
+}
+
 
 /**
  * @brief Функция чтения параметров калибровки одиночной камеры.

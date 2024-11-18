@@ -2102,6 +2102,13 @@ void MainWindow::onViewButtonClicked()
     setupCameraViewLayout(_sevROV.cameraView);
 }
 
+double calculateDistance(const std::vector<double>& point1,const std::vector<double>& point2 ){
+    return std::sqrt(std::pow(point1[0] - point2[0], 2) +
+                     std::pow(point1[1] - point2[1], 2) +
+                     std::pow(point1[2] - point2[2], 2)
+                     );
+}
+
 void MainWindow::onScreenshotButtonClicked()
 {
     // Создаем инструмент Линейка
@@ -2159,12 +2166,18 @@ void MainWindow::onScreenshotButtonClicked()
     }
 
     std::string file_calibration_parameters =
-        (QCoreApplication::applicationDirPath() + "/camera_calibration_parameters.yml").toStdString();
+        (QCoreApplication::applicationDirPath() + "/camera_calibration_parameters.xml").toStdString();
 
     stereo_output_par_t calib_par = read_stereo_params(file_calibration_parameters);
 
+    // Чтение настроек SGBM-метода
+    stereo_sgbm_t SGBMparams;
+    std::string file_SGBM_params =
+        (QCoreApplication::applicationDirPath() + "/sgbm_params.txt").toStdString();
+    loadSGBMParams(file_SGBM_params, SGBMparams);
+
     // Поск 3D точек и сохранение их в формате x y 3d_x 3d_y 3d_z
-    std::vector<std::vector<double>> coords3d = point3d_finder(imageL, imageR, calib_par);
+    std::vector<std::vector<double>> coords3d = point3d_finder(imageL, imageR, calib_par, SGBMparams);
 
     // Запись найденных точек в файл
     std::string file_cloud_3D = (QCoreApplication::applicationDirPath() + "/cloud_3D.txt").toStdString();

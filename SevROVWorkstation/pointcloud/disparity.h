@@ -10,6 +10,7 @@
 #define DISPARITY_H
 
 #include <iostream>
+#include <fstream>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
@@ -20,16 +21,17 @@
 
 /// Структура, содержащая параметры объектов StereoSGBM / BM
 typedef struct StereoSGBMstruct{
-    int minDisparity = 0;  // 40
-    int numDisparities = 4;
-    int blockSize = 2; // 0
+    int minDisparity = 0;
+    int numDisparities = 250;
+    int blockSize = 15;
     int P1_ = 0;
     int P2_ = 0;
     int disp12MaxDiff = 0;
     int preFilterCap = 0;
-    int uniquenessRatio = 3;
-    int speckleWindowSize = 80;
+    int uniquenessRatio = 5;
+    int speckleWindowSize = 10;
     int speckleRange = 2;
+    int mode = cv::StereoSGBM::MODE_SGBM;
 }stereo_sgbm_t;
 
 typedef struct StereoBMstruct{
@@ -76,5 +78,14 @@ void stereo_d_map(cv::Mat rectifiedLeft, cv::Mat rectifiedRight, cv::Mat &dispar
  *  \param[out] disparity Матрица значенией диспарантности
 */
 void stereo_d_map(cv::Mat rectifiedImageLeft, cv::Mat rectifiedImageRight, cv::Mat &disparity, cv::Ptr<cv::StereoBM> &stereo);
+
+/**
+ * @brief Функция для чтения параметров объекта SGBM для метода рассчёта карты диспаратности
+ *
+ * @param filename  - путь к файлу конфигурации
+ * @param params    - структура парамтеров объекта SGBM
+ * @return - код 0, если чтение произведено успешно. 1 - если безуспешно
+ */
+int loadSGBMParams(const std::string& filename, stereo_sgbm_t& params);
 
 #endif // DISPARITY_H
