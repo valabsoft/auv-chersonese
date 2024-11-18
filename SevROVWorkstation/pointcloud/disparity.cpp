@@ -52,11 +52,11 @@ void stereo_d_map(cv::Mat rectifiedImageLeft, cv::Mat rectifiedImageRight, cv::M
         //cv::applyColorMap(filtered, filtered, cv::COLORMAP_JET);
         //cv::imshow("Colorized filter Map", filtered);
 
-        cv::applyColorMap(disparity_norm, coloredDispMap, cv::COLORMAP_JET);
-        cv::imshow("Colored disparity Map", coloredDispMap);
     #endif
 
-    //disparity = filtered;
+    cv::applyColorMap(disparity_norm, coloredDispMap, cv::COLORMAP_JET);
+    cv::imshow("Colored disparity Map", coloredDispMap);
+    //cv::imshow("Rectified left", rectifiedImageLeft);
 }
 
 void stereo_d_map(cv::Mat rectifiedImageLeft, cv::Mat rectifiedImageRight, cv::Mat &disparity,

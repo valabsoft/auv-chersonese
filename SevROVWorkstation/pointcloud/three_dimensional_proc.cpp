@@ -44,7 +44,7 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
     stereo->setP1(32*cn*SGBM_par.P2_*SGBM_par.P2_);
     stereo->setMode(SGBM_par.mode);
 
-    stereo_d_map(imageL, imageR, disparity, stereo);
+    stereo_d_map(rectifiedLeft, rectifiedRight, disparity, stereo);
 
     // Поиск 3д точек
     cv::Mat points23D;
