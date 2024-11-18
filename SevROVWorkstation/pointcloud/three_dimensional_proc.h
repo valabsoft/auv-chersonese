@@ -22,7 +22,7 @@
  *
  *  \param[out] disparity Двумерный вектор, содержащий 2D и 3D координаты точек на изображении
 */
-std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, stereo_output_par_t calib_par);
+std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, stereo_output_par_t calib_par, const stereo_sgbm_t SGBM_par);
 
 /*!
  *  \brief Функция для нахождения трёхмерных координат точки по 2д клику
