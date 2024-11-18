@@ -526,8 +526,8 @@ void MainWindow::setupWindowGeometry()
         _appSet.CAMERA_WIDTH,
         _appSet.CAMERA_HEIGHT);
 
-    int cameraLX = _appSet.CAMERA_VIEW_X0 + _appSet.CAMERA_WIDTH / 2 + _appSet.CAMERA_VIEW_BORDER_WIDTH;
-    int cameraRX = _appSet.CAMERA_VIEW_X0;
+    int cameraLX = _appSet.CAMERA_VIEW_X0;
+    int cameraRX = _appSet.CAMERA_VIEW_X0 + _appSet.CAMERA_WIDTH / 2 + _appSet.CAMERA_VIEW_BORDER_WIDTH;
 
     ui->lbCameraL->setGeometry(
         cameraLX,
