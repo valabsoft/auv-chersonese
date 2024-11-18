@@ -579,12 +579,12 @@ void MainWindow::setupConnectedControlsStyle(bool isconnected)
         ui->lbCameraL->setStyleSheet("QLabel {"
                                      "border-style: solid;"
                                      "border-width: 1px;"
-                                     "border-color: #F0BE50; "
+                                     "border-color: red;"
                                      "}");
         ui->lbCameraR->setStyleSheet("QLabel {"
                                      "border-style: solid;"
                                      "border-width: 1px;"
-                                     "border-color: #F0BE50; "
+                                     "border-color: green;"
                                      "}");
 
         // Обводка внешней границы блока управления
