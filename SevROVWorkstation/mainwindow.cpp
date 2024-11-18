@@ -526,14 +526,17 @@ void MainWindow::setupWindowGeometry()
         _appSet.CAMERA_WIDTH,
         _appSet.CAMERA_HEIGHT);
 
+    int cameraLX = _appSet.CAMERA_VIEW_X0 + _appSet.CAMERA_WIDTH / 2 + _appSet.CAMERA_VIEW_BORDER_WIDTH;
+    int cameraRX = _appSet.CAMERA_VIEW_X0;
+
     ui->lbCameraL->setGeometry(
-        _appSet.CAMERA_VIEW_X0,
+        cameraLX,
         (mainWindowRect.height() - _appSet.CAMERA_HEIGHT / 2) / 2,
         _appSet.CAMERA_WIDTH / 2,
         _appSet.CAMERA_HEIGHT / 2);
 
     ui->lbCameraR->setGeometry(
-        _appSet.CAMERA_VIEW_X0 + _appSet.CAMERA_WIDTH / 2 + _appSet.CAMERA_VIEW_BORDER_WIDTH,
+        cameraRX,
         (mainWindowRect.height() - _appSet.CAMERA_HEIGHT / 2) / 2,
         _appSet.CAMERA_WIDTH / 2,
         _appSet.CAMERA_HEIGHT / 2);

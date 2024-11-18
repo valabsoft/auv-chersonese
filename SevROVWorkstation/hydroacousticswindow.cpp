@@ -186,9 +186,9 @@ void AcousticWindow::onSerialConnectClicked()
 {
     double distance = 1.0;
     double pressure = 2.0;
-    double telemetry = 3.0;
+    double temperature = 3.0;
 
-    emit onTelemetry(distance, pressure, telemetry);
+    emit onTelemetry(distance, pressure, temperature);
 
     QString portName = ui->serialPortListDropDown->currentText(); // Получение текущего доступного COM-порта из выпадающего списка
 
