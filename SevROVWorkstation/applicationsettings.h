@@ -12,7 +12,7 @@
 class ApplicationSettings
 {
 private:
-    const std::string APP_VERSION = "1.5.0";
+    const std::string APP_VERSION = "1.6.0";
     QString _settingsFileName;
 public:
     ApplicationSettings();
