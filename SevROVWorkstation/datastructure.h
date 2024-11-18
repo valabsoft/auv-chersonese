@@ -238,4 +238,12 @@ public:
     SevROVPIDController depthPID;
 };
 
+// Данные управления
+struct AcousticTelemetry
+{
+    double Distance;
+    double Pressure;
+    double Temperature;
+};
+
 #endif // DATASTRUCTURE_H
