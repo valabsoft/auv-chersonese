@@ -128,12 +128,12 @@ void parse_ambient_data(char* command_line, bool* isSaveToFlash, int* period,
         token = strtok(NULL, ",");
     }
 
-    *isSaveToFlash        = atoi(tokens[1]);
-    *period               = atoi(tokens[2]);
-    *isPressure           = atoi(tokens[3]);
-    *isTemperature        = atoi(tokens[4]);
-    *isDepth              = atoi(tokens[5]);
-    *isVCC                = atoi(tokens[6]);
+    *isSaveToFlash        = atoi(tokens[0]);
+    *period               = atoi(tokens[1]);
+    *isPressure           = atoi(tokens[2]);
+    *isTemperature        = atoi(tokens[3]);
+    *isDepth              = atoi(tokens[4]);
+    *isVCC                = atoi(tokens[5]);
 }
 
 void parse_itg_command(char* command_line, int* addr, int* dataID){

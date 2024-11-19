@@ -66,7 +66,9 @@ signals:
      *
      * @param data - Принятые данные в формате строки
      */
-    void dataReceived(const QString &data);    
+    void dataReceived(const QString &data);
+
+    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
 
 private:
     HANDLE h_serial; /**< Дескпритор последовательного порта */
@@ -172,7 +174,8 @@ protected:
      * @param event - Событие нажатия клавиши
      */
     void keyPressEvent(QKeyEvent *event) override;
-
+signals:
+    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
 private:
     Ui::AcousticWindow *ui;
 
@@ -188,9 +191,6 @@ private:
     void updatePortList();
 
     void commandNumScroller();
-
-signals:
-    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
 };
 
 

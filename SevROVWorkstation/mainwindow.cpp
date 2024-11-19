@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Создаем указатель на окно с картой диспаратности
     _disparityWindow = new DisparityWindow(this);
     
+    // Создание указателя на окно с гидроакустикой
     _acousticWindow = new AcousticWindow(this);
 
     // Кнопки

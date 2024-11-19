@@ -101,26 +101,43 @@ void AcousticWindow::onSendButtonClicked()
 
     char sendBuffer[500] = {0};
 
-    switch(command){
+    bool isSaveToFlash;
+    bool isPressure;
+    bool isTemperature;
+    bool isDepth;
+    bool isVCC;
+    int period;
+
+    switch(command)
+    {
     case SEND:
+        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktSend(sendBuffer, dest_addr, 2, data.toUtf8().data());
         break;
     case TEST:
+        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktSend(sendBuffer, dest_addr, 2, qStringToChar("hydro_test"));
         break;
     case PING:
+        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryRemoteModem(sendBuffer, dest_addr, 0, RC_PING);
         break;
     case DEVINFO:
+        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForDeviceInfo(sendBuffer);
         break;
     case PT_SETTINGS:
+        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktModeSettings(sendBuffer);
         break;
     case AMBIENT:
-        //queryForAmbientDataConfig(sendBuffer, isSaveToFlash, period, isPressure,Temperature,isDepth,isVCC);
+        memset(sendBuffer, 0, sizeof(sendBuffer));
+        parse_ambient_data(qStringToChar(data), &isSaveToFlash, &period, &isPressure,
+                           &isTemperature, &isDepth, &isVCC);
+        queryForAmbientDataConfig(sendBuffer, isSaveToFlash, period, isPressure,isTemperature,isDepth,isVCC);
         break;
     case ITG_REQ:
+        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktITG(sendBuffer, dest_addr, 0);
         break;
     default:
@@ -131,7 +148,7 @@ void AcousticWindow::onSendButtonClicked()
     ui->inputField->clear();    // Очистка текстового поля после ввода значений
     ui->inputField->setFocus(); // Удержание фокуса на текстовом поле после отправки
 
-    updateOutput(" >> " + charToString(sendBuffer)); // Вывод сообщения, отправленного по COM-порту
+    updateOutput(" << " + charToString(sendBuffer)); // Вывод сообщения, отправленного по COM-порту
 
     if(writerThread && h_serial != NULL)
     {
@@ -157,16 +174,16 @@ void AcousticWindow::updateOutput(const QString &text)
         ui->scrollAreaWidgetContents_3->setLayout(layout);
     }
 
+    // Создание нового QLabel'а для вывода текста
+    QLabel *newLabel = new QLabel(timestamp + text, ui->scrollAreaWidgetContents_3);
+    newLabel->setWordWrap(true);  //  Перенос строк, если текст длинный
+    layout->addWidget(newLabel);
+
     // Получение скроллбара из outputArea и прокрутка его вниз
     QScrollBar *scrollBar = ui->outputArea->verticalScrollBar();
     if (scrollBar) {
         scrollBar->setValue(scrollBar->maximum());
     }
-
-    // Создание нового QLabel'а для вывода текста
-    QLabel *newLabel = new QLabel(timestamp + text, ui->scrollAreaWidgetContents_3);
-    newLabel->setWordWrap(true);  //  Перенос строк, если текст длинный
-    layout->addWidget(newLabel);
 }
 
 /** @brief
@@ -184,12 +201,6 @@ void AcousticWindow::keyPressEvent(QKeyEvent *event)
 
 void AcousticWindow::onSerialConnectClicked()
 {
-    double distance = 1.0;
-    double pressure = 2.0;
-    double temperature = 3.0;
-
-    emit onTelemetry(distance, pressure, temperature);
-
     QString portName = ui->serialPortListDropDown->currentText(); // Получение текущего доступного COM-порта из выпадающего списка
 
     if(h_serial != NULL)
@@ -247,6 +258,8 @@ void AcousticWindow::onSerialConnectClicked()
 
             writerThread = new SerialInput(h_serial, this);
             writerThread->start();
+
+            connect(readerThread, &SerialOutput::onTelemetry, this, &AcousticWindow::onTelemetry);
         }
         else
         {
@@ -476,7 +489,13 @@ void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
                       .arg(puwv.itg_resp.pTime)
                       .arg(puwv.itg_resp.azimuth);
         break;
-
+    case AMB_DATA:
+        result += QStringLiteral("\n\t\t\tAmbient data\n");
+        result += QString( "Pressure: %1\n Temperature: %2\n Depth: %3\n VCC: %4\n")
+                        .arg(puwv.amb_dta.pressure_mBar)
+                        .arg(puwv.amb_dta.temperature_C)
+                        .arg(puwv.amb_dta.Depth_m)
+                      .arg(puwv.amb_dta.VCC_V);
     default:
         result += QStringLiteral("Unknown command\n");
         break;
@@ -492,6 +511,14 @@ void SerialOutput::run()
     puwv_t puwv;
     QString parse_descript;
 
+    /** @todo   Сделать структуру для хранения телеметрии, вместо отдельных переменных
+     *          Добавить больше команд для получения большего количества данных
+     */
+    double distance = 0.0;
+    double pressure = 0.0;
+    double temperature = 0.0;
+
+
     while(!isInterruptionRequested()) {
         char buffer[1024];
         DWORD bytes_read = uart_read(h_serial, buffer, sizeof(buffer));
@@ -501,6 +528,24 @@ void SerialOutput::run()
             puwv2Qstr(puwv, puwv_command, parse_descript);
             if (parse_descript.length() > 0){
                 emit dataReceived(parse_descript);
+
+                switch (puwv_command)
+                {
+                case AMB_DATA:
+                    pressure = puwv.amb_dta.pressure_mBar;
+                    temperature = puwv.amb_dta.temperature_C;
+                    emit onTelemetry(distance, pressure, temperature);
+                    break;
+                case PT_RECIEVED:
+                    //puwv.rcvd.azimuth;
+                    break;
+                case RC_RESPONSE:
+                    distance = puwv.rc_resp.propTime*1500;
+                    emit onTelemetry(distance, pressure, temperature);
+                    break;
+                default:
+                    break;
+                }
                 parse_descript.clear();
             }
             memset(buffer, 0, sizeof(buffer));
