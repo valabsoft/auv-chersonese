@@ -6,6 +6,7 @@
 #include <QThread>
 //#include <QTcpSocket>
 #include <QQueue>
+#include <QTimer>
 
 extern "C" {
     #include "hydroacoustics/interfaces/uart.h"
@@ -66,9 +67,7 @@ signals:
      *
      * @param data - Принятые данные в формате строки
      */
-    void dataReceived(const QString &data);
-
-    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
+    void dataReceived(const QString &data);    
 
 private:
     HANDLE h_serial; /**< Дескпритор последовательного порта */
@@ -165,6 +164,7 @@ public slots:
      */
     void updateOutput(const QString &text);
 
+    void sendAutoPing();
 protected:
     /**
      * @brief Функция-обработчик нажатия клавиш
@@ -174,8 +174,7 @@ protected:
      * @param event - Событие нажатия клавиши
      */
     void keyPressEvent(QKeyEvent *event) override;
-signals:
-    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
+
 private:
     Ui::AcousticWindow *ui;
 
@@ -183,6 +182,9 @@ private:
     SerialOutput *readerThread; /**< Дескприптор потока чтения последовательного порта */
     SerialInput *writerThread;  /**< Дескприптор потока записи в последовательный порт */
 
+    QTimer* pingTimer;          /**< Экземпляр таймера для автопингера */
+    int pingCount;              /**< Счётчик пингов */
+    int maxPingCount;           /**< Максимальное количество пакетов пингера */
     //bool isConnected = false;
 
     /**
@@ -191,6 +193,9 @@ private:
     void updatePortList();
 
     void commandNumScroller();
+
+signals:
+    void onTelemetry(const double &distance, const double &pressure, const double &temperature);
 };
 
 

@@ -4,11 +4,16 @@
 #include <QScrollBar>
 #include <QDateTime>
 #include <QMap>
+#include <fstream>
+#include <iomanip>
 
 
 AcousticWindow::AcousticWindow(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::AcousticWindow)
+    , ui(new Ui::AcousticWindow),
+        pingTimer(new QTimer(this)),  // Создание таймера
+        pingCount(0),
+        maxPingCount(0)
 {
     ui->setupUi(this);
 
@@ -18,10 +23,10 @@ AcousticWindow::AcousticWindow(QWidget *parent)
     setupWindowGeometry();  // Позиционирование окна
     setupControlsStyle();   // Установка стилей компонентов
 
-
     connect(ui->sendButton, &QPushButton::clicked, this, &AcousticWindow::onSendButtonClicked);
     connect(ui->pbserialConnect, &QPushButton::clicked, this, &AcousticWindow::onSerialConnectClicked);
     connect(ui->pbsocketConnect, &QPushButton::clicked, this, &AcousticWindow::onSocketConnectClicked);
+    connect(pingTimer, &QTimer::timeout, this, &AcousticWindow::sendAutoPing);
 }
 
 AcousticWindow::~AcousticWindow()
@@ -101,43 +106,41 @@ void AcousticWindow::onSendButtonClicked()
 
     char sendBuffer[500] = {0};
 
-    bool isSaveToFlash;
-    bool isPressure;
-    bool isTemperature;
-    bool isDepth;
-    bool isVCC;
-    int period;
-
-    switch(command)
-    {
+    switch(command){
     case SEND:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktSend(sendBuffer, dest_addr, 2, data.toUtf8().data());
         break;
     case TEST:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktSend(sendBuffer, dest_addr, 2, qStringToChar("hydro_test"));
         break;
-    case PING:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
-        queryRemoteModem(sendBuffer, dest_addr, 0, RC_PING);
+    case PING:{
+        //queryRemoteModem(sendBuffer, dest_addr, 0, RC_PING);
+        QStringList params = data.split(',');
+        if (params.size()<2){
+            updateOutput("Please, enter params for remote request");
+            //return;
+        }
+        bool ok, ok1;
+        int period = params[0].toInt(&ok);
+        int repeats = params[1].toInt(&ok1);
+
+        maxPingCount = repeats;
+        pingCount = 0;
+
+        pingTimer->start(period);
+        //queryRemoteModem(sendBuffer, dest_addr, 1, RC_DPT_GET);
         break;
+    }
     case DEVINFO:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForDeviceInfo(sendBuffer);
         break;
     case PT_SETTINGS:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktModeSettings(sendBuffer);
         break;
     case AMBIENT:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
-        parse_ambient_data(qStringToChar(data), &isSaveToFlash, &period, &isPressure,
-                           &isTemperature, &isDepth, &isVCC);
-        queryForAmbientDataConfig(sendBuffer, isSaveToFlash, period, isPressure,isTemperature,isDepth,isVCC);
+        //queryForAmbientDataConfig(sendBuffer, isSaveToFlash, period, isPressure,Temperature,isDepth,isVCC);
         break;
     case ITG_REQ:
-        memset(sendBuffer, 0, sizeof(sendBuffer));
         queryForPktITG(sendBuffer, dest_addr, 0);
         break;
     default:
@@ -148,7 +151,7 @@ void AcousticWindow::onSendButtonClicked()
     ui->inputField->clear();    // Очистка текстового поля после ввода значений
     ui->inputField->setFocus(); // Удержание фокуса на текстовом поле после отправки
 
-    updateOutput(" << " + charToString(sendBuffer)); // Вывод сообщения, отправленного по COM-порту
+    updateOutput(" >> " + charToString(sendBuffer)); // Вывод сообщения, отправленного по COM-порту
 
     if(writerThread && h_serial != NULL)
     {
@@ -174,16 +177,16 @@ void AcousticWindow::updateOutput(const QString &text)
         ui->scrollAreaWidgetContents_3->setLayout(layout);
     }
 
-    // Создание нового QLabel'а для вывода текста
-    QLabel *newLabel = new QLabel(timestamp + text, ui->scrollAreaWidgetContents_3);
-    newLabel->setWordWrap(true);  //  Перенос строк, если текст длинный
-    layout->addWidget(newLabel);
-
     // Получение скроллбара из outputArea и прокрутка его вниз
     QScrollBar *scrollBar = ui->outputArea->verticalScrollBar();
     if (scrollBar) {
         scrollBar->setValue(scrollBar->maximum());
     }
+
+    // Создание нового QLabel'а для вывода текста
+    QLabel *newLabel = new QLabel(timestamp + text, ui->scrollAreaWidgetContents_3);
+    newLabel->setWordWrap(true);  //  Перенос строк, если текст длинный
+    layout->addWidget(newLabel);
 }
 
 /** @brief
@@ -201,6 +204,12 @@ void AcousticWindow::keyPressEvent(QKeyEvent *event)
 
 void AcousticWindow::onSerialConnectClicked()
 {
+    double distance = 1.0;
+    double pressure = 2.0;
+    double temperature = 3.0;
+
+    emit onTelemetry(distance, pressure, temperature);
+
     QString portName = ui->serialPortListDropDown->currentText(); // Получение текущего доступного COM-порта из выпадающего списка
 
     if(h_serial != NULL)
@@ -258,8 +267,6 @@ void AcousticWindow::onSerialConnectClicked()
 
             writerThread = new SerialInput(h_serial, this);
             writerThread->start();
-
-            connect(readerThread, &SerialOutput::onTelemetry, this, &AcousticWindow::onTelemetry);
         }
         else
         {
@@ -360,6 +367,112 @@ void AcousticWindow::updatePortList () {
     }
 }
 
+std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remote_depth, double propagation_time, bool log_flag){
+    double rs = 0.0;
+    double rh = 0.0;
+    double X = 0.0;
+    double Y = 0.0;
+    double Z = 0.0;
+    double c = 1500;
+    rs = c * propagation_time; // Полная дистанция от модема до удалённого устройства
+
+    Z = remote_depth - local_depth; // Получение относительной глубины удалённого устройства
+
+    rh = sqrt(rs*rs - Z*Z);         // Проекция дистанции до модема на двумерную плоскость
+    if (rh == NAN) {
+        qDebug() << "nan was observe\n";
+        X = 0.0;
+        Y = 0.0;
+        rh = 0.0;
+    } else {
+        rh = sqrt(rs*rs - Z*Z);
+        X = rh * sin(azimuth*M_PI/180.0);
+        Y = rh * cos(azimuth*M_PI/180.0);
+    }
+
+    qDebug() << "Distance, m: " << rs << "\n";
+    qDebug() << "DistanceXY, m: " << rh << "\n";
+    qDebug() << "Azimuth: " << azimuth << "\n";
+    qDebug() << "Depth: " <<  Z << "\n";
+    qDebug() << "Prop time: " <<  propagation_time << "\n";
+    qDebug() << "3D: X: " << X << " Y: " << Y << " Z:" << Z << "\n";
+
+    if (log_flag){
+        // Путь к файлу
+        const std::string filename = "usbl_log.csv";
+
+        // Переменные для чтения файла
+        std::ifstream infile(filename);
+        std::string update_flag = "False";
+        double file_azimuth = 0, file_rs = 0, file_x = 0, file_y = 0;
+
+        // Проверка существующего файла
+        if (infile.is_open()) {
+            std::string line;
+            std::getline(infile, line);
+            infile.close();
+
+            std::istringstream iss(line);
+            iss >> update_flag >> file_azimuth >> file_rs >> file_x >> file_y;
+            if (update_flag == "False") {
+                qDebug() << "Visualizer has not read the previous data yet.";
+                return {X, Y, Z}; // Возвращение координат без обновления файла
+            }
+        }
+
+        // Логирование новых данных
+        std::ofstream outfile(filename);
+        if (outfile.is_open()) {
+            update_flag = "False"; // Установка флага обновления
+            outfile << update_flag << " " // Флаг обновления (False)
+                    << std::fixed << std::setprecision(2)    // 2 знака после запятой
+                    << azimuth << " "                      // Азимут в градусах
+                    << rh << " "                           // Полная дистанция в м
+                    << X << " "                            // Координата X в м
+                    << Y << "\n";                           // Координата Y в м
+            outfile.close();
+            qDebug() << "Data logged successfully.";
+        } else {
+            qDebug() << "File open error!";
+        }
+    }
+
+    return {X, Y, Z};
+}
+
+void AcousticWindow::sendAutoPing()
+{
+    if (pingCount >= maxPingCount) {
+        pingTimer->stop(); // Остановка таймера, если достигнуто максимальное количество повторов
+        updateOutput("PING is complete.");
+        return;
+    }
+    /*
+    QString data = ui->inputField->text();
+
+    QStringList params = data.split(',');
+    if (params.size()<2){
+        updateOutput("Please, enter params for remote request");
+        //return;
+    }
+    */
+    //int recv_channel = params[2].toInt(); // Получение канала приёма из поля с данными
+
+    char sendBuffer[500] = {0};
+    int dest_addr = ui->dstAddressField->text().toInt();
+
+    queryRemoteModem(sendBuffer, dest_addr, 1, RC_DPT_GET); // Отправка команды PING
+    updateOutput(" >> " + charToString(sendBuffer)); // Вывод сообщения в интерфейс
+
+    if (writerThread && h_serial != NULL) {
+        writerThread->writeData(sendBuffer); // Отправка по COM-порту
+    } else {
+        updateOutput("Serial threads or connection error");
+    }
+
+    pingCount++;
+}
+
 /**
  * @brief Функция-обработчик пришедших команд от uWave
  *
@@ -372,6 +485,7 @@ void AcousticWindow::updatePortList () {
 void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
     QString result;
     QString data;
+    std::vector<double> usbl_position;
     char cdata[64] = {0};
 
     switch (command) {
@@ -392,6 +506,10 @@ void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
                       .arg(puwv.rc_resp.propTime)
                       .arg(puwv.rc_resp.MSR)
                       .arg(puwv.rc_resp.value);
+        if (puwv.rc_resp.azimuth != 0){
+            result += QString(" Azimuth: %1\n").arg(puwv.rc_resp.azimuth);
+        }
+
         break;
     }
 
@@ -411,7 +529,6 @@ void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
         break;
 
     case DINFO:
-        qDebug() << "AAAAA" << charToString(puwv.dinfo.serial_number) << " " << charToString(puwv.dinfo.system_moniker);
         result += QStringLiteral("\n\t\t\tResponse to device information request:\n");
         result += QString(" Serial num: %1\n Moniker: %2\n Version: %3\n Core moniker: %4\n Core version: %5\n Baudrate: %6\n")
                       .arg(charToString(puwv.dinfo.serial_number))
@@ -489,17 +606,17 @@ void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
                       .arg(puwv.itg_resp.pTime)
                       .arg(puwv.itg_resp.azimuth);
         break;
-    case AMB_DATA:
-        result += QStringLiteral("\n\t\t\tAmbient data\n");
-        result += QString( "Pressure: %1\n Temperature: %2\n Depth: %3\n VCC: %4\n")
-                        .arg(puwv.amb_dta.pressure_mBar)
-                        .arg(puwv.amb_dta.temperature_C)
-                        .arg(puwv.amb_dta.Depth_m)
-                      .arg(puwv.amb_dta.VCC_V);
+
     default:
         result += QStringLiteral("Unknown command\n");
         break;
     }
+
+    usbl_position = usbl_3d_pos(puwv.rc_resp.azimuth, 0.6, puwv.rc_resp.value,  puwv.rc_resp.propTime, true);
+    result += QString(" 3D coordinates (local): \tX: %1 \tY: %2 \tZ: %3\n")
+                  .arg(usbl_position[0])
+                  .arg(usbl_position[1])
+                  .arg(usbl_position[2]);
 
     out_buffer = result;
 }
@@ -510,14 +627,9 @@ void SerialOutput::run()
     int mine_id;
     puwv_t puwv;
     QString parse_descript;
+    std::vector<double> coords3D = {};
 
-    /** @todo   Сделать структуру для хранения телеметрии, вместо отдельных переменных
-     *          Добавить больше команд для получения большего количества данных
-     */
-    double distance = 0.0;
-    double pressure = 0.0;
-    double temperature = 0.0;
-
+    puwv.rc_resp.azimuth = 0.0; // Обнуение значения азимута для последующего заполнения в парсерах
 
     while(!isInterruptionRequested()) {
         char buffer[1024];
@@ -526,26 +638,9 @@ void SerialOutput::run()
             emit dataReceived(" >> " + QString::fromLocal8Bit(buffer, bytes_read));
             puwv_command = puwv_parser(buffer, &mine_id, &puwv);
             puwv2Qstr(puwv, puwv_command, parse_descript);
+
             if (parse_descript.length() > 0){
                 emit dataReceived(parse_descript);
-
-                switch (puwv_command)
-                {
-                case AMB_DATA:
-                    pressure = puwv.amb_dta.pressure_mBar;
-                    temperature = puwv.amb_dta.temperature_C;
-                    emit onTelemetry(distance, pressure, temperature);
-                    break;
-                case PT_RECIEVED:
-                    //puwv.rcvd.azimuth;
-                    break;
-                case RC_RESPONSE:
-                    distance = puwv.rc_resp.propTime*1500;
-                    emit onTelemetry(distance, pressure, temperature);
-                    break;
-                default:
-                    break;
-                }
                 parse_descript.clear();
             }
             memset(buffer, 0, sizeof(buffer));

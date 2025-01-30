@@ -1,6 +1,6 @@
 #include "three_dimensional_proc.h"
 
-std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, stereo_output_par_t calib_par, const stereo_sgbm_t SGBM_par){
+std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, stereo_output_par_t calib_par, const stereo_sgbm_t SGBM_par, cv::Mat &rectifiedLeft){
 
     // Стереоректификация изображений
     cv::Mat mapLx, mapLy, mapRx, mapRy;
@@ -11,21 +11,28 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
     cv::Mat grayImageRight = imageR;
     cv::cvtColor(imageL, grayImageLeft, cv::COLOR_BGR2GRAY);
     cv::cvtColor(imageR, grayImageRight, cv::COLOR_BGR2GRAY);
-
-    //cv::Size targetSize = cv::Size(1280, 1024);
+    cv::Size targetSize = cv::Size(1440, 1080);
+    //cv::Size targetSize = imageL.size();
+    std::cout<<targetSize<<"\n";
 
     // Ректификация и устранение искажений
     cv::stereoRectify(calib_par.cameraM1, calib_par.distCoeffs1, calib_par.cameraM2, calib_par.distCoeffs2,
-                      grayImageLeft.size(), calib_par.R, calib_par.T, R1, R2, P1, P2, Q, cv::CALIB_ZERO_DISPARITY);
+                      targetSize, calib_par.R, calib_par.T, R1, R2, P1, P2, Q, cv::CALIB_ZERO_DISPARITY,-1,targetSize);
 
     cv::initUndistortRectifyMap(calib_par.cameraM1, calib_par.distCoeffs1, R1, P1,
-                                grayImageLeft.size(), CV_32FC1, mapLx, mapLy);
+                                targetSize, CV_32FC1, mapLx, mapLy);
     cv::initUndistortRectifyMap(calib_par.cameraM2, calib_par.distCoeffs2, R2, P2,
-                                grayImageLeft.size(), CV_32FC1, mapRx, mapRy);
+                                targetSize, CV_32FC1, mapRx, mapRy);
 
-    cv::Mat rectifiedLeft, rectifiedRight;
-    cv::remap(grayImageLeft, rectifiedLeft, mapLx, mapLy, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
-    cv::remap(grayImageRight, rectifiedRight, mapRx, mapRy, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
+    cv::Mat /*rectifiedLeft,*/ rectifiedRight;
+    cv::remap(grayImageLeft, rectifiedLeft, mapLx, mapLy, cv::INTER_LINEAR/*, cv::BORDER_CONSTANT, 0*/);
+    cv::remap(grayImageRight, rectifiedRight, mapRx, mapRy, cv::INTER_LINEAR/*, cv::BORDER_CONSTANT, 0*/);
+
+
+    //cv::Mat resizedLeft, resizedRight;
+    //cv::resize(rectifiedLeft, resizedLeft, targetSize);
+    //cv::resize(rectifiedRight, resizedRight, targetSize);
+    //rectifiedLeft = resizedLeft;
 
     // Рассчёт карты диспаратности методом SGBM
     cv::Mat disparity;
@@ -40,8 +47,8 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
     stereo->setSpeckleWindowSize(SGBM_par.speckleWindowSize);
     stereo->setSpeckleRange(SGBM_par.speckleRange);
     stereo->setDisp12MaxDiff(SGBM_par.disp12MaxDiff);
-    stereo->setP1(8*cn*SGBM_par.P1_*SGBM_par.P1_);
-    stereo->setP1(32*cn*SGBM_par.P2_*SGBM_par.P2_);
+    stereo->setP1(8*cn*SGBM_par.blockSize*SGBM_par.blockSize);
+    stereo->setP2(32*cn*SGBM_par.blockSize*SGBM_par.blockSize);
     stereo->setMode(SGBM_par.mode);
 
     stereo_d_map(rectifiedLeft, rectifiedRight, disparity, stereo);
@@ -52,7 +59,7 @@ std::vector<std::vector<double>> point3d_finder(cv::Mat imageL, cv::Mat imageR, 
 
     std::vector<std::vector<double>> result;
     std::vector<double> limit_outlierArea {-5.0e3, -5.0e3, 250, 5.0e3, 5.0e3, 5.0e3};
-    const double minDistance = 100.0;
+    const double minDistance = 10.0;
     std::deque<std::vector<double>> lastPoints;
 
     // Лямбда-фукнция для проверки входа 3д-точки в рабочую область камеры

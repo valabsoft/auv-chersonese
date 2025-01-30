@@ -57,7 +57,6 @@ MainWindow::MainWindow(QWidget *parent)
     // Создаем указатель на окно с картой диспаратности
     _disparityWindow = new DisparityWindow(this);
     
-    // Создание указателя на окно с гидроакустикой
     _acousticWindow = new AcousticWindow(this);
 
     // Кнопки
@@ -2200,8 +2199,12 @@ void MainWindow::onScreenshotButtonClicked()
         (QCoreApplication::applicationDirPath() + "/sgbm_params.txt").toStdString();
     loadSGBMParams(file_SGBM_params, SGBMparams);
 
+    cv::Mat rectifedLeft;
+
     // Поск 3D точек и сохранение их в формате x y 3d_x 3d_y 3d_z
-    std::vector<std::vector<double>> coords3d = point3d_finder(imageL, imageR, calib_par, SGBMparams);
+    std::vector<std::vector<double>> coords3d = point3d_finder(imageL, imageR, calib_par, SGBMparams, rectifedLeft);
+
+    imageL = rectifedLeft; // Временное решение с ректификацией
 
     // Запись найденных точек в файл
     std::string file_cloud_3D = (QCoreApplication::applicationDirPath() + "/cloud_3D.txt").toStdString();
@@ -2214,8 +2217,8 @@ void MainWindow::onScreenshotButtonClicked()
     t_vuxyzrgb data = convertCloud3DPoints(cloud);
 
     _toolWindow->setupWindowGeometry();
-    // TODO: Переделать под новый формат данных    
-    _toolWindow->setDataCloud3D(imageL, data);
+    // TODO: Переделать под новый формат данных
+    _toolWindow->setDataCloud3D(imageL, data); // Сюда ректификацию
     _toolWindow->setWindowTitle("ТНПА :: AРМ Оператора :: " + _appSet.getAppVersion());
 
     // Центрировать инструментальную панель
