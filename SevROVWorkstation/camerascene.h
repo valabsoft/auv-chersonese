@@ -13,7 +13,7 @@ public:
     explicit CameraScene(QImage img, QObject *parent = nullptr);
     ~CameraScene();
 
-    static const int CIRCLE_D = 10;
+    static const int CIRCLE_D = 5;
     enum Mode {Undefined, LeftButton, RightButton};
 
     void setMode(Mode mode);

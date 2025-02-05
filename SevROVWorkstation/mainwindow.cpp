@@ -2140,8 +2140,31 @@ void MainWindow::onScreenshotButtonClicked()
     cv::Mat imageL;
     cv::Mat imageR;
 
+    // @todo: Сделать возможность сохранения стереопары для офлайн-отладки алгоритма
+    //int limage_count = 0;
+    //int rimage_count = 0;
+
     int nRet = MV_OK;
     MV_FRAME_OUT stOutFrame = {};
+
+    // проверяем наличие папки с видео - если ее нет, создаем
+    /*
+    std::filesystem::path pathToStereoDirectory = std::filesystem::current_path() / "/stereo_frames";
+    std::filesystem::directory_entry stereoDirectoryEntry{ pathToStereoDirectory };
+
+    // Проверяем существование папки video в рабочем каталоге
+    bool isStereoDirectoryExists = stereoDirectoryEntry.exists();
+
+    if (!isStereoDirectoryExists)
+    {
+        // Если папка video не существует, создаем ее
+        isStereoDirectoryExists = std::filesystem::create_directory(pathToStereoDirectory);
+        if (!isStereoDirectoryExists)
+        {
+            return;
+        }
+    }
+*/
 
     switch (_appSet.CAMERA_TYPE)
     {
@@ -2152,6 +2175,10 @@ void MainWindow::onScreenshotButtonClicked()
             // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
+
+            // Задел на возможность записи правого изображения
+            //cv::imwrite("/stereo_frames/L"+ std::to_string(limage_count) + ".png", imageR);
+            //limage_count++;
 
             nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
 
@@ -2170,6 +2197,10 @@ void MainWindow::onScreenshotButtonClicked()
             // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
+
+            // Задел на возможность записи левого изображения
+            //cv::imwrite("stereo_frames/R"+ std::to_string(rimage_count) + ".png", imageR);
+            //rimage_count++;
 
             nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
 
@@ -2204,6 +2235,7 @@ void MainWindow::onScreenshotButtonClicked()
     // Поск 3D точек и сохранение их в формате x y 3d_x 3d_y 3d_z
     std::vector<std::vector<double>> coords3d = point3d_finder(imageL, imageR, calib_par, SGBMparams, rectifedLeft);
 
+    cv::cvtColor(rectifedLeft, rectifedLeft, cv::COLOR_GRAY2BGR);
     imageL = rectifedLeft; // Временное решение с ректификацией
 
     // Запись найденных точек в файл

@@ -355,7 +355,12 @@ void CameraScene::set3DPoints(t_vuxyzrgb points)
     for (size_t i = 0; i < points.cluster.size(); i++)
     {
         auto elipse = new QGraphicsEllipseItem();
-        elipse->setPen(QPen(Qt::lightGray, 1, Qt::SolidLine));
+
+        QColor penColor = Qt::lightGray;
+        penColor.setAlpha(80);
+
+        //elipse->setPen(QPen(Qt::lightGray, 1, Qt::SolidLine));
+        elipse->setPen(QPen(penColor, 1, Qt::SolidLine));
         // Add real XY from 3D cloud data structure
         elipse->setRect(points.vu.at(i).at(1) - CIRCLE_D / 2,
                         points.vu.at(i).at(0) - CIRCLE_D / 2,

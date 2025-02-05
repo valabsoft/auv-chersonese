@@ -54,7 +54,8 @@ QMap<QString, CommandType> commandMap = {
     {"PT_SETTINGS", PT_SETTINGS},
     {"AMBIENT", AMBIENT},
     {"ITG_REQ", ITG_REQ},
-    {"PITCH_ROLL", PITCH_ROLL}
+    {"PITCH_ROLL", PITCH_ROLL},
+    {"USBL_POSITION", USBL_POS}
 };
 
 /** @brief Функция-конвертер C-представления строк в QString C++
@@ -114,11 +115,10 @@ void AcousticWindow::onSendButtonClicked()
         queryForPktSend(sendBuffer, dest_addr, 2, qStringToChar("hydro_test"));
         break;
     case PING:{
-        //queryRemoteModem(sendBuffer, dest_addr, 0, RC_PING);
         QStringList params = data.split(',');
         if (params.size()<2){
             updateOutput("Please, enter params for remote request");
-            //return;
+            return;
         }
         bool ok, ok1;
         int period = params[0].toInt(&ok);
@@ -137,9 +137,21 @@ void AcousticWindow::onSendButtonClicked()
     case PT_SETTINGS:
         queryForPktModeSettings(sendBuffer);
         break;
-    case AMBIENT:
-        //queryForAmbientDataConfig(sendBuffer, isSaveToFlash, period, isPressure,Temperature,isDepth,isVCC);
+    case AMBIENT:{
+        QStringList params = data.split(',');
+        if (params.size()<5){
+            updateOutput("Please, enter params for remote request");
+            return;
+        }
+        bool isSaveToFlash = params[0].toInt();
+        int period = params[1].toInt();
+        bool isPressure = params[2].toInt();
+        bool isTemperature = params[3].toInt();
+        bool isDepth = params[4].toInt();
+        bool isVCC = params[5].toInt();
+        queryForAmbientDataConfig(sendBuffer, isSaveToFlash, period, isPressure,isTemperature,isDepth,isVCC);
         break;
+        }
     case ITG_REQ:
         queryForPktITG(sendBuffer, dest_addr, 0);
         break;
@@ -367,25 +379,57 @@ void AcousticWindow::updatePortList () {
     }
 }
 
-std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remote_depth, double propagation_time, bool log_flag){
+void log_xyz_data(double X, double Y, double Z, double azimuth, double depth, double propagation_time) {
+    const std::string filename = "xyz_log.csv";
+
+    std::ofstream outfile(filename, std::ios::app);
+    if (!outfile.is_open()) {
+        std::cerr << "Error when opening a file!\n";
+        return;
+    }
+
+    // Если файл новый, добавляем заголовки
+    /*
+    bool header_written = false;
+    if (outfile.tellp() == 0) {
+        outfile << "Timestamp, X (m), Y (m), Z (m), Azimuth (deg), Depth (m), Propagation Time (s)\n";
+        header_written = true;
+    }
+    */
+
+    // Получаем текущее время в секундах (можно заменить на более точное)
+    time_t now = time(0);
+    std::tm* ltm = localtime(&now);
+
+    // Записываем данные в CSV-формате
+    outfile << std::put_time(ltm, "%Y-%m-%d %H:%M:%S") << ", "
+            << std::fixed << std::setprecision(3) << X << ", "
+            << Y << ", " << Z << ", "
+            << azimuth << ", " << depth << ", " << propagation_time << "\n";
+
+    outfile.close();
+}
+
+
+std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remote_depth, double propagation_time,
+                                double roll = 0.0, double pitch = 0.0, bool log_flag = true){
     double rs = 0.0;
     double rh = 0.0;
     double X = 0.0;
     double Y = 0.0;
     double Z = 0.0;
-    double c = 1500;
+    double c = 1500.0;
+
     rs = c * propagation_time; // Полная дистанция от модема до удалённого устройства
-
     Z = remote_depth - local_depth; // Получение относительной глубины удалённого устройства
+    rh = sqrt(abs(rs*rs - Z*Z));         // Проекция дистанции до модема на двумерную плоскость
 
-    rh = sqrt(rs*rs - Z*Z);         // Проекция дистанции до модема на двумерную плоскость
-    if (rh == NAN) {
+    if (std::isnan(rh)) {
         qDebug() << "nan was observe\n";
         X = 0.0;
         Y = 0.0;
         rh = 0.0;
     } else {
-        rh = sqrt(rs*rs - Z*Z);
         X = rh * sin(azimuth*M_PI/180.0);
         Y = rh * cos(azimuth*M_PI/180.0);
     }
@@ -395,7 +439,22 @@ std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remot
     qDebug() << "Azimuth: " << azimuth << "\n";
     qDebug() << "Depth: " <<  Z << "\n";
     qDebug() << "Prop time: " <<  propagation_time << "\n";
+    qDebug() << "Roll: " << roll << "\n";
+    qDebug() << "Pitch: " << pitch << "\n";
     qDebug() << "3D: X: " << X << " Y: " << Y << " Z:" << Z << "\n";
+
+
+    double phi = roll * M_PI / 180.0;
+    double theta = pitch * M_PI / 180.0;
+
+    double X_new = X * cos(theta) + Z * sin(theta);
+    double Y_new = Y * cos(phi) - Z * sin(phi);
+    double Z_new = -X * sin(theta) + Y * sin(phi) + Z * cos(theta) * cos(phi);
+
+    // Обход нуля для чисел, близких к 0
+    if (fabs(X_new) < 1e-6) X_new = 0.0;
+    if (fabs(Y_new) < 1e-6) Y_new = 0.0;
+    if (fabs(Z_new) < 1e-6) Z_new = 0.0;
 
     if (log_flag){
         // Путь к файлу
@@ -416,7 +475,7 @@ std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remot
             iss >> update_flag >> file_azimuth >> file_rs >> file_x >> file_y;
             if (update_flag == "False") {
                 qDebug() << "Visualizer has not read the previous data yet.";
-                return {X, Y, Z}; // Возвращение координат без обновления файла
+                return {X_new, Y_new, Z_new}; // Возвращение координат без обновления файла
             }
         }
 
@@ -428,17 +487,33 @@ std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remot
                     << std::fixed << std::setprecision(2)    // 2 знака после запятой
                     << azimuth << " "                      // Азимут в градусах
                     << rh << " "                           // Полная дистанция в м
-                    << X << " "                            // Координата X в м
-                    << Y << "\n";                           // Координата Y в м
+                    << X_new << " "                            // Координата X в м
+                    << Y_new << "\n";                           // Координата Y в м
             outfile.close();
             qDebug() << "Data logged successfully.";
         } else {
             qDebug() << "File open error!";
         }
     }
-
-    return {X, Y, Z};
+    log_xyz_data(X_new, Y_new, Z_new, azimuth, local_depth, propagation_time);
+    return {X_new, Y_new, Z_new};
 }
+
+
+std::vector<double> usbl_3d_polar(double X, double Y, double Z) {
+    double r = sqrt(X * X + Y * Y + Z * Z);
+    double theta = atan2(X, Y) * 180.0 / M_PI;  // Азимут (градусы)
+    double phi = asin(Z / r) * 180.0 / M_PI;    // Угол места (градусы)
+
+    qDebug() << "Polar Coordinates:";
+    qDebug() << "Range r: " << r << " m";
+    qDebug() << "Azimuth θ: " << theta << " deg";
+    qDebug() << "Elevation φ: " << phi << " deg";
+
+    return {r, theta, phi};
+}
+
+
 
 void AcousticWindow::sendAutoPing()
 {
@@ -458,10 +533,11 @@ void AcousticWindow::sendAutoPing()
     */
     //int recv_channel = params[2].toInt(); // Получение канала приёма из поля с данными
 
-    char sendBuffer[500] = {0};
+    char sendBuffer[500];
     int dest_addr = ui->dstAddressField->text().toInt();
 
     queryRemoteModem(sendBuffer, dest_addr, 1, RC_DPT_GET); // Отправка команды PING
+    qDebug() << "Buffer: " << charToString(sendBuffer) << "\n";
     updateOutput(" >> " + charToString(sendBuffer)); // Вывод сообщения в интерфейс
 
     if (writerThread && h_serial != NULL) {
@@ -607,12 +683,20 @@ void puwv2Qstr(puwv_t puwv, int command, QString& out_buffer) {
                       .arg(puwv.itg_resp.azimuth);
         break;
 
+    case AMB_DATA:
+        result += QStringLiteral("\n\t\t\tLocal modem ambient data\n");
+        result += QString(" Pressure, mBar: %1\n Temperature, C: %2\n Depth, m: %3\n VCC, V: %3\n")
+                        .arg(puwv.amb_dta.pressure_mBar)
+                        .arg(puwv.amb_dta.temperature_C)
+                        .arg(puwv.amb_dta.Depth_m)
+                        .arg(puwv.amb_dta.VCC_V);
+        break;
     default:
         result += QStringLiteral("Unknown command\n");
         break;
     }
 
-    usbl_position = usbl_3d_pos(puwv.rc_resp.azimuth, 0.6, puwv.rc_resp.value,  puwv.rc_resp.propTime, true);
+    usbl_position = usbl_3d_pos(puwv.rc_resp.azimuth, puwv.amb_dta.Depth_m, puwv.rc_resp.value,  puwv.rc_resp.propTime, true);
     result += QString(" 3D coordinates (local): \tX: %1 \tY: %2 \tZ: %3\n")
                   .arg(usbl_position[0])
                   .arg(usbl_position[1])
