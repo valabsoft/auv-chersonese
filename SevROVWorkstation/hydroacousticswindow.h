@@ -31,7 +31,8 @@ enum CommandType {
     PT_SETTINGS,
     AMBIENT,
     ITG_REQ,
-    PITCH_ROLL
+    PITCH_ROLL,
+    USBL_POS
 };
 
 extern QMap<QString, CommandType> commandMap;

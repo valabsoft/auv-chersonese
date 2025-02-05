@@ -161,7 +161,7 @@ cv::Vec3f third_coords(cv::Mat imageL, cv::Mat imageR, cv::Point xy, stereo_outp
     stereo->setP1(8*cn*SGBM_par.P1_*SGBM_par.P1_);
     stereo->setP1(32*cn*SGBM_par.P2_*SGBM_par.P2_);
 
-    stereo_d_map(imageL, imageR, disparity, stereo);
+    stereo_d_map(rectifiedLeft, rectifiedRight, disparity, stereo);
 
 
     cv::Mat coords3d;

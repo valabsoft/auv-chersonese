@@ -103,8 +103,8 @@ HANDLE init_serial(char* portName){
 }
 
 DWORD uart_read(HANDLE h_serial, char* buffer, DWORD buffer_size) {
-    static char internal_buffer[4096] = {0};  // Внутренний буфер для накопления данных
-    static size_t buffer_position = 0;        // Текущая позиция в буфере
+    char internal_buffer[4096] = {0};  // Внутренний буфер для накопления данных
+    size_t buffer_position = 0;        // Текущая позиция в буфере
 
     OVERLAPPED osReader = { 0 };
     osReader.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
