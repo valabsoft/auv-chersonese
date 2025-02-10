@@ -55,7 +55,7 @@ void stereo_d_map(cv::Mat rectifiedImageLeft, cv::Mat rectifiedImageRight, cv::M
     #endif
 
     cv::applyColorMap(disparity_norm, coloredDispMap, cv::COLORMAP_JET);
-    cv::imshow("Colored disparity Map", coloredDispMap);
+    //cv::imshow("Colored disparity Map", coloredDispMap);
     //cv::imshow("Rectified left", rectifiedImageLeft);
 }
 

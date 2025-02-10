@@ -113,6 +113,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::onStereoCaptured, _disparityWindow, &DisparityWindow::onStereoCaptured);
 
     connect(_acousticWindow, &AcousticWindow::onTelemetry, this, &MainWindow::onTelemetry);
+
+    // Создаем инструмент Линейка
+    _toolWindow = new ToolWindow(this);
 }
 
 MainWindow::~MainWindow()
@@ -2134,9 +2137,6 @@ double calculateDistance(const std::vector<double>& point1,const std::vector<dou
 
 void MainWindow::onScreenshotButtonClicked()
 {
-    // Создаем инструмент Линейка
-    _toolWindow = new ToolWindow(this);
-
     cv::Mat imageL;
     cv::Mat imageR;
 
@@ -2164,7 +2164,7 @@ void MainWindow::onScreenshotButtonClicked()
             return;
         }
     }
-*/
+    */
 
     switch (_appSet.CAMERA_TYPE)
     {
@@ -2248,23 +2248,22 @@ void MainWindow::onScreenshotButtonClicked()
     // Конвертация в старый формат
     t_vuxyzrgb data = convertCloud3DPoints(cloud);
 
-    _toolWindow->setupWindowGeometry();
-    // TODO: Переделать под новый формат данных
-    _toolWindow->setDataCloud3D(imageL, data); // Сюда ректификацию
-    _toolWindow->setWindowTitle("ТНПА :: AРМ Оператора :: " + _appSet.getAppVersion());
+    if (_toolWindow)
+    {
+        _toolWindow->setupWindowGeometry();
+        // TODO: Переделать под новый формат данных
+        _toolWindow->setDataCloud3D(imageL, data); // Сюда ректификацию
+        _toolWindow->setWindowTitle("ТНПА :: AРМ Оператора :: " + _appSet.getAppVersion());
 
-    // Центрировать инструментальную панель
-    QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
-    int x = (screenGeometry.width() - _toolWindow->width()) / 2;
-    int y = (screenGeometry.height() - _toolWindow->height()) / 2;
+        // Центрировать инструментальную панель
+        QRect screenGeometry = QGuiApplication::screens()[0]->geometry();
+        int x = (screenGeometry.width() - _toolWindow->width()) / 2;
+        int y = (screenGeometry.height() - _toolWindow->height()) / 2;
 
-    _toolWindow->move(x, y);
-    _toolWindow->exec();
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Очищаем ресурсы
-    delete _toolWindow;
-    ///////////////////////////////////////////////////////////////////////////
+        _toolWindow->show();
+        _toolWindow->move(QPoint(x, y));
+    }
 }
 
 void MainWindow::onSettingsButtonClicked()

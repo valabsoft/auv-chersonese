@@ -220,6 +220,8 @@ int DisparityWindow::disparityMap(cv::Mat &map,
     disparityLeft = (disparityLeft / 16.0f - (float)minDisparity) / ((float)numDisparities);
     disparityRight = (disparityRight / 16.0f - (float)minDisparity) / ((float)numDisparities);
 
+    showImages = false;
+
     if (showImages)
     {
         cv::namedWindow("Image Left", cv::WINDOW_AUTOSIZE);

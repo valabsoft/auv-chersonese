@@ -351,16 +351,15 @@ void CameraScene::set3DPoints(t_vuxyzrgb points)
     // Clear vector of items
     circleItems.clear();
 
+    QColor penColor = Qt::lightGray;
+    penColor.setAlpha(80);
+
     // Create new circle items
     for (size_t i = 0; i < points.cluster.size(); i++)
     {
         auto elipse = new QGraphicsEllipseItem();
-
-        QColor penColor = Qt::lightGray;
-        penColor.setAlpha(80);
-
-        //elipse->setPen(QPen(Qt::lightGray, 1, Qt::SolidLine));
         elipse->setPen(QPen(penColor, 1, Qt::SolidLine));
+
         // Add real XY from 3D cloud data structure
         elipse->setRect(points.vu.at(i).at(1) - CIRCLE_D / 2,
                         points.vu.at(i).at(0) - CIRCLE_D / 2,
