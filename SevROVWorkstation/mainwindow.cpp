@@ -153,6 +153,9 @@ MainWindow::~MainWindow()
     if (_disparityWindow)
         delete _disparityWindow;
 
+    if (_acousticWindow)
+        delete _acousticWindow;
+
     if (_leftCamStreaming)
         delete _leftCamStreaming;
 
