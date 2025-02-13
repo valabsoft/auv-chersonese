@@ -11,6 +11,7 @@ public:
     SevROVData();
 
     std::string toIntString(int8_t value);
+    std::string toUIntString(uint64_t value);
     std::string toFloatString(float value, int precision = 2);
 
     virtual void Initialize() = 0;

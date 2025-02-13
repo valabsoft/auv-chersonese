@@ -17,20 +17,17 @@ public:
     SevROVControlData();
 
     void Initialize() override;
-    void Initialize(float horizontalvectorx,
-                    float horizontalvectory,
-                    float vericalthrust,
-                    float powertarget,
-                    float angularvelocityz,
-                    float manipulatorstate,
-                    float manipulatorrotate,
-                    float camerarotate,
-                    int8_t resetinitialization,
-                    int8_t lightsstate,
-                    int8_t stabilizationstate,
-                    float rollinc,
-                    float pitchinc,
-                    int8_t resetposition,
+    void Initialize(uint64_t flags,
+                    float moveforward,
+                    float movesideways,
+                    float movevertical,
+                    float rotateyaw,
+                    float incrementroll,
+                    float incrementpitch,
+                    float powersetpoint,
+                    float rotatecamera,
+                    float grabmanipulator,
+                    float rotatemanipulator,
                     float rollkp,
                     float rollki,
                     float rollkd,
@@ -41,27 +38,24 @@ public:
                     float yawki,
                     float yawkd,
                     float depthkp,
-                    float ddepthki,
-                    float depthkd,
-                    int8_t updatepid);
+                    float depthki,
+                    float depthkd);
 
     ////////////////////////////////////////////////////////////////////////////
     // Сеттеры
     ////////////////////////////////////////////////////////////////////////////
-    void setHorizontalVectorX(float value);
-    void setHorizontalVectorY(float value);    
-    void setVericalThrust(float value);
-    void setPowerTarget(float value);
-    void setAngularVelocityZ(float value);
-    void setManipulatorState(float value);
-    void setManipulatorRotate(float value);
-    void setCameraRotate(float value);
-    void setResetInitialization(int8_t value);
-    void setLightsState(int8_t value);
-    void setStabilizationState(int8_t value);
-    void setRollInc(float value);
-    void setPitchInc(float value);
-    void setResetPosition(int8_t value);
+
+    void setFlags(uint64_t value);
+    void setMoveForward(float value);
+    void setMoveSideways(float value);
+    void setMoveVertical(float value);
+    void setRotateYaw(float value);
+    void setIncrementRoll(float value);
+    void setIncrementPitch(float value);
+    void setPowerSetPoint(float value);
+    void setRotateCamera(float value);
+    void setGrabManipulator(float value);
+    void setRotateManipulator(float value);
     void setRollKp(float value);
     void setRollKi(float value);
     void setRollKd(float value);
@@ -74,24 +68,21 @@ public:
     void setDepthKp(float value);
     void setDepthKi(float value);
     void setDepthKd(float value);
-    void setUpdatePID(int8_t value);
+
     ////////////////////////////////////////////////////////////////////////////
     // Геттеры
     ////////////////////////////////////////////////////////////////////////////
-    float getHorizontalVectorX();
-    float getHorizontalVectorY();
-    float getPowerTarget();
-    float getVericalThrust();
-    float getAngularVelocityZ();
-    float getManipulatorState();
-    float getManipulatorRotate();
-    float getCameraRotate();
-    int8_t getResetInitialization();
-    int8_t getLightsState();
-    int8_t getStabilizationState();
-    float getRollInc();
-    float getPitchInc();
-    int8_t getResetPosition();
+    uint64_t getFlags();
+    float getMoveForward();
+    float getMoveSideways();
+    float getMoveVertical();
+    float getRotateYaw();
+    float getIncrementRoll();
+    float getIncrementPitch();
+    float getPowerSetPoint();
+    float getRotateCamera();
+    float getGrabManipulator();
+    float getRotateManipulator();
     float getRollKp();
     float getRollKi();
     float getRollKd();
@@ -104,7 +95,6 @@ public:
     float getDepthKp();
     float getDepthKi();
     float getDepthKd();
-    int8_t getUpdatePID();
 
     QByteArray toByteArray() override;
     void printDebugInfo() override;
@@ -112,20 +102,17 @@ public:
     QDateTime LightsStatePrevious;
 
 private:
-    float HorizontalVectorX;
-    float HorizontalVectorY;
-    float VericalThrust;
-    float PowerTarget;
-    float AngularVelocityZ;
-    float ManipulatorState;
-    float ManipulatorRotate;
-    float CameraRotate;
-    int8_t ResetInitialization;
-    int8_t LightsState;
-    int8_t StabilizationState;
-    float RollInc;
-    float PitchInc;
-    int8_t ResetPosition;
+    uint64_t Flags; // Флаги управления
+    float MoveForward; // Движение вперед [-1..1]
+    float MoveSideways; // Движение в сторону [-1..1]
+    float MoveVertical; // Движение по вертикали (погружение / всплытие) [-1..1]
+    float RotateYaw; // Вращение по курсу [-1..1]
+    float IncrementRoll; // Инкремент крена [-1;0;1]
+    float IncrementPitch; // Инкремент дифферента [-1;0;1]
+    float PowerSetPoint; // Уставка мощности [0..1]
+    float RotateCamera; // Вращение камеры [-1;0;1]
+    float GrabManipulator; // Схват манипулятора [-1..1]
+    float RotateManipulator; // Вращение манипулятора [-1..1]
     float RollKp;
     float RollKi;
     float RollKd;
@@ -138,7 +125,6 @@ private:
     float DepthKp;
     float DepthKi;
     float DepthKd;
-    int8_t UpdatePID;
 };
 
 #endif // SEVROVCONTROLDATA_H

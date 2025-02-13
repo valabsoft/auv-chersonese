@@ -8,20 +8,17 @@ SevROVControlData::SevROVControlData()
 
 void SevROVControlData::Initialize()
 {
-    HorizontalVectorX = 0.0;
-    HorizontalVectorY = 0.0;
-    VericalThrust = 0.0;
-    PowerTarget = 0.0;
-    AngularVelocityZ = 0.0;
-    ManipulatorState = 0.0;
-    ManipulatorRotate = 0.0;
-    CameraRotate = 0.0;
-    ResetInitialization = 0;
-    LightsState = 0;
-    StabilizationState = 0;
-    RollInc = 0.0;
-    PitchInc = 0.0;
-    ResetPosition = 0;
+    Flags = 0;
+    MoveForward = 0.0;
+    MoveSideways = 0.0;
+    MoveVertical = 0.0;
+    RotateYaw = 0.0;
+    IncrementRoll = 0.0;
+    IncrementPitch = 0.0;
+    PowerSetPoint = 0.0;
+    RotateCamera = 0.0;
+    GrabManipulator = 0.0;
+    RotateManipulator = 0.0;
     RollKp = 0.0;
     RollKi = 0.0;
     RollKd = 0.0;
@@ -34,51 +31,43 @@ void SevROVControlData::Initialize()
     DepthKp = 0.0;
     DepthKi = 0.0;
     DepthKd = 0.0;
-    UpdatePID = 0.0;
 }
-
-void SevROVControlData::Initialize(float horizontalvectorx,
-                                   float horizontalvectory,
-                                   float vericalthrust,
-                                   float powertarget,
-                                   float angularvelocityz,
-                                   float manipulatorstate,
-                                   float manipulatorrotate,
-                                   float camerarotate,
-                                   int8_t resetinitialization,
-                                   int8_t lightsstate,
-                                   int8_t stabilizationstate,
-                                   float rollinc,
-                                   float pitchinc,
-                                   int8_t resetposition,
-                                   float rollkp,
-                                   float rollki,
-                                   float rollkd,
-                                   float pitchkp,
-                                   float pitchki,
-                                   float pitchkd,
-                                   float yawkp,
-                                   float yawki,
-                                   float yawkd,
-                                   float depthkp,
-                                   float depthki,
-                                   float depthkd,
-                                   int8_t updatepid)
+void SevROVControlData::Initialize(
+    uint64_t flags,
+    float moveforward,
+    float movesideways,
+    float movevertical,
+    float rotateyaw,
+    float incrementroll,
+    float incrementpitch,
+    float powersetpoint,
+    float rotatecamera,
+    float grabmanipulator,
+    float rotatemanipulator,
+    float rollkp,
+    float rollki,
+    float rollkd,
+    float pitchkp,
+    float pitchki,
+    float pitchkd,
+    float yawkp,
+    float yawki,
+    float yawkd,
+    float depthkp,
+    float depthki,
+    float depthkd)
 {
-    HorizontalVectorX = horizontalvectorx;
-    HorizontalVectorY = horizontalvectory;
-    VericalThrust = vericalthrust;
-    PowerTarget = powertarget;
-    AngularVelocityZ = angularvelocityz;
-    ManipulatorState = manipulatorstate;
-    ManipulatorRotate = manipulatorrotate;
-    CameraRotate = camerarotate;
-    ResetInitialization = resetinitialization;
-    LightsState = lightsstate;
-    StabilizationState = stabilizationstate;
-    RollInc = rollinc;
-    PitchInc = pitchinc;
-    ResetPosition = resetposition;
+    Flags = flags;
+    MoveForward = moveforward;
+    MoveSideways = movesideways;
+    MoveVertical = movevertical;
+    RotateYaw = rotateyaw;
+    IncrementRoll = incrementroll;
+    IncrementPitch = incrementpitch;
+    PowerSetPoint = powersetpoint;
+    RotateCamera = rotatecamera;
+    GrabManipulator = grabmanipulator;
+    RotateManipulator = rotatemanipulator;
     RollKp = rollkp;
     RollKi = rollki;
     RollKd = rollkd;
@@ -91,75 +80,51 @@ void SevROVControlData::Initialize(float horizontalvectorx,
     DepthKp = depthkp;
     DepthKi = depthki;
     DepthKd = depthkd;
-    UpdatePID = updatepid;
 }
 
-void SevROVControlData::setHorizontalVectorX(float value)
+void SevROVControlData::setFlags(uint64_t value)
 {
-    HorizontalVectorX = value;
+    Flags = value;
 }
-void SevROVControlData::setHorizontalVectorY(float value)
+void SevROVControlData::setMoveForward(float value)
 {
-    HorizontalVectorY = value;
+    MoveForward = value;
 }
-void SevROVControlData::setVericalThrust(float value)
+void SevROVControlData::setMoveSideways(float value)
 {
-    VericalThrust = value;
+    MoveSideways = value;
 }
-void SevROVControlData::setPowerTarget(float value)
+void SevROVControlData::setMoveVertical(float value)
 {
-    PowerTarget = value;
+    MoveVertical = value;
 }
-void SevROVControlData::setAngularVelocityZ(float value)
+void SevROVControlData::setRotateYaw(float value)
 {
-    AngularVelocityZ = value;
+    RotateYaw = value;
 }
-void SevROVControlData::setManipulatorState(float value)
+void SevROVControlData::setIncrementRoll(float value)
 {
-    ManipulatorState = value;
+    IncrementRoll = value;
 }
-void SevROVControlData::setManipulatorRotate(float value)
+void SevROVControlData::setIncrementPitch(float value)
 {
-    ManipulatorRotate = value;
+    IncrementPitch = value;
 }
-void SevROVControlData::setCameraRotate(float value)
+void SevROVControlData::setPowerSetPoint(float value)
 {
-    CameraRotate = value;
+    PowerSetPoint = value;
 }
-void SevROVControlData::setResetInitialization(int8_t value)
+void SevROVControlData::setRotateCamera(float value)
 {
-    ResetInitialization = value;
+    RotateCamera = value;
 }
-void SevROVControlData::setLightsState(int8_t value)
+void SevROVControlData::setGrabManipulator(float value)
 {
-    QDateTime LightsStateCurrent = QDateTime::currentDateTime();
-
-    //qDebug() << LightsStatePrevious;
-    //qDebug() << LightsStateCurrent;
-    //qDebug() << LightsStatePrevious.msecsTo(LightsStateCurrent);
-
-    // Смена режима не раньше чем раз в X секунд
-    if (LightsStatePrevious.msecsTo(LightsStateCurrent) >= LIGHT_ONOFF_PAUSE)
-    {
-        LightsState = value;
-        LightsStatePrevious = QDateTime::currentDateTime();
-    }
+    GrabManipulator = value;
 }
-void SevROVControlData::setStabilizationState(int8_t value)
+void SevROVControlData::setRotateManipulator(float value)
 {
-    StabilizationState = value;
-}
-void SevROVControlData::setRollInc(float value)
-{
-    RollInc = value;
-}
-void SevROVControlData::setPitchInc(float value)
-{
-    PitchInc = value;
-}
-void SevROVControlData::setResetPosition(int8_t value)
-{
-    ResetPosition = value;
+    RotateManipulator = value;
 }
 void SevROVControlData::setRollKp(float value)
 {
@@ -209,66 +174,50 @@ void SevROVControlData::setDepthKd(float value)
 {
     DepthKd = value;
 }
-void SevROVControlData::setUpdatePID(int8_t value)
-{
-    UpdatePID = value;
-}
 
-float SevROVControlData::getHorizontalVectorX()
+uint64_t SevROVControlData::getFlags()
 {
-    return HorizontalVectorX;
+    return Flags;
 }
-float SevROVControlData::getHorizontalVectorY()
+float SevROVControlData::getMoveForward()
 {
-    return HorizontalVectorY;
+    return MoveForward;
 }
-float SevROVControlData::getVericalThrust()
+float SevROVControlData::getMoveSideways()
 {
-    return VericalThrust;
+    return MoveSideways;
 }
-float SevROVControlData::getPowerTarget()
+float SevROVControlData::getMoveVertical()
 {
-    return PowerTarget;
+    return MoveVertical;
 }
-float SevROVControlData::getAngularVelocityZ()
+float SevROVControlData::getRotateYaw()
 {
-    return AngularVelocityZ;
+    return RotateYaw;
 }
-float SevROVControlData::getManipulatorState()
+float SevROVControlData::getIncrementRoll()
 {
-    return ManipulatorState;
+    return IncrementRoll;
 }
-float SevROVControlData::getManipulatorRotate()
+float SevROVControlData::getIncrementPitch()
 {
-    return ManipulatorRotate;
+    return IncrementPitch;
 }
-float SevROVControlData::getCameraRotate()
+float SevROVControlData::getPowerSetPoint()
 {
-    return CameraRotate;
+    return PowerSetPoint;
 }
-int8_t SevROVControlData::getResetInitialization()
+float SevROVControlData::getRotateCamera()
 {
-    return ResetInitialization;
+    return RotateCamera;
 }
-int8_t SevROVControlData::getLightsState()
+float SevROVControlData::getGrabManipulator()
 {
-    return LightsState;
+    return GrabManipulator;
 }
-int8_t SevROVControlData::getStabilizationState()
+float SevROVControlData::getRotateManipulator()
 {
-    return StabilizationState;
-}
-float SevROVControlData::getRollInc()
-{
-    return RollInc;
-}
-float SevROVControlData::getPitchInc()
-{
-    return PitchInc;
-}
-int8_t SevROVControlData::getResetPosition()
-{
-    return ResetPosition;
+    return RotateManipulator;
 }
 float SevROVControlData::getRollKp()
 {
@@ -318,11 +267,6 @@ float SevROVControlData::getDepthKd()
 {
     return DepthKd;
 }
-int8_t SevROVControlData::getUpdatePID()
-{
-    return UpdatePID;
-}
-
 
 QByteArray SevROVControlData::toByteArray()
 {
@@ -332,20 +276,17 @@ QByteArray SevROVControlData::toByteArray()
     stream.setByteOrder(QDataStream::LittleEndian);
     stream.setVersion(QDataStream::Qt_6_3);
 
-    stream << HorizontalVectorX;
-    stream << HorizontalVectorY;
-    stream << VericalThrust;
-    stream << PowerTarget;
-    stream << AngularVelocityZ;
-    stream << ManipulatorState;
-    stream << ManipulatorRotate;
-    stream << CameraRotate;
-    stream << ResetInitialization;
-    stream << LightsState;
-    stream << StabilizationState;
-    stream << RollInc;
-    stream << PitchInc;
-    stream << ResetPosition;
+    stream << Flags;
+    stream << MoveForward;
+    stream << MoveSideways;
+    stream << MoveVertical;
+    stream << RotateYaw;
+    stream << IncrementRoll;
+    stream << IncrementPitch;
+    stream << PowerSetPoint;
+    stream << RotateCamera;
+    stream << GrabManipulator;
+    stream << RotateManipulator;
     stream << RollKp;
     stream << RollKi;
     stream << RollKd;
@@ -358,7 +299,6 @@ QByteArray SevROVControlData::toByteArray()
     stream << DepthKp;
     stream << DepthKi;
     stream << DepthKd;
-    stream << UpdatePID;
 
     return result;
 }
@@ -372,32 +312,17 @@ void SevROVControlData::printDebugInfo()
     qDebug() << "CONTROL" << this->toByteArray().size() << "[bytes]"
              << datetime.c_str() << "[" << timestamp << "]";
     qDebug() << "=============================================================";
-    qDebug() << "HorizontalVectorX:\t" << toFloatString(HorizontalVectorX).c_str();
-    qDebug() << "HorizontalVectorY:\t" << toFloatString(HorizontalVectorY).c_str();
-    qDebug() << "VericalThrust:\t\t" << toFloatString(VericalThrust).c_str();
-    qDebug() << "PowerTarget:\t\t" << toFloatString(PowerTarget).c_str();
-    qDebug() << "AngularVelocityZ:\t\t" << toFloatString(AngularVelocityZ).c_str();
-    qDebug() << "ManipulatorState:\t\t" << toFloatString(ManipulatorState).c_str();
-    qDebug() << "ManipulatorRotate:\t" << toFloatString(ManipulatorRotate).c_str();
-    qDebug() << "CameraRotate:\t\t" << toFloatString(CameraRotate).c_str();
-    qDebug() << "ResetInitialization:\t" << toIntString(ResetInitialization).c_str();
-    qDebug() << "LightsState:\t\t" << toIntString(LightsState).c_str();
-    qDebug() << "StabilizationState:\t" << toIntString(StabilizationState).c_str();
-    qDebug() << "RollInc:\t\t\t" << toIntString(RollInc).c_str();
-    qDebug() << "PitchInc:\t\t" << toIntString(PitchInc).c_str();
-    qDebug() << "ResetPosition:\t\t" << toIntString(ResetPosition).c_str();
-    //qDebug() << "RollKp:\t\t" << toIntString(RollKp).c_str();
-    //qDebug() << "RollKi:\t\t" << toIntString(RollKi).c_str();
-    //qDebug() << "RollKd:\t\t" << toIntString(RollKd).c_str();
-    //qDebug() << "PitchKp:\t\t" << toIntString(PitchKp).c_str();
-    //qDebug() << "PitchKi:\t\t" << toIntString(PitchKi).c_str();
-    //qDebug() << "PitchKd:\t\t" << toIntString(PitchKd).c_str();
-    //qDebug() << "YawKp:\t\t" << toIntString(YawKp).c_str();
-    //qDebug() << "YawKi:\t\t" << toIntString(YawKi).c_str();
-    //qDebug() << "YawKd:\t\t" << toIntString(YawKd).c_str();
-    //qDebug() << "DepthKp:\t\t" << toIntString(DepthKp).c_str();
-    //qDebug() << "DepthKi:\t\t" << toIntString(DepthKi).c_str();
-    //qDebug() << "DepthKd:\t\t" << toIntString(DepthKd).c_str();
-    qDebug() << "UpdatePID:\t\t" << toIntString(UpdatePID).c_str();
+
+    qDebug() << "Flags:\t" << toUIntString(Flags).c_str();
+    qDebug() << "MoveForward:\t" << toFloatString(MoveForward).c_str();
+    qDebug() << "MoveSideways:\t\t" << toFloatString(MoveSideways).c_str();
+    qDebug() << "MoveVertical:\t\t" << toFloatString(MoveVertical).c_str();
+    qDebug() << "RotateYaw:\t\t" << toFloatString(RotateYaw).c_str();
+    qDebug() << "IncrementRoll:\t\t" << toFloatString(IncrementRoll).c_str();
+    qDebug() << "IncrementPitch:\t" << toFloatString(IncrementPitch).c_str();
+    qDebug() << "PowerSetPoint:\t\t" << toFloatString(PowerSetPoint).c_str();
+    qDebug() << "RotateCamera:\t" << toFloatString(RotateCamera).c_str();
+    qDebug() << "GrabManipulator:\t\t" << toFloatString(GrabManipulator).c_str();
+    qDebug() << "RotateManipulator:\t" << toFloatString(RotateManipulator).c_str();
     qDebug() << "";
 }

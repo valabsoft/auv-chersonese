@@ -13,3 +13,8 @@ std::string SevROVData::toIntString(int8_t value)
 {
     return QString::number(value, 'i', 0).toStdString();
 }
+
+std::string SevROVData::toUIntString(uint64_t value)
+{
+    return QString::number(value, 'i', 0).toStdString();
+}

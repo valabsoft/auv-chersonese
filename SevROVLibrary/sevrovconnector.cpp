@@ -133,27 +133,36 @@ void SevROVConnector::processDatagram()
             in.setByteOrder(QDataStream::LittleEndian);
             in.setVersion(QDataStream::Qt_6_3);
 
+            uint64_t Flags;
             float Roll;
             float Pitch;
             float Yaw;
-            float Heading;
             float Depth;
+            float BatteryVoltage;
+            float BatteryChargeLevel;
+            float CurrentConsumption;
             float RollSetPoint;
             float PitchSetPoint;
 
+            in >> Flags;
             in >> Roll;
             in >> Pitch;
             in >> Yaw;
-            in >> Heading;
             in >> Depth;
+            in >> BatteryVoltage;
+            in >> BatteryChargeLevel;
+            in >> CurrentConsumption;
             in >> RollSetPoint;
             in >> PitchSetPoint;
 
+            telemetry.setFlags(Flags);
             telemetry.setRoll(Roll);
             telemetry.setPitch(Pitch);
             telemetry.setYaw(Yaw);
-            telemetry.setHeading(Heading);
             telemetry.setDepth(Depth);
+            telemetry.setBatteryVoltage(BatteryVoltage);
+            telemetry.setBatteryChargeLevel(BatteryChargeLevel);
+            telemetry.setCurrentConsumption(CurrentConsumption);
             telemetry.setRollSetPoint(RollSetPoint);
             telemetry.setPitchSetPoint(PitchSetPoint);
 
