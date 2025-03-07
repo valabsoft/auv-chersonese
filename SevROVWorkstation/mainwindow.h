@@ -175,6 +175,7 @@ private slots:
     void onSettingsButtonClicked();
     void onDisparityButtonClicked();
     void onAcousticButtonClicked();
+    void onWriteStereo();
 
 private:
     Ui::MainWindow *ui;

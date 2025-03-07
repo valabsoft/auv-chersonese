@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pbSettings, &QPushButton::clicked, this, &MainWindow::onSettingsButtonClicked);
     connect(ui->pbDisparity, &QPushButton::clicked, this, &MainWindow::onDisparityButtonClicked);
     connect(ui->pbAcoustics, &QPushButton::clicked, this, &MainWindow::onAcousticButtonClicked);
+    connect(ui->pbScreenStereoShot, &QPushButton::clicked, this, &MainWindow::onWriteStereo);
 
     // Загрузка настроек
     _appSet.load(_ctrSet);
@@ -303,6 +304,15 @@ int MainWindow::MV_SDK_Initialization()
     MVCC_ENUMVALUE stEnumValue = {};
     MVCC_ENUMENTRY stEnumEntry = {};
 
+    auto cameraName_L = stDeviceList.pDeviceInfo[_appSet.CAMERA_LEFT_ID]->SpecialInfo.stGigEInfo.chUserDefinedName;
+    char* camname = reinterpret_cast<char *>(cameraName_L);
+    if (strcmp(camname, "LCamera") != 0){
+        //Если имя камеры и id камеры в списке устройств не совпадают, меняем id местами
+        auto tmp = _appSet.CAMERA_LEFT_ID;
+        _appSet.CAMERA_LEFT_ID = _appSet.CAMERA_RIGHT_ID;
+        _appSet.CAMERA_RIGHT_ID = tmp;
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Left Camera Initialization
     ///////////////////////////////////////////////////////////////////////////
@@ -505,6 +515,12 @@ void MainWindow::moveWindowToCenter()
     move(primaryScreenRectCenter);
 }
 
+
+/// @todo сделать ресайз главного окна независимым от разрешения камер, путём масштабирования непосредственно отображаемого изображения
+/// Варианты решения:
+///
+/// int windowWidth = <fixed_camera_width> + _appSet.CONTROL_PANEL_WIDTH + _appSet.CAMERA_VIEW_BORDER_WIDTH*4;
+/// int windowWidth = <fixed_camera_height> + _appSet.CAMERA_VIEW_BORDER_WIDTH*2;
 void MainWindow::setupWindowGeometry()
 {
     // Установка размера главного окна// Установка размера главного окна
@@ -977,7 +993,7 @@ void MainWindow::onVideoTimer()
         switch (_appSet.CAMERA_TYPE)
         {
         case CameraType::IP:
-            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
+            nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, /*_appSet.MVS_TIMEOUT*/ INFINITE);
             if (nRet == MV_OK)
             {
                 _sourceMatL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
@@ -2125,31 +2141,25 @@ void MainWindow::onViewButtonClicked()
     setupCameraViewLayout(_sevROV.cameraView);
 }
 
-double calculateDistance(const std::vector<double>& point1,const std::vector<double>& point2 ){
-    return std::sqrt(std::pow(point1[0] - point2[0], 2) +
-                     std::pow(point1[1] - point2[1], 2) +
-                     std::pow(point1[2] - point2[2], 2)
-                     );
-}
+void MainWindow::onWriteStereo(){
+    struct tm currentTime;
+    time_t nowTime = time(0);
 
-void MainWindow::onScreenshotButtonClicked()
-{
-    // Создаем инструмент Линейка
-    _toolWindow = new ToolWindow(this);
+    #ifdef _WIN32
+        localtime_s(&currentTime, &nowTime);
+    #else
+        localtime_r(&nowTime, &currentTime);
+    #endif
+
+    std::ostringstream outStringStream;
+    outStringStream << std::put_time(&currentTime, "%y-%m-%d_%H-%M-%S");
+    std::string writingTime = outStringStream.str();
 
     cv::Mat imageL;
     cv::Mat imageR;
 
-    // @todo: Сделать возможность сохранения стереопары для офлайн-отладки алгоритма
-    //int limage_count = 0;
-    //int rimage_count = 0;
-
-    int nRet = MV_OK;
-    MV_FRAME_OUT stOutFrame = {};
-
     // проверяем наличие папки с видео - если ее нет, создаем
-    /*
-    std::filesystem::path pathToStereoDirectory = std::filesystem::current_path() / "/stereo_frames";
+    std::filesystem::path pathToStereoDirectory = std::filesystem::current_path() / "stereo_frames";
     std::filesystem::directory_entry stereoDirectoryEntry{ pathToStereoDirectory };
 
     // Проверяем существование папки video в рабочем каталоге
@@ -2159,26 +2169,26 @@ void MainWindow::onScreenshotButtonClicked()
     {
         // Если папка video не существует, создаем ее
         isStereoDirectoryExists = std::filesystem::create_directory(pathToStereoDirectory);
+
         if (!isStereoDirectoryExists)
         {
-            return;
+            qDebug() << "Error creating directory\n";
+            //return;
         }
     }
-*/
+
+    int nRet = MV_OK;
+    MV_FRAME_OUT stOutFrame = {};
 
     switch (_appSet.CAMERA_TYPE)
     {
     case CameraType::IP:
-        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, _appSet.MVS_TIMEOUT);
+        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, /*_appSet.MVS_TIMEOUT*/ INFINITE);
         if (nRet == MV_OK)
         {
             // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
-
-            // Задел на возможность записи правого изображения
-            //cv::imwrite("/stereo_frames/L"+ std::to_string(limage_count) + ".png", imageR);
-            //limage_count++;
 
             nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
 
@@ -2191,16 +2201,12 @@ void MainWindow::onScreenshotButtonClicked()
         ///////////////////////////////////////////////////////////////////////
         // Right Camera
         ///////////////////////////////////////////////////////////////////////
-        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, _appSet.MVS_TIMEOUT);
+        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, /*_appSet.MVS_TIMEOUT*/ INFINITE);
         if (nRet == MV_OK)
         {
             // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
             imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
             cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
-
-            // Задел на возможность записи левого изображения
-            //cv::imwrite("stereo_frames/R"+ std::to_string(rimage_count) + ".png", imageR);
-            //rimage_count++;
 
             nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
 
@@ -2218,6 +2224,75 @@ void MainWindow::onScreenshotButtonClicked()
     default:
         break;
     }
+
+    if (imageL.empty() && imageR.empty()){
+        qDebug() << "Images is empty!\n";
+    } else {
+        cv::imwrite("stereo_frames/L_"+ writingTime + ".png", imageL);
+        cv::imwrite("stereo_frames/R_"+ writingTime + ".png", imageR);
+    }
+}
+
+
+void MainWindow::onScreenshotButtonClicked()
+{
+    // Создаем инструмент Линейка
+    _toolWindow = new ToolWindow(this);
+
+    cv::Mat imageL;
+    cv::Mat imageR;
+
+    int nRet = MV_OK;
+    MV_FRAME_OUT stOutFrame = {};
+
+    switch (_appSet.CAMERA_TYPE)
+    {
+    case CameraType::IP:
+        nRet = MV_CC_GetImageBuffer(handleL, &stOutFrame, /*_appSet.MVS_TIMEOUT*/ INFINITE);
+        if (nRet == MV_OK)
+        {
+            // qDebug() << "Left Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            imageL = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+            cv::cvtColor(imageL, imageL, cv::COLOR_BayerRG2RGB);
+
+            nRet = MV_CC_FreeImageBuffer(handleL, &stOutFrame);
+
+            if(nRet != MV_OK)
+                qDebug() << "ERROR: Left Camera - Free Image Buffer fail!";
+        }
+        else
+            qDebug() << "ERROR: Left Camera - Get Image fail!";
+
+        ///////////////////////////////////////////////////////////////////////
+        // Right Camera
+        ///////////////////////////////////////////////////////////////////////
+        nRet = MV_CC_GetImageBuffer(handleR, &stOutFrame, /*_appSet.MVS_TIMEOUT*/ INFINITE);
+        if (nRet == MV_OK)
+        {
+            // qDebug() << "Right Camera - Get Image Buffer: Width[" << stOutFrame.stFrameInfo.nWidth << "], Height[" << stOutFrame.stFrameInfo.nHeight << "], FrameNum[" << stOutFrame.stFrameInfo.nFrameNum << "]";
+            imageR = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8U, stOutFrame.pBufAddr); // TODO: Почему H x W а не W x H ?
+            cv::cvtColor(imageR, imageR, cv::COLOR_BayerRG2RGB);
+
+            nRet = MV_CC_FreeImageBuffer(handleR, &stOutFrame);
+
+            if(nRet != MV_OK)
+                qDebug() << "ERROR: Right Camera - Free Image Buffer fail!";
+        }
+        else
+            qDebug() << "ERROR: Right Camera - Get Image fail!";
+        ///////////////////////////////////////////////////////////////////////
+        break;
+    case CameraType::WEB:
+        _webCamL->read(imageL);
+        _webCamR->read(imageR);
+        break;
+    default:
+        break;
+    }
+
+    // Временное решение для анализа стереопар
+    //imageL = cv::imread("D:/Games/auv-chersonese-developer/build/Desktop_Qt_6_7_2_MinGW_64_bit-Release/SevROVWorkstation/release/stereo_frames/L_25-02-11_13-05-12.png");
+    //imageR = cv::imread("D:/Games/auv-chersonese-developer/build/Desktop_Qt_6_7_2_MinGW_64_bit-Release/SevROVWorkstation/release/stereo_frames/R_25-02-11_13-05-12.png");
 
     std::string file_calibration_parameters =
         (QCoreApplication::applicationDirPath() + "/camera_calibration_parameters.xml").toStdString();

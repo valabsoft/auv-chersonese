@@ -216,12 +216,6 @@ void AcousticWindow::keyPressEvent(QKeyEvent *event)
 
 void AcousticWindow::onSerialConnectClicked()
 {
-    double distance = 1.0;
-    double pressure = 2.0;
-    double temperature = 3.0;
-
-    emit onTelemetry(distance, pressure, temperature);
-
     QString portName = ui->serialPortListDropDown->currentText(); // Получение текущего доступного COM-порта из выпадающего списка
 
     if(h_serial != NULL)
@@ -275,6 +269,7 @@ void AcousticWindow::onSerialConnectClicked()
             // Инициализация потоков чтения и записи с последовательного порта
             readerThread = new SerialOutput(h_serial,this);
             connect(readerThread, &SerialOutput::dataReceived, this, &AcousticWindow::updateOutput);
+            //connect(readerThread, &SerialOutput::onTelemetry, this, &AcousticWindow::onTelemetry);
             readerThread->start();
 
             writerThread = new SerialInput(h_serial, this);
@@ -379,6 +374,7 @@ void AcousticWindow::updatePortList () {
     }
 }
 
+/*
 void log_xyz_data(double X, double Y, double Z, double azimuth, double depth, double propagation_time) {
     const std::string filename = "xyz_log.csv";
 
@@ -387,15 +383,6 @@ void log_xyz_data(double X, double Y, double Z, double azimuth, double depth, do
         std::cerr << "Error when opening a file!\n";
         return;
     }
-
-    // Если файл новый, добавляем заголовки
-    /*
-    bool header_written = false;
-    if (outfile.tellp() == 0) {
-        outfile << "Timestamp, X (m), Y (m), Z (m), Azimuth (deg), Depth (m), Propagation Time (s)\n";
-        header_written = true;
-    }
-    */
 
     // Получаем текущее время в секундах (можно заменить на более точное)
     time_t now = time(0);
@@ -408,9 +395,27 @@ void log_xyz_data(double X, double Y, double Z, double azimuth, double depth, do
             << azimuth << ", " << depth << ", " << propagation_time << "\n";
 
     outfile.close();
+}*/
+
+void acoustic_logger(const std::string& log_entry) {
+    const std::string filename = "xyz_log.csv";
+
+    time_t now = time(0);
+    std::tm* ltm = localtime(&now);
+
+    std::ofstream outfile(filename, std::ios::app);
+    if (!outfile.is_open()) {
+        std::cerr << "Error when opening a file!\n";
+        return;
+    }
+
+    // Записываем уже подготовленную строку
+    outfile << std::put_time(ltm, "%Y-%m-%d %H:%M:%S") << "\t" << log_entry << "\n";
+
+    outfile.close();
 }
-
-
+    int header = 0;
+/* @todo: Добавить функции в класс*/
 std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remote_depth, double propagation_time,
                                 double roll = 0.0, double pitch = 0.0, bool log_flag = true){
     double rs = 0.0;
@@ -495,7 +500,31 @@ std::vector<double> usbl_3d_pos(double azimuth, double local_depth, double remot
             qDebug() << "File open error!";
         }
     }
-    log_xyz_data(X_new, Y_new, Z_new, azimuth, local_depth, propagation_time);
+
+
+    // Формируем строку логирования
+    std::ostringstream log_entry;
+
+    if (header == 0) {
+        log_entry << std::fixed << "X(m)"<< " \t"
+                  << "Y(m)" << " \t" << "Z(m)" << " \t"
+                  << "Azimuth(deg)" << " \t" << "Local_depth(m)" << " \t"
+                  << "Remote_depth(m)" << " \t" << "Propagation_time(s)"
+                  << " \t" << "rs(m)" << " \t" << "rh(m)" << " \t";
+        header++;
+    }
+
+    log_entry << std::fixed << std::setprecision(6) << X_new << " \t"
+              << Y_new << " \t" << Z_new << " \t"
+              << azimuth << " \t" << local_depth << " \t"
+              << remote_depth << " \t" << propagation_time
+              << " \t" << rs << " \t" << rh << " \t";
+
+    //log_xyz_data(X_new, Y_new, Z_new, azimuth, local_depth, propagation_time);
+    acoustic_logger(log_entry.str());
+
+    //emit onTelemetry(remote_depth, local_depth, propagation_time);
+
     return {X_new, Y_new, Z_new};
 }
 
@@ -536,7 +565,7 @@ void AcousticWindow::sendAutoPing()
     char sendBuffer[500];
     int dest_addr = ui->dstAddressField->text().toInt();
 
-    queryRemoteModem(sendBuffer, dest_addr, 1, RC_DPT_GET); // Отправка команды PING
+    queryRemoteModem(sendBuffer, dest_addr, 0, RC_DPT_GET); // Отправка команды PING
     qDebug() << "Buffer: " << charToString(sendBuffer) << "\n";
     updateOutput(" >> " + charToString(sendBuffer)); // Вывод сообщения в интерфейс
 
@@ -711,7 +740,7 @@ void SerialOutput::run()
     int mine_id;
     puwv_t puwv;
     QString parse_descript;
-    std::vector<double> coords3D = {};
+    //std::vector<double> coords3D = {};
 
     puwv.rc_resp.azimuth = 0.0; // Обнуение значения азимута для последующего заполнения в парсерах
 
@@ -719,11 +748,11 @@ void SerialOutput::run()
         char buffer[1024];
         DWORD bytes_read = uart_read(h_serial, buffer, sizeof(buffer));
         if (bytes_read > 0) {
-            emit dataReceived(" >> " + QString::fromLocal8Bit(buffer, bytes_read));
             puwv_command = puwv_parser(buffer, &mine_id, &puwv);
             puwv2Qstr(puwv, puwv_command, parse_descript);
 
             if (parse_descript.length() > 0){
+                emit dataReceived(" >> " + QString::fromLocal8Bit(buffer, bytes_read));
                 emit dataReceived(parse_descript);
                 parse_descript.clear();
             }

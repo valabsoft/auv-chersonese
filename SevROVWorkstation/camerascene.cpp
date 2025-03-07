@@ -84,6 +84,27 @@ CameraScene::~CameraScene()
     }
 }
 
+size_t CameraScene::findClosestPoint(const QPointF &clickPos)
+{
+    size_t closestIdx = SIZE_MAX;
+    double minDist = std::numeric_limits<double>::max();
+
+    for (size_t i = 0; i < clusterPoints.cluster.size(); i++)
+    {
+        QPointF projected(clusterPoints.vu.at(i).at(1), clusterPoints.vu.at(i).at(0));
+        double dist = QLineF(clickPos, projected).length();
+
+        if (dist < CIRCLE_D / 2 && dist < minDist)
+        {
+            minDist = dist;
+            closestIdx = i;
+        }
+    }
+    return closestIdx;
+}
+
+/*
+/// @todo Добавить привязку к ближайшей 2д проекции 3д точки по клику
 void CameraScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     CameraScene::Mode currentMode = getMode();
@@ -99,6 +120,10 @@ void CameraScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
                 return;
 
             startPoint = event->scenePos();
+            qDebug() << "start point: " << startPoint << "\n";
+            //startPoint = findClosestPoint(startPoint);
+            //qDebug() << "close point " << startPoint;
+
             endPoint = event->scenePos();
 
             if (circleStart != nullptr)
@@ -154,7 +179,6 @@ void CameraScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
             circleStartRealZ = circleCurrentRealZ;
             setMode(Mode::LeftButton); // Устанавливаем режим
         }
-
         // Окончание отрисовки (второе нажатие ЛКМ)
         if (currentMode == Mode::LeftButton)
         {
@@ -227,6 +251,7 @@ void CameraScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
     QGraphicsScene::mousePressEvent(event);
 }
 
+/// @todo Удалить циклическую проверку координат 3д-точек
 void CameraScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     CameraScene::Mode currentMode = getMode();
@@ -320,6 +345,117 @@ void CameraScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 
     QGraphicsScene::mouseMoveEvent(event);
 }
+*/
+
+/// Функция отрисовки для демонстрационной версии
+/// @todo переделать под использование заложенного метода отрисовки точек и линейки и убрать
+void CameraScene::drawSelectionCircle(const std::vector<double> &point)
+{
+    if (circleCurrent != nullptr && circleCurrentAdded)
+        this->removeItem(circleCurrent);
+
+    if (!circleCurrent)
+    {
+        circleCurrent = new QGraphicsEllipseItem();
+        circleCurrent->setPen(QPen(Qt::red, 1, Qt::SolidLine));
+    }
+
+    circleCurrent->setRect(point.at(1) - CIRCLE_D / 2, point.at(0) - CIRCLE_D / 2, CIRCLE_D, CIRCLE_D);
+    this->addItem(circleCurrent);
+    circleCurrentAdded = true;
+}
+
+/// @todo переделать под использование заложенного метода отрисовки точек и линейки и убрать
+void CameraScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    CameraScene::Mode currentMode = getMode();
+    endPoint = event->scenePos();
+
+    if ((lineItem != nullptr) && (currentMode == Mode::LeftButton))
+    {
+        lineItem->setLine(0, 0, endPoint.x() - startPoint.x(), endPoint.y() - startPoint.y());
+    }
+
+    QGraphicsScene::mouseMoveEvent(event);
+}
+
+/// @todo переделать под использование заложенного метода отрисовки точек и линейки и убрать
+void CameraScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->buttons() & Qt::LeftButton)
+    {
+        QPointF clickPos = event->scenePos();
+        size_t closestIdx = findClosestPoint(clickPos);
+
+        if (closestIdx != SIZE_MAX)
+        {
+            circleCurrentRealX = clusterPoints.xyz.at(closestIdx).at(0);
+            circleCurrentRealY = clusterPoints.xyz.at(closestIdx).at(1);
+            circleCurrentRealZ = clusterPoints.xyz.at(closestIdx).at(2);
+
+            std::vector<double> point = {
+                static_cast<double>(clusterPoints.vu.at(closestIdx).at(0)),
+                static_cast<double>(clusterPoints.vu.at(closestIdx).at(1))
+            };
+
+            drawSelectionCircle(point);
+
+            if (!firstPointSelected)
+            {
+                // Сохраняем первую точку
+                startPoint = clickPos;
+                circleStartRealX = circleCurrentRealX;
+                circleStartRealY = circleCurrentRealY;
+                circleStartRealZ = circleCurrentRealZ;
+                firstPointSelected = true;
+            }
+            else
+            {
+                // Вторая точка, рисуем линию
+                endPoint = clickPos;
+                circleEndRealX = circleCurrentRealX;
+                circleEndRealY = circleCurrentRealY;
+                circleEndRealZ = circleCurrentRealZ;
+
+                // Рассчитываем расстояние
+                double distance = std::sqrt(
+                    std::pow(circleStartRealX - circleEndRealX, 2) +
+                    std::pow(circleStartRealY - circleEndRealY, 2) +
+                    std::pow(circleStartRealZ - circleEndRealZ, 2));
+
+                // Создаем линию между точками
+                QGraphicsLineItem* lineItem = new QGraphicsLineItem(
+                    startPoint.x(), startPoint.y(),
+                    endPoint.x(), endPoint.y());
+                lineItem->setPen(QPen(Qt::white, 2, Qt::SolidLine));
+                this->addItem(lineItem);
+
+                // Отображаем расстояние
+                QGraphicsTextItem* textItem = new QGraphicsTextItem(
+                    QString::number(distance, 'f', 2) + " мм");
+                textItem->setDefaultTextColor(Qt::yellow);
+                textItem->setFont(QFont("Arial", 12));
+                textItem->setPos((startPoint.x() + endPoint.x()) / 2,
+                                 (startPoint.y() + endPoint.y()) / 2);
+                this->addItem(textItem);
+
+                // Сброс состояния
+                firstPointSelected = false;
+            }
+
+            emit updateInfo(circleCurrentRealX, circleCurrentRealY, circleCurrentRealZ,
+                            std::sqrt(circleCurrentRealX * circleCurrentRealX +
+                                      circleCurrentRealY * circleCurrentRealY +
+                                      circleCurrentRealZ * circleCurrentRealZ));
+        }
+        else
+        {
+            emit updateInfo(0, 0, 0, 0);
+        }
+    }
+
+    QGraphicsScene::mousePressEvent(event);
+}
 
 void CameraScene::setMode(Mode mode)
 {
@@ -357,7 +493,7 @@ void CameraScene::set3DPoints(t_vuxyzrgb points)
         auto elipse = new QGraphicsEllipseItem();
 
         QColor penColor = Qt::lightGray;
-        penColor.setAlpha(80);
+        penColor.setAlpha(95);
 
         //elipse->setPen(QPen(Qt::lightGray, 1, Qt::SolidLine));
         elipse->setPen(QPen(penColor, 1, Qt::SolidLine));

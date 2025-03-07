@@ -42,7 +42,9 @@ private:
     bool circleEndAdded = false;
     bool textItemAdded = false;
 
-    bool circleFound = false;
+    bool firstPointSelected = false; // Флаг о захвате первой точки
+    std::vector<QPointF> selectedPoints; // Контейнер 2D координат 3D точек
+    std::vector<std::vector<double>> current3DCoords; // Контейнер 3D координат 3D точек
 
     double circleCurrentRealX = 0;
     double circleCurrentRealY = 0;
@@ -58,6 +60,9 @@ private:
 
     Mode sceneMode;
     t_vuxyzrgb clusterPoints;
+
+    size_t findClosestPoint(const QPointF &clickPos);  // Функция поиска ближайшей к месту клика 2D точки
+    void drawSelectionCircle(const std::vector<double> &point); // Временная функция отрисовки точек
 
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event);

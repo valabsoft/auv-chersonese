@@ -68,7 +68,10 @@ signals:
      *
      * @param data - Принятые данные в формате строки
      */
-    void dataReceived(const QString &data);    
+    void dataReceived(const QString &data);
+
+    //void onTelemetry(double distance, double pressure, double temperature);
+
 
 private:
     HANDLE h_serial; /**< Дескпритор последовательного порта */
@@ -165,7 +168,13 @@ public slots:
      */
     void updateOutput(const QString &text);
 
+    /**
+     * @brief Функция периодической отправки сигнала PING
+     *
+     * Отправляет заданное число пакетов PING с заданной периодичностью
+    */
     void sendAutoPing();
+
 protected:
     /**
      * @brief Функция-обработчик нажатия клавиш
