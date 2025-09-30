@@ -4,7 +4,7 @@
 #include "sevrovcontroldata.h"
 #include "sevrovpidcontroller.h"
 
-const std::string APP_VERSION = "1.2.1";
+const std::string APP_VERSION = "2.0.1";
 const int JOYSTICK_DEAD_ZONE = 5000;
 
 // https://support.xbox.com/en-US/help/hardware-network/controller/xbox-one-wireless-controller
@@ -15,15 +15,15 @@ struct XboxGamepad {
     short RStickY;  // 3
     short LTrigger; // 4
     short RTrigger; // 5
-    short DPad;     // Directional Pad
-    short A;        // 0
-    short B;        // 1
-    short X;        // 2
-    short Y;        // 3
-    short LBumper;  // 4
-    short RBumper;  // 5
-    short View;     // 6
-    short Menu;     // 7
+    short DPad;     // 6
+    short A;        // 7
+    short B;        // 8
+    short X;        // 9
+    short Y;        // 10
+    short LBumper;  // 11
+    short RBumper;  // 12
+    short View;     // 13
+    short Menu;     // 14
 };
 
 // Меппинг осей зависит от версии операционной системы Windows / Linux

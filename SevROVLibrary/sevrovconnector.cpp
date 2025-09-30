@@ -87,7 +87,7 @@ void SevROVConnector::writeConnectDatagram()
     QDataStream stream(&bytearray, QIODeviceBase::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream.setVersion(QDataStream::Qt_6_3);
+    stream.setVersion(QDataStream::Qt_6_7);
 
     stream << (std::byte)0xAA;
     stream << (std::byte)0xFF;
@@ -104,7 +104,7 @@ void SevROVConnector::writeConnectDatagram(QHostAddress _host, int _port)
     QDataStream stream(&bytearray, QIODeviceBase::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream.setVersion(QDataStream::Qt_6_3);
+    stream.setVersion(QDataStream::Qt_6_7);
     stream << (std::byte)0xAA;
     stream << (std::byte)0xFF;
 
@@ -131,7 +131,7 @@ void SevROVConnector::processDatagram()
             QDataStream in(&datagram, QIODevice::ReadOnly);
             in.setFloatingPointPrecision(QDataStream::SinglePrecision);
             in.setByteOrder(QDataStream::LittleEndian);
-            in.setVersion(QDataStream::Qt_6_3);
+            in.setVersion(QDataStream::Qt_6_7);
 
             uint64_t Flags;
             float Roll;
@@ -180,7 +180,8 @@ void SevROVConnector::processDatagram()
             QHostAddress senderAddress = QHostAddress::Null;
             quint16 senderPort = 0;
 
-            do {
+            do
+            {
                 datagram.resize(udpSocket.pendingDatagramSize());
                 udpSocket.readDatagram(datagram.data(), datagram.size(),
                                        &senderAddress, &senderPort);
@@ -189,22 +190,19 @@ void SevROVConnector::processDatagram()
             QDataStream in(&datagram, QIODevice::ReadOnly);
             in.setFloatingPointPrecision(QDataStream::SinglePrecision);
             in.setByteOrder(QDataStream::LittleEndian);
-            in.setVersion(QDataStream::Qt_6_3);
+            in.setVersion(QDataStream::Qt_6_7);
 
-            float HorizontalVectorX;
-            float HorizontalVectorY;
-            float VericalThrust;
-            float PowerTarget;
-            float AngularVelocityZ;
-            float ManipulatorState;
-            float ManipulatorRotate;
-            float CameraRotate;
-            int8_t ResetInitialization;
-            int8_t LightsState;
-            int8_t StabilizationState;
-            float RollInc;
-            float PitchInc;
-            int8_t ResetPosition;
+            uint64_t Flags; // Флаги управления
+            float MoveForward; // Движение вперед [-1..1]
+            float MoveSideways; // Движение в сторону [-1..1]
+            float MoveVertical; // Движение по вертикали (погружение / всплытие) [-1..1]
+            float RotateYaw; // Вращение по курсу [-1..1]
+            float IncrementRoll; // Инкремент крена [-1;0;1]
+            float IncrementPitch; // Инкремент дифферента [-1;0;1]
+            float PowerSetPoint; // Уставка мощности [0..1]
+            float RotateCamera; // Вращение камеры [-1;0;1]
+            float GrabManipulator; // Схват манипулятора [-1..1]
+            float RotateManipulator; // Вращение манипулятора [-1..1]
             float RollKp;
             float RollKi;
             float RollKd;
@@ -217,22 +215,18 @@ void SevROVConnector::processDatagram()
             float DepthKp;
             float DepthKi;
             float DepthKd;
-            int8_t UpdatePID;
 
-            in >> HorizontalVectorX;
-            in >> HorizontalVectorY;
-            in >> VericalThrust;
-            in >> PowerTarget;
-            in >> AngularVelocityZ;
-            in >> ManipulatorState;
-            in >> ManipulatorRotate;
-            in >> CameraRotate;
-            in >> ResetInitialization;
-            in >> LightsState;
-            in >> StabilizationState;
-            in >> RollInc;
-            in >> PitchInc;
-            in >> ResetPosition;
+            in >> Flags; // Флаги управления
+            in >> MoveForward; // Движение вперед [-1..1]
+            in >> MoveSideways; // Движение в сторону [-1..1]
+            in >> MoveVertical; // Движение по вертикали (погружение / всплытие) [-1..1]
+            in >> RotateYaw; // Вращение по курсу [-1..1]
+            in >> IncrementRoll; // Инкремент крена [-1;0;1]
+            in >> IncrementPitch; // Инкремент дифферента [-1;0;1]
+            in >> PowerSetPoint; // Уставка мощности [0..1]
+            in >> RotateCamera; // Вращение камеры [-1;0;1]
+            in >> GrabManipulator; // Схват манипулятора [-1..1]
+            in >> RotateManipulator; // Вращение манипулятора [-1..1]
             in >> RollKp;
             in >> RollKi;
             in >> RollKd;
@@ -245,22 +239,18 @@ void SevROVConnector::processDatagram()
             in >> DepthKp;
             in >> DepthKi;
             in >> DepthKd;
-            in >> UpdatePID;
 
-            control.setHorizontalVectorX(HorizontalVectorX);
-            control.setHorizontalVectorY(HorizontalVectorY);
-            control.setVericalThrust(VericalThrust);
-            control.setPowerTarget(PowerTarget);
-            control.setAngularVelocityZ(AngularVelocityZ);
-            control.setManipulatorState(ManipulatorState);
-            control.setManipulatorRotate(ManipulatorRotate);
-            control.setCameraRotate(CameraRotate);
-            control.setResetInitialization(ResetInitialization);
-            control.setLightsState(LightsState);
-            control.setStabilizationState(StabilizationState);
-            control.setRollInc(RollInc);
-            control.setPitchInc(PitchInc);
-            control.setResetPosition(ResetPosition);
+            control.setFlags(Flags); // Флаги управления
+            control.setMoveForward(MoveForward); // Движение вперед [-1..1]
+            control.setMoveSideways(MoveSideways); // Движение в сторону [-1..1]
+            control.setMoveVertical(MoveVertical); // Движение по вертикали (погружение / всплытие) [-1..1]
+            control.setRotateYaw(RotateYaw); // Вращение по курсу [-1..1]
+            control.setIncrementRoll(IncrementRoll); // Инкремент крена [-1;0;1]
+            control.setIncrementPitch(IncrementPitch); // Инкремент дифферента [-1;0;1]
+            control.setPowerSetPoint(PowerSetPoint); // Уставка мощности [0..1]
+            control.setRotateCamera(RotateCamera); // Вращение камеры [-1;0;1]
+            control.setGrabManipulator(GrabManipulator); // Схват манипулятора [-1..1]
+            control.setRotateManipulator(RotateManipulator); // Вращение манипулятора [-1..1]
             control.setRollKp(RollKp);
             control.setRollKi(RollKi);
             control.setRollKd(RollKd);
@@ -273,7 +263,7 @@ void SevROVConnector::processDatagram()
             control.setDepthKp(DepthKp);
             control.setDepthKi(DepthKi);
             control.setDepthKd(DepthKd);
-            control.setUpdatePID(UpdatePID);
+            control.setDepthKd(DepthKd);
 
             emit OnProcessControlDatagram();
 
@@ -303,7 +293,7 @@ void SevROVConnector::processDatagram()
         QDataStream in(&datagram, QIODevice::ReadOnly);
         in.setFloatingPointPrecision(QDataStream::SinglePrecision);
         in.setByteOrder(QDataStream::LittleEndian);
-        in.setVersion(QDataStream::Qt_6_3);
+        in.setVersion(QDataStream::Qt_6_7);
 
         float A;
         float B;
